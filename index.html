@@ -3,43 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tyler's Notes - HTML5 Learning Path</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Hellish Falling Sand</title>
+    <style>
+        body {
+            background-color: #1a1a1a; /* Dark grey */
+            color: #ffffff; /* White text */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 1px solid #ff0000; /* Red border */
+            background-color: #000000; /* Black canvas */
+        }
+        h1 {
+            position: absolute;
+            top: 20px;
+            color: #ff0000; /* Red title */
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <h1>Tyler's Notes - Learn HTML5 (Tiered Learning Path)</h1>
-        <button id="dark-mode-toggle" onclick="toggleDarkMode()">Toggle Dark Mode</button>
-        <div id="user-section">
-            <p id="user-status"></p>
-            <button id="login-btn" onclick="showLogin()">Login</button>
-            <button id="signup-btn" onclick="showSignup()">Sign Up</button>
-            <button id="logout-btn" style="display: none;" onclick="logout()">Logout</button>
-        </div>
-    </header>
-
-    <section id="app-content">
-        <div id="tier-selection">
-            <h2>Select a Tier</h2>
-            <ul>
-                <li><button onclick="loadTier(1)">Tier 1: HTML5 Basics</button></li>
-                <li><button onclick="loadTier(2)">Tier 2: Media and Tables</button></li>
-                <li><button onclick="loadTier(3)">Tier 3: Forms and Inputs</button></li>
-                <li><button onclick="loadTier(4)">Tier 4: Semantics and Structure</button></li>
-                <li><button onclick="loadTier(5)">Tier 5: Multimedia and Graphics</button></li>
-            </ul>
-        </div>
-        <div id="lesson-content" style="display: none;">
-            <h2 id="lesson-title"></h2>
-            <div id="lesson-body"></div>
-            <button onclick="goBackToTiers()">Back to Tiers</button>
-        </div>
-    </section>
-
-    <footer>
-        <p>&copy; 2024 Tyler's Notes Learning Platform. All rights reserved.</p>
-    </footer>
-
+    <h1>HELLISH SAND</h1>
+    <canvas id="sandCanvas"></canvas>
     <script src="script.js"></script>
 </body>
 </html>
