@@ -1,0 +1,14 @@
+{
+  "name": "void-drift-ios",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start",
+    "tunnel": "expo start --tunnel",
+    "doctor": "npx expo-doctor@latest",
+    "ios:build": "npx eas-cli@latest build --platform ios --profile production",
+    "ios:submit": "npx eas-cli@latest submit --platform ios"
+  },
+  "dependencies": {
+    "expo": "~54.0.36",
