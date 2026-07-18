@@ -44,3 +44,11 @@ jobs:
         shell: bash
         run: |
           ! grep -qE "eth_call|mempool|seed phrase|private[_ -]?key|walletAddress|btcAddress|sendTransaction|signMessage" pennyspawn-ai/index.html
+      - name: Confirm commercial guide documents retirement
+        shell: bash
+        run: |
+          test -s pennyspawn-ai/COMMERCIAL_SETUP.md
+          grep -q "PennySpawn is retired" pennyspawn-ai/COMMERCIAL_SETUP.md
+          grep -q "monetization-config.js" pennyspawn-ai/COMMERCIAL_SETUP.md
+          ! grep -q "Add only public Base USDC" pennyspawn-ai/COMMERCIAL_SETUP.md
+          ! grep -q "Apply to Google AdSense" pennyspawn-ai/COMMERCIAL_SETUP.md
