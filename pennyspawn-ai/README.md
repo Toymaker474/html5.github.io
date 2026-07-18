@@ -1,33 +1,23 @@
-# PennySpawn Revenue Lab v7
+# PennySpawn retirement notice
 
-PennySpawn is an iPhone-first PWA with zero-download deterministic agents, local device profiles, watch-only Base USDC and Bitcoin telemetry, shareable service offers, and direct-to-wallet invoice text.
+PennySpawn is retired. The public `pennyspawn-ai/` route is a small migration page that removes narrowly matched legacy browser caches, unregisters service workers scoped to the retired route, and redirects visitors to Sandbox God Genic.
 
-## Hosting modes
+## Current public behavior
 
-### GitHub Pages preview
+The route does not provide or load:
 
-GitHub Pages is used only as a free non-commercial preview. The application automatically disables ads and real invoice payment requests on `*.github.io`.
+- a local or remote AI model;
+- autonomous agents or service-offer generation;
+- user profiles or credential storage;
+- advertising or ad-view rewards;
+- invoices or payment requests;
+- Bitcoin or Base USDC wallet telemetry;
+- custody, signing, or outgoing transactions.
 
-### Commercial deployment
+The active page contains no public receiving address, so earnings cannot be verified from the repository or public route.
 
-Deploy the same repository to Netlify or another host whose terms allow commercial sites. Then configure approved public AdSense IDs and public receiving addresses in `monetization-config.js`.
+## Safety boundary
 
-## No model download
+Do not add seed phrases, recovery phrases, private keys, passwords, exchange credentials, wallet-signing authority, private financial data, automated outreach, fake traffic, fabricated earnings, or guaranteed-profit claims to this redirect shell.
 
-Version 7 does not download an LLM. Offer selection and lifecycle planning run as open deterministic JavaScript on the visitor's device.
-
-## Monetization rules
-
-- Normal approved ads only.
-- Never click your own ads.
-- Never pay cash, cryptocurrency, or transferable rewards for ad views.
-- Never use bots, auto-refresh, paid-to-click, traffic exchanges, or deceptive placements.
-- Ad revenue is never displayed unless it can be verified by the ad provider.
-
-## Funds and invoices
-
-PennySpawn cannot hold funds. It stores no seed phrase or private key. Invoices contain a public payment destination; sats or USDC go directly to the owner's external wallet.
-
-## Safety
-
-No fraud, scams, phishing, malware, fake reviews, impersonation, spam, counterfeit/stolen goods, credential theft, evasion, private keys, or guaranteed-profit claims.
+Historical model, monetization, PWA, wallet, and commercial-host instructions no longer describe the deployed application. Any future commercial or financial application should be created and reviewed as a separate project with truthful claims, explicit consent, provider-policy compliance, and non-custodial design.
