@@ -43,10 +43,15 @@ jobs:
           test ! -e pennyspawn-ai/runtime.js
           test ! -e pennyspawn-ai/state.js
           test ! -e pennyspawn-ai/model-worker.js
+          test ! -e pennyspawn-ai/monetization-config.js
+          test ! -e pennyspawn-ai/rpc-ui.js
+          test ! -e pennyspawn-ai/stability-ui.js
+          test ! -e pennyspawn-ai/app.webmanifest
+          test ! -e pennyspawn-ai/agent-catalog.json
       - name: Confirm retired runtime is unreachable from the public shell
         shell: bash
         run: |
-          ! grep -qE "q\.js|q\.css|monetization-config\.js|sw\.js|app\.webmanifest|agent-catalog\.json|runtime\.js|state\.js|model-worker\.js" pennyspawn-ai/index.html
+          ! grep -qE "q\.js|q\.css|monetization-config\.js|sw\.js|app\.webmanifest|agent-catalog\.json|runtime\.js|state\.js|model-worker\.js|rpc-ui\.js|stability-ui\.js" pennyspawn-ai/index.html
           ! grep -q "navigator.serviceWorker.register" pennyspawn-ai/index.html
       - name: Confirm redirect shell contains no wallet or signing logic
         shell: bash
