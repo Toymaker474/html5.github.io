@@ -35,10 +35,16 @@ jobs:
           grep -q "pennyspawn|q-arena|revenue-lab" pennyspawn-ai/index.html
           grep -q "/pennyspawn-ai/" pennyspawn-ai/index.html
           ! grep -q "keys.map(key => caches.delete(key))" pennyspawn-ai/index.html
+      - name: Confirm retired runtime files are absent
+        shell: bash
+        run: |
+          test ! -e pennyspawn-ai/runtime.js
+          test ! -e pennyspawn-ai/state.js
+          test ! -e pennyspawn-ai/model-worker.js
       - name: Confirm retired runtime is unreachable from the public shell
         shell: bash
         run: |
-          ! grep -qE "q\.js|q\.css|monetization-config\.js|sw\.js|app\.webmanifest|agent-catalog\.json" pennyspawn-ai/index.html
+          ! grep -qE "q\.js|q\.css|monetization-config\.js|sw\.js|app\.webmanifest|agent-catalog\.json|runtime\.js|state\.js|model-worker\.js" pennyspawn-ai/index.html
           ! grep -q "navigator.serviceWorker.register" pennyspawn-ai/index.html
       - name: Confirm redirect shell contains no wallet or signing logic
         shell: bash
