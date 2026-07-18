@@ -1,0 +1,27 @@
+name: Hourly Teacher Health
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  teacher-health:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate teacher engines
+        run: |
+          node --check sandbox-god-genic/src/teacher.js
+          python -m py_compile sandbox-god-genic/python/teacher.py
+      - name: Check public world
+        run: |
+          curl --fail --retry 3 --retry-delay 8 --max-time 30 \
+            https://toymaker474.github.io/html5.github.io/ \
+            | grep -q "SANDBOX GOD GENIC"
