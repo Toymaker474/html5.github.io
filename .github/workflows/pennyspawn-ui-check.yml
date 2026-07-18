@@ -1,49 +1,38 @@
-name: Check PennySpawn Public UI
+name: Check Retired PennySpawn Route
 
 on:
   push:
     branches: ["main"]
     paths:
       - "pennyspawn-ai/**"
-      - "netlify.toml"
       - ".github/workflows/pennyspawn-ui-check.yml"
   pull_request:
     paths:
       - "pennyspawn-ai/**"
-      - "netlify.toml"
       - ".github/workflows/pennyspawn-ui-check.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  public-ui-only:
+  retired-route:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Confirm private server source is absent
+      - name: Validate legacy redirect shell
         shell: bash
-        run: test -z "$(git ls-files 'pennyspawn-ai/worker/**')"
-      - name: Check browser JavaScript
-        run: |
-          node --check pennyspawn-ai/q.js
-          node --check pennyspawn-ai/monetization-config.js
-          node --check pennyspawn-ai/sw.js
-      - name: Confirm required PWA files
         run: |
           test -s pennyspawn-ai/index.html
-          test -s pennyspawn-ai/q.css
-          test -s pennyspawn-ai/q.js
-          test -s pennyspawn-ai/monetization-config.js
-          test -s pennyspawn-ai/agent-catalog.json
-          test -s pennyspawn-ai/app.webmanifest
-          test -s pennyspawn-ai/sw.js
-          test -s pennyspawn-ai/icon.svg
-          test -s netlify.toml
-      - name: Confirm zero-download engine
+          grep -q "Sandbox God Genic" pennyspawn-ai/index.html
+          grep -q "location.replace('../?v=god-genic-1')" pennyspawn-ai/index.html
+          grep -q "serviceWorker.getRegistrations" pennyspawn-ai/index.html
+      - name: Confirm retired runtime is unreachable from the public shell
         shell: bash
         run: |
-          ! grep -R "HuggingFaceTB\|onnx-community\|transformers@" pennyspawn-ai/index.html pennyspawn-ai/q.js pennyspawn-ai/sw.js
-      - name: Confirm GitHub commercial guard
+          ! grep -qE "q\.js|q\.css|monetization-config\.js|sw\.js|app\.webmanifest|agent-catalog\.json" pennyspawn-ai/index.html
+          ! grep -q "navigator.serviceWorker.register" pennyspawn-ai/index.html
+      - name: Confirm redirect shell contains no wallet or signing logic
         shell: bash
-        run: grep -q "github\\.io" pennyspawn-ai/q.js
+        run: |
+          ! grep -qE "eth_call|mempool|seed phrase|private[_ -]?key|walletAddress|btcAddress|sendTransaction|signMessage" pennyspawn-ai/index.html
