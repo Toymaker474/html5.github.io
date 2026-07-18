@@ -21,7 +21,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: Confirm private agent source is absent
         shell: bash
-        run: test -z "$(git ls-files 'pennyspawn-ai/worker/**')"
+        run: |
+          tracked="$(git ls-files 'pennyspawn-ai/worker/**')"
+          if [ -n "$tracked" ]; then
+            echo "Unexpected tracked Worker files:"
+            printf '%s\n' "$tracked"
+            exit 1
+          fi
       - name: Check dashboard JavaScript
         run: node --check pennyspawn-ai/q.js
       - name: Confirm required dashboard files
