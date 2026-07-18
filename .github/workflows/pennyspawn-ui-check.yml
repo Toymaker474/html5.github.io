@@ -25,8 +25,16 @@ jobs:
         run: |
           test -s pennyspawn-ai/index.html
           grep -q "Sandbox God Genic" pennyspawn-ai/index.html
-          grep -q "location.replace('../?v=god-genic-1')" pennyspawn-ai/index.html
+          grep -q "location.replace(destination)" pennyspawn-ai/index.html
           grep -q "serviceWorker.getRegistrations" pennyspawn-ai/index.html
+          grep -q "Promise.race" pennyspawn-ai/index.html
+          ! grep -q 'http-equiv="refresh"' pennyspawn-ai/index.html
+      - name: Confirm cleanup is narrowly scoped
+        shell: bash
+        run: |
+          grep -q "pennyspawn|q-arena|revenue-lab" pennyspawn-ai/index.html
+          grep -q "/pennyspawn-ai/" pennyspawn-ai/index.html
+          ! grep -q "keys.map(key => caches.delete(key))" pennyspawn-ai/index.html
       - name: Confirm retired runtime is unreachable from the public shell
         shell: bash
         run: |
