@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://toymaker474.github.io/html5.github.io/pennyspawn-ai/sitemap.xml
