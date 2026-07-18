@@ -3,140 +3,148 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-  <meta name="theme-color" content="#03050a">
+  <meta name="theme-color" content="#050810">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="PennySpawn">
-  <meta name="description" content="PennySpawn Local: an iPhone-first local AI strategy lab with verified Base USDC wallet telemetry.">
-  <link rel="manifest" href="app.webmanifest">
-  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <meta name="description" content="PennySpawn Local: on-device AI planning with verified Base USDC wallet telemetry.">
+  <link rel="manifest" href="app.webmanifest?v=4">
+  <link rel="icon" href="icon.svg?v=4" type="image/svg+xml">
   <title>PennySpawn Local</title>
-  <link rel="stylesheet" href="q.css">
+  <link rel="stylesheet" href="q.css?v=4">
 </head>
 <body>
   <div class="noise" aria-hidden="true"></div>
 
   <div class="auth-gate" id="authGate" role="dialog" aria-modal="true" aria-labelledby="authTitle">
-    <div class="auth-card glass">
-      <div class="auth-orbit"><div class="auth-logo">P</div></div>
-      <div class="eyebrow">local account · on-device AI · real wallet telemetry</div>
-      <h1 id="authTitle">PennySpawn Local</h1>
-      <p>Register once on this iPhone or sign in to your local profile. Account data stays on this device; there is no central server.</p>
-      <div class="auth-tabs" role="tablist">
+    <div class="auth-card">
+      <div class="auth-top">
+        <div class="auth-logo">P</div>
+        <div>
+          <div class="eyebrow">PRIVATE ON THIS IPHONE</div>
+          <h1 id="authTitle">PennySpawn</h1>
+        </div>
+      </div>
+      <p class="auth-copy">Sign in to your local profile or create one. Nothing is uploaded to an account server.</p>
+      <div class="auth-tabs" role="tablist" aria-label="Account mode">
         <button class="auth-tab active" id="loginTab" type="button" role="tab">Login</button>
         <button class="auth-tab" id="registerTab" type="button" role="tab">Register</button>
       </div>
-      <form id="authForm">
-        <label>USERNAME<input id="authUser" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Choose or enter username" required></label>
-        <label>PASSWORD<input id="authPass" type="password" autocomplete="current-password" placeholder="Password" minlength="8" required></label>
-        <label class="confirm-row hidden" id="confirmRow">CONFIRM PASSWORD<input id="authConfirm" type="password" autocomplete="new-password" placeholder="Repeat password"></label>
-        <button class="btn primary" id="authSubmit" type="submit">Login</button>
+      <form id="authForm" class="auth-form">
+        <label class="field-label" for="authUser">Username</label>
+        <input class="auth-input" id="authUser" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Username" required>
+        <label class="field-label" for="authPass">Password</label>
+        <input class="auth-input" id="authPass" type="password" autocomplete="current-password" placeholder="Password" minlength="8" required>
+        <label class="confirm-row hidden" id="confirmRow" for="authConfirm">
+          <span class="field-label">Confirm password</span>
+          <input class="auth-input" id="authConfirm" type="password" autocomplete="new-password" placeholder="Repeat password">
+        </label>
+        <button class="btn primary auth-submit" id="authSubmit" type="submit">Login</button>
       </form>
-      <button class="btn secondary wide" id="spectatorBtn" type="button">Open read-only dashboard</button>
+      <button class="spectator-link" id="spectatorBtn" type="button">Continue read-only</button>
       <div class="auth-error" id="authError" aria-live="polite"></div>
-      <small>Local registration is a device lock, not banking authentication. Never reuse a wallet, email, or GitHub password here.</small>
+      <p class="auth-note">Use a new password only for this app. Never use a wallet recovery phrase or private key.</p>
     </div>
   </div>
 
   <main class="shell" id="appShell" aria-hidden="true">
     <header class="top glass">
-      <div class="brand"><div class="logo">P</div><div><strong>PennySpawn Local</strong><small>legal strategy organism · no cloud backend</small></div></div>
+      <div class="brand"><div class="logo">P</div><div class="brand-copy"><strong>PennySpawn</strong><small>Local AI · verified wallet</small></div></div>
       <div class="top-actions">
-        <span class="pill"><i class="dot" id="statusDot"></i><span id="topState">WAITING</span></span>
-        <span class="pill" id="accountBadge">SPECTATOR</span>
-        <button class="icon-btn" id="installBtn" type="button" aria-label="Install app">⇩</button>
-        <button class="icon-btn" id="settingsBtn" type="button" aria-label="Open settings">⚙</button>
+        <span class="status-pill"><i class="dot" id="statusDot"></i><span id="topState">WAITING</span></span>
+        <span class="account-pill" id="accountBadge">SPECTATOR</span>
+        <button class="icon-btn install-button" id="installBtn" type="button" aria-label="Install app">↓</button>
+        <button class="icon-btn" id="settingsBtn" type="button" aria-label="Open settings">⚙︎</button>
       </div>
     </header>
 
     <section class="hero">
       <article class="hero-copy glass">
-        <div class="eyebrow">verified Base USDC · local open models · lawful survival cycles</div>
-        <h1>Earn is real.<br><span>Everything else stays honest.</span></h1>
-        <p>The counter reads the public Base blockchain. It only rises after confirmed USDC reaches your configured public wallet. The local agent proposes legal work, watches real earnings, retires failed strategies, and creates a new plan—without private keys, spending access, spam, scams, or fake revenue.</p>
-        <div class="hero-tags"><span class="tag">SmolLM2 on-device</span><span class="tag">MiniLM local ranker</span><span class="tag">2–60 minute cycles</span><span class="tag warn">no guaranteed income</span></div>
+        <div class="eyebrow">BASE USDC · LOCAL OPEN MODELS · REAL RECEIPTS ONLY</div>
+        <h2>Real balance.<br><span>No fake earnings.</span></h2>
+        <p>The app watches one public Base wallet and counts only confirmed incoming USDC. The local agent proposes legal work and changes strategy when a cycle earns nothing.</p>
+        <div class="hero-tags"><span class="tag">SmolLM2</span><span class="tag">MiniLM ranker</span><span class="tag">2–60 min cycles</span><span class="tag warn">income not guaranteed</span></div>
       </article>
       <article class="arena-card glass">
-        <canvas id="arena" aria-label="Interactive local AI survival arena"></canvas>
-        <div class="arena-hud"><span>WATCHER</span><strong id="watcherText">waiting for wallet and model</strong></div>
+        <canvas id="arena" aria-label="Interactive AI survival arena"></canvas>
+        <div class="arena-hud"><span>WATCHER</span><strong id="watcherText">waiting for setup</strong></div>
         <div class="arena-footer"><span id="countdown">--:--</span><span id="connectionText">NO WALLET</span></div>
       </article>
     </section>
 
-    <section class="metrics">
-      <article class="metric glass featured"><small>CONFIRMED USDC BALANCE</small><strong class="mint" id="walletBalance">$0.000000</strong><em id="walletBlock">not connected</em></article>
-      <article class="metric glass"><small>SESSION EARNED</small><strong class="cyan" id="sessionEarned">+$0.000000</strong><em>verified wallet delta</em></article>
-      <article class="metric glass"><small>CYCLE EARNED</small><strong id="cycleEarned">+$0.000000</strong><em id="cycleGoal">goal: any positive receipt</em></article>
-      <article class="metric glass"><small>CONFIRMED PACE</small><strong class="violet-text" id="paceActual">$0.000000/h</strong><em id="paceNote">based on confirmed deltas</em></article>
-      <article class="metric glass"><small>ACTIVE GENERATION</small><strong id="generationMetric">GEN-01</strong><em id="fitnessMetric">fitness 0.25</em></article>
+    <section class="metrics" aria-label="Wallet metrics">
+      <article class="metric glass featured"><small>CONFIRMED USDC</small><strong class="mint" id="walletBalance">$0.000000</strong><em id="walletBlock">not connected</em></article>
+      <article class="metric glass"><small>SESSION RECEIVED</small><strong class="cyan" id="sessionEarned">+$0.000000</strong><em>confirmed delta</em></article>
+      <article class="metric glass"><small>CYCLE RECEIVED</small><strong id="cycleEarned">+$0.000000</strong><em id="cycleGoal">any positive receipt</em></article>
+      <article class="metric glass"><small>CONFIRMED PACE</small><strong class="violet-text" id="paceActual">$0.000000/h</strong><em id="paceNote">confirmed deltas only</em></article>
+      <article class="metric glass"><small>GENERATION</small><strong id="generationMetric">GEN-01</strong><em id="fitnessMetric">fitness 0.25</em></article>
     </section>
 
     <section class="section glass">
-      <div class="section-head"><div><div class="eyebrow">automatic local cycle</div><h2>Agent command core</h2><p>The browser runs the model locally while the app is open. Every cycle checks actual wallet change: positive change survives; zero change retires the strategy and asks the local model for a safer, clearer next move.</p></div><div class="step">01</div></div>
+      <div class="section-head"><div><div class="eyebrow">AGENT CONTROL</div><h2>Command core</h2><p>Start the local model, monitor the public wallet, and see the next useful action without hidden autonomous spending.</p></div><div class="step">01</div></div>
       <div class="command-grid">
         <article class="panel core-panel">
-          <div class="core-row"><span>AGENT</span><strong id="agentName">penny-agent-01</strong></div>
-          <div class="core-row"><span>STATUS</span><strong id="agentStatus" class="amber">waiting</strong></div>
-          <div class="core-row"><span>MODEL</span><strong id="modelName">not installed</strong></div>
-          <div class="core-row"><span>MODEL ENGINE</span><strong id="modelDevice">—</strong></div>
-          <div class="core-row"><span>CYCLE</span><strong id="cycleLength">10 minutes</strong></div>
+          <div class="core-row"><span>Agent</span><strong id="agentName">penny-agent-01</strong></div>
+          <div class="core-row"><span>Status</span><strong id="agentStatus" class="amber">waiting</strong></div>
+          <div class="core-row"><span>Model</span><strong id="modelName">not installed</strong></div>
+          <div class="core-row"><span>Engine</span><strong id="modelDevice">—</strong></div>
+          <div class="core-row"><span>Cycle</span><strong id="cycleLength">10 minutes</strong></div>
           <div class="progress"><i id="cycleProgress"></i></div>
           <div class="model-progress hidden" id="modelProgressWrap"><div class="model-progress-head"><span id="modelProgressText">Downloading model…</span><strong id="modelProgressValue">0%</strong></div><div class="progress"><i id="modelProgressBar"></i></div></div>
           <button class="btn primary wide" id="engineBtn" type="button">Start local engine</button>
-          <p class="tiny">The model downloads from Hugging Face on first use and is cached by the browser when storage permits. iOS may pause cycles when the app is closed or backgrounded.</p>
+          <p class="tiny">Keep the app open during local model work. iOS may pause it in the background.</p>
         </article>
         <article class="panel thought-panel">
           <div class="panel-title"><span>CURRENT STRATEGY</span><strong id="strategyName">awaiting setup</strong></div>
-          <div class="thought" id="thoughtBubble">“Connect a public wallet and start the local model.”</div>
-          <div class="next-action"><small>NEXT HUMAN ACTION</small><p id="nextAction">Add your public Base wallet address in Settings. Never enter a seed phrase or private key.</p></div>
-          <div class="guard"><i>✓</i><div><b>Legal Shield active</b><p>No fraud, phishing, fake reviews, malware, impersonation, stolen goods, harassment, evasion, credential theft, or financial deception.</p></div></div>
+          <div class="thought" id="thoughtBubble">“Add a public wallet, then start the local model.”</div>
+          <div class="next-action"><small>NEXT ACTION</small><p id="nextAction">Open Settings and add only your public Base wallet address.</p></div>
+          <div class="guard"><i>✓</i><div><b>Legal Shield</b><p>No fraud, phishing, malware, impersonation, fake reviews, stolen goods, evasion, spam, or wallet secrets.</p></div></div>
         </article>
       </div>
     </section>
 
     <section class="section glass">
-      <div class="section-head"><div><div class="eyebrow">real balance changes only</div><h2>Millisecond earnings pulse</h2><p>The animation refreshes every screen frame, but it never invents money. It smoothly displays the latest confirmed on-chain balance and stops when no new receipt exists.</p></div><div class="step">02</div></div>
-      <div class="chart-wrap"><canvas id="earningsChart" aria-label="Confirmed USDC balance history"></canvas><div class="chart-empty" id="chartEmpty">Configure a public Base wallet to begin real balance monitoring.</div></div>
-      <div class="pulse-grid"><div><small>Last receipt</small><strong id="lastReceipt">none</strong></div><div><small>Cycle start</small><strong id="cycleStartBalance">—</strong></div><div><small>Poll health</small><strong id="rpcHealth">offline</strong></div><div><small>Model cycles</small><strong id="modelCycles">0</strong></div><div><small>Strategies retired</small><strong id="retiredCount">0</strong></div><div><small>Offspring plans</small><strong id="offspringCount">0</strong></div></div>
-    </section>
-
-    <section class="section glass">
-      <div class="section-head"><div><div class="eyebrow">watch the organism reason</div><h2>Lineage, activity, and next move</h2><p>Every event explains what the local agent is doing and what you should do next. No secret autonomous action occurs behind the screen.</p></div><div class="step">03</div></div>
-      <div class="activity-grid">
-        <article class="panel"><div class="eyebrow panel-kicker">lineage</div><div class="tree" id="tree"></div></article>
-        <article class="panel"><div class="eyebrow panel-kicker">activity stream</div><div class="log" id="log"></div></article>
+      <div class="section-head"><div><div class="eyebrow">VERIFIED TELEMETRY</div><h2>Earnings pulse</h2><p>The number animates smoothly but only changes after a confirmed blockchain balance update.</p></div><div class="step">02</div></div>
+      <div class="chart-wrap"><canvas id="earningsChart" aria-label="Confirmed USDC balance history"></canvas><div class="chart-empty" id="chartEmpty">Add a public Base wallet in Settings.</div></div>
+      <div class="pulse-grid">
+        <div><small>Last receipt</small><strong id="lastReceipt">none</strong></div><div><small>Cycle start</small><strong id="cycleStartBalance">—</strong></div><div><small>RPC health</small><strong id="rpcHealth">offline</strong></div><div><small>Model cycles</small><strong id="modelCycles">0</strong></div><div><small>Retired</small><strong id="retiredCount">0</strong></div><div><small>Offspring</small><strong id="offspringCount">0</strong></div>
       </div>
     </section>
 
     <section class="section glass">
-      <div class="section-head"><div><div class="eyebrow">how it can improve</div><h2>Legal earning logic</h2><p>The local model does not promise customers. It rotates through useful microservice strategies you can manually publish elsewhere under those platforms’ rules.</p></div><div class="step">04</div></div>
-      <div class="logic-grid">
-        <article class="logic-card"><b>1. Observe</b><p>Read only your public USDC balance, cycle history, model health, and your selected skills.</p></article>
-        <article class="logic-card"><b>2. Propose</b><p>Generate a lawful small service: JSON repair, prompt cleanup, naming, summaries, accessibility text, or listing cleanup.</p></article>
-        <article class="logic-card"><b>3. Verify</b><p>Never count a sale until the Base chain confirms a USDC increase at your public receiving address.</p></article>
-        <article class="logic-card"><b>4. Evolve</b><p>Revenue creates a child strategy; no revenue retires the current plan and generates a clearer replacement.</p></article>
-      </div>
+      <div class="section-head"><div><div class="eyebrow">VISIBLE REASONING</div><h2>Lineage and activity</h2><p>Every change is shown. The app does not secretly message people, spend funds, or publish content.</p></div><div class="step">03</div></div>
+      <div class="activity-grid"><article class="panel"><div class="eyebrow panel-kicker">LINEAGE</div><div class="tree" id="tree"></div></article><article class="panel"><div class="eyebrow panel-kicker">ACTIVITY</div><div class="log" id="log"></div></article></div>
     </section>
 
-    <footer class="footer">GitHub Pages is static hosting. This app runs models in your browser and monitors a public wallet; it cannot securely operate a commercial backend, receive private keys, guarantee customers, or continue cycles while iOS suspends the app.</footer>
+    <section class="section glass compact-section">
+      <div class="section-head"><div><div class="eyebrow">HOW IT WORKS</div><h2>Observe → propose → verify → evolve</h2></div><div class="step">04</div></div>
+      <div class="logic-grid"><article class="logic-card"><b>Observe</b><p>Read public wallet and local history.</p></article><article class="logic-card"><b>Propose</b><p>Create a lawful microservice idea.</p></article><article class="logic-card"><b>Verify</b><p>Count only confirmed incoming USDC.</p></article><article class="logic-card"><b>Evolve</b><p>Keep winners and retire zero-receipt plans.</p></article></div>
+    </section>
+
+    <footer class="footer">Runs locally in your browser. No private keys. No guaranteed customers. iOS may suspend work when the app is closed.</footer>
   </main>
 
   <aside class="sheet" id="settingsSheet" aria-hidden="true">
     <div class="sheet-backdrop" id="sheetBackdrop"></div>
-    <div class="sheet-card glass">
-      <div class="sheet-head"><div><div class="eyebrow">owner configuration</div><h2>Settings</h2></div><button class="icon-btn" id="closeSettingsBtn" type="button">×</button></div>
-      <label>PUBLIC BASE WALLET ADDRESS<input class="input" id="walletAddress" autocapitalize="none" spellcheck="false" placeholder="0x… public address only"></label>
-      <p class="tiny">This address is public. Never paste a seed phrase, recovery phrase, or private key.</p>
-      <label>CYCLE LENGTH <span id="cycleMinutesLabel">10 minutes</span><input id="cycleMinutes" type="range" min="2" max="60" step="1" value="10"></label>
-      <label>SKILLS / INTERESTS<textarea class="input textarea" id="skillsInput" maxlength="600" placeholder="Example: games, HTML5, product descriptions, JSON repair"></textarea></label>
-      <label>PUBLIC BASE RPC<input class="input" id="rpcUrl" inputmode="url" value="https://mainnet.base.org"></label>
-      <div class="setting-note"><b>Model fleet</b><span>SmolLM2-135M-Instruct + MiniLM-L6, downloaded to this browser.</span></div>
+    <div class="sheet-card">
+      <div class="sheet-grabber" aria-hidden="true"></div>
+      <div class="sheet-head"><div><div class="eyebrow">OWNER SETTINGS</div><h2>Configure</h2></div><button class="icon-btn close-btn" id="closeSettingsBtn" type="button" aria-label="Close settings">×</button></div>
+      <label class="settings-label" for="walletAddress">Public Base wallet</label>
+      <input class="input" id="walletAddress" autocapitalize="none" spellcheck="false" placeholder="0x… public address only">
+      <p class="tiny">Public address only. Never paste a seed phrase, recovery phrase, or private key.</p>
+      <label class="settings-label" for="cycleMinutes">Cycle length <span id="cycleMinutesLabel">10 minutes</span></label>
+      <input id="cycleMinutes" type="range" min="2" max="60" step="1" value="10">
+      <label class="settings-label" for="skillsInput">Skills and interests</label>
+      <textarea class="input textarea" id="skillsInput" maxlength="600" placeholder="HTML5 games, writing, JSON repair…"></textarea>
+      <label class="settings-label" for="rpcUrl">Public Base RPC</label>
+      <input class="input" id="rpcUrl" inputmode="url" value="https://mainnet.base.org">
+      <div class="setting-note"><b>Local models</b><span>SmolLM2 + MiniLM download into this browser.</span></div>
       <button class="btn primary wide" id="saveSettingsBtn" type="button">Save and start</button>
-      <button class="btn secondary wide" id="logoutBtn" type="button">Log out</button>
+      <button class="logout-link" id="logoutBtn" type="button">Log out of this device</button>
     </div>
   </aside>
 
   <div class="toast" id="toast">Saved</div>
-  <script src="q.js" defer></script>
+  <script src="q.js?v=4" defer></script>
 </body>
 </html>
