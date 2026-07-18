@@ -1,1 +1,12 @@
-{"name":"PennySpawn Quantum Agent OS","short_name":"PennySpawn Q","description":"Open-source quantum-inspired local swarm agent web app with verified Lightning ledger.","start_url":"./","scope":"./","display":"standalone","orientation":"portrait-primary","background_color":"#03050a","theme_color":"#03050a","icons":[{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}
+{
+  "name":"Sandbox God Genic",
+  "short_name":"God Genic",
+  "description":"Procedural ecosystem simulation with evolving tiny neural creature brains and an hourly teacher agent.",
+  "start_url":"./?v=1",
+  "scope":"./",
+  "display":"standalone",
+  "background_color":"#050812",
+  "theme_color":"#050812",
+  "orientation":"any",
+  "icons":[{"src":"icon.svg?v=1","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}
