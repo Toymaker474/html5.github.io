@@ -1,0 +1,40 @@
+name: Sandbox God Genic CI
+on:
+  push:
+    paths:
+      - "index.html"
+      - "manifest.webmanifest"
+      - "icon.svg"
+      - "sandbox-god-genic/**"
+      - ".github/workflows/sandbox-god-genic-ci.yml"
+  pull_request:
+    paths:
+      - "index.html"
+      - "sandbox-god-genic/**"
+  workflow_dispatch:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: JavaScript syntax
+        run: |
+          for f in sandbox-god-genic/src/*.js; do node --check "$f"; done
+      - name: Python teacher syntax
+        run: python -m py_compile sandbox-god-genic/python/teacher.py
+      - name: Rust core
+        run: cargo check --manifest-path sandbox-god-genic/rust/Cargo.toml --target wasm32-unknown-unknown
+      - name: Required files
+        run: |
+          test -f index.html
+          test -f sandbox-god-genic/src/world.js
+          test -f sandbox-god-genic/src/teacher.js
