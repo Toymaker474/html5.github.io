@@ -1,5 +1,5 @@
-const CACHE='pennyspawn-local-v2';
-const SHELL=['./','index.html','q.css','q.js','model-worker.js','app.webmanifest','icon.svg'];
+const CACHE='pennyspawn-local-v4';
+const SHELL=['./','index.html','q.css?v=4','q.js?v=4','model-worker.js','app.webmanifest?v=4','icon.svg?v=4'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{
