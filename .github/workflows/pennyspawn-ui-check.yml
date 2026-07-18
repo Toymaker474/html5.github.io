@@ -19,17 +19,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Inventory tracked Worker paths
-        shell: bash
-        run: git ls-files 'pennyspawn-ai/worker/**' > tracked-worker-files.txt
-      - name: Upload inventory for diagnosis
-        uses: actions/upload-artifact@v4
-        with:
-          name: tracked-worker-files
-          path: tracked-worker-files.txt
       - name: Confirm private agent source is absent
         shell: bash
-        run: test ! -s tracked-worker-files.txt
+        run: test -z "$(git ls-files 'pennyspawn-ai/worker/**')"
       - name: Check dashboard JavaScript
         run: node --check pennyspawn-ai/q.js
       - name: Confirm required dashboard files
