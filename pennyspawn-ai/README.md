@@ -1,38 +1,33 @@
-# PennySpawn Forge v6
+# PennySpawn Revenue Lab v7
 
-PennySpawn Forge is an iPhone-first GitHub Pages PWA that combines:
+PennySpawn is an iPhone-first PWA with zero-download deterministic agents, local device profiles, watch-only Base USDC and Bitcoin telemetry, shareable service offers, and direct-to-wallet invoice text.
 
-- visitor-side open-source AI tools;
-- WebGPU acceleration with quantized WASM/CPU fallback;
-- device-local owner profiles;
-- watch-only Base USDC and Bitcoin telemetry;
-- real public-wallet receipt detection;
-- a lawful local strategy agent;
-- an AdSense-ready adapter with visitor opt-in;
-- public sponsor and crypto-tip buttons.
+## Hosting modes
 
-## Monetization setup
+### GitHub Pages preview
 
-Edit `monetization-config.js` and add only public identifiers:
+GitHub Pages is used only as a free non-commercial preview. The application automatically disables ads and real invoice payment requests on `*.github.io`.
 
-- AdSense publisher ID and approved ad-unit slot IDs;
-- public Base USDC receiving address;
-- public Bitcoin receiving address;
-- sponsor inquiry URL.
+### Commercial deployment
 
-Never place seed phrases, private keys, exchange passwords, wallet signing credentials, or OAuth tokens in this repository.
+Deploy the same repository to Netlify or another host whose terms allow commercial sites. Then configure approved public AdSense IDs and public receiving addresses in `monetization-config.js`.
 
-AdSense will not show ads until the site is added to the publisher account, reviewed, approved, and the correct code/IDs are present. The app does not estimate or fabricate ad earnings.
+## No model download
 
-## Compute model
+Version 7 does not download an LLM. Offer selection and lifecycle planning run as open deterministic JavaScript on the visitor's device.
 
-Visitors perform inference on their own device through Transformers.js:
+## Monetization rules
 
-- `HuggingFaceTB/SmolLM2-135M-Instruct` in Lite mode;
-- `onnx-community/Qwen2.5-0.5B-Instruct` in Deep mode;
-- WebGPU `q4` first when supported;
-- WASM `q4`/`q8` fallback.
+- Normal approved ads only.
+- Never click your own ads.
+- Never pay cash, cryptocurrency, or transferable rewards for ad views.
+- Never use bots, auto-refresh, paid-to-click, traffic exchanges, or deceptive placements.
+- Ad revenue is never displayed unless it can be verified by the ad provider.
 
-## Static-site limits
+## Funds and invoices
 
-GitHub Pages cannot securely store secrets, process custodial payments, run permanent background agents, or guarantee visitors and income. PennySpawn therefore uses public wallet telemetry, local inference, approved advertising scripts, and human-reviewed actions.
+PennySpawn cannot hold funds. It stores no seed phrase or private key. Invoices contain a public payment destination; sats or USDC go directly to the owner's external wallet.
+
+## Safety
+
+No fraud, scams, phishing, malware, fake reviews, impersonation, spam, counterfeit/stolen goods, credential theft, evasion, private keys, or guaranteed-profit claims.
