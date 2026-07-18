@@ -57,12 +57,18 @@ jobs:
         shell: bash
         run: |
           ! grep -qE "eth_call|mempool|seed phrase|private[_ -]?key|walletAddress|btcAddress|sendTransaction|signMessage" pennyspawn-ai/index.html
-      - name: Confirm commercial guide documents retirement
+      - name: Confirm retirement documentation is current
         shell: bash
         run: |
+          test -s pennyspawn-ai/README.md
+          test -s pennyspawn-ai/LEGAL.md
           test -s pennyspawn-ai/COMMERCIAL_SETUP.md
+          grep -q "PennySpawn is retired" pennyspawn-ai/README.md
+          grep -q "PennySpawn is retired" pennyspawn-ai/LEGAL.md
           grep -q "PennySpawn is retired" pennyspawn-ai/COMMERCIAL_SETUP.md
-          grep -q "monetization-config.js" pennyspawn-ai/COMMERCIAL_SETUP.md
+          grep -q "does not accept payments" pennyspawn-ai/LEGAL.md
+          ! grep -q "PennySpawn is an iPhone-first PWA" pennyspawn-ai/README.md
+          ! grep -q "Deploy the same repository to Netlify" pennyspawn-ai/README.md
           ! grep -q "Add only public Base USDC" pennyspawn-ai/COMMERCIAL_SETUP.md
           ! grep -q "Apply to Google AdSense" pennyspawn-ai/COMMERCIAL_SETUP.md
       - name: Confirm retired route is not a standalone Netlify deployment
