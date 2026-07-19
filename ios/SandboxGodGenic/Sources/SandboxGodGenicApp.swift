@@ -1,6 +1,7 @@
 import SwiftUI
 
 @main
+@MainActor
 struct SandboxGodGenicApp: App {
     @Environment(\.scenePhase) private var scenePhase
     @State private var engine = SimulationEngine()
