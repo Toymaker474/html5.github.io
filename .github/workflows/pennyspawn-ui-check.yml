@@ -55,6 +55,8 @@ jobs:
           test ! -e pennyspawn-ai/stability-ui.js
           test ! -e pennyspawn-ai/app.webmanifest
           test ! -e pennyspawn-ai/agent-catalog.json
+          test ! -e pennyspawn-ai/ads-policy.md
+          test ! -e pennyspawn-ai/ads.txt.example
       - name: Confirm retired runtime is unreachable from the public shell
         shell: bash
         run: |
