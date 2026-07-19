@@ -14,6 +14,19 @@ final class SimulationEngine {
     private(set) var teacherLesson = "Observe the first generations before changing the laws."
     private(set) var teacherHistory: [TeacherReport] = []
 
+    private(set) var godEnergy: Float = 68
+    private(set) var evolutionScore = 0
+    private(set) var missionIndex = 0
+    private(set) var completedMissions = 0
+    private(set) var breakthrough: EvolutionBreakthrough?
+    private(set) var eventMessage = "Tap the world to cast your selected law."
+    private(set) var selectedPower: GodPower = .nutrientBloom
+    private(set) var pulses: [WorldPulse] = []
+    private(set) var selectionChallengeActive = false
+    private(set) var selectionChallengeCompleted = false
+    private(set) var selectionSurvivalTime: Float = 0
+    private(set) var ecosystemHoldTime: Float = 0
+
     var isRunning = true
     var speed: Float = 1
     var mutationRate: Float = 0.08
@@ -29,9 +42,64 @@ final class SimulationEngine {
     private var totalBirths = 0
     private var totalDeaths = 0
     private var elapsed: Double = 0
+    private var missionBaselineBirths = 0
+    private var lastObservedBirths = 0
+    private var lastObservedSpecies = 0
+    private var selectionPopulationFloor = 0
 
     init() {
         seedWorld(founders: 64, food: 110)
+    }
+
+    var currentMission: EvolutionMission {
+        EvolutionMission(rawValue: min(missionIndex, EvolutionMission.allCases.count - 1)) ?? .alienIntelligence
+    }
+
+    var missionProgress: Float {
+        switch currentMission {
+        case .sparkOfLife:
+            return min(1, Float(metrics.population) / 100)
+        case .selfReplication:
+            return min(1, Float(max(0, metrics.births - missionBaselineBirths)) / 40)
+        case .naturalSelection:
+            return selectionChallengeCompleted ? 1 : min(0.99, selectionSurvivalTime / 15)
+        case .speciation:
+            return min(1, min(Float(metrics.species) / 12, metrics.diversity / 0.45))
+        case .livingEcosystem:
+            return min(1, ecosystemHoldTime / 20)
+        case .alienIntelligence:
+            return min(1, min(Float(metrics.generation) / 10, Float(teacherScore) / 80))
+        }
+    }
+
+    var missionProgressText: String {
+        switch currentMission {
+        case .sparkOfLife:
+            return "\(metrics.population) / 100 organisms"
+        case .selfReplication:
+            return "\(max(0, metrics.births - missionBaselineBirths)) / 40 births"
+        case .naturalSelection:
+            return selectionChallengeActive || selectionChallengeCompleted
+                ? "\(Int(selectionSurvivalTime)) / 15 seconds"
+                : "Cast Selection Storm"
+        case .speciation:
+            return "\(metrics.species) species · \(Int(metrics.diversity * 100))% diversity"
+        case .livingEcosystem:
+            return "\(Int(ecosystemHoldTime)) / 20 stable seconds"
+        case .alienIntelligence:
+            return "Generation \(metrics.generation) · Teacher \(teacherScore)"
+        }
+    }
+
+    var nextTeacherReviewText: String {
+        let next = lastTeacherReview.addingTimeInterval(3600)
+        let remaining = max(0, Int(next.timeIntervalSinceNow))
+        let minutes = remaining / 60
+        return minutes == 0 ? "due now" : "in \(minutes)m"
+    }
+
+    var champion: Creature? {
+        creatures.max { $0.fitnessScore < $1.fitnessScore }
     }
 
     func start() {
@@ -68,10 +136,97 @@ final class SimulationEngine {
         speed = value
     }
 
+    func selectPower(_ power: GodPower) {
+        selectedPower = power
+        eventMessage = "\(power.title) selected. Tap the microscopic world."
+    }
+
+    @discardableResult
+    func castSelectedPower(at position: SIMD2<Float>) -> Bool {
+        cast(selectedPower, at: position)
+    }
+
+    @discardableResult
+    func cast(_ power: GodPower, at position: SIMD2<Float>? = nil) -> Bool {
+        guard godEnergy >= power.cost else {
+            eventMessage = "Not enough God Energy for \(power.title)."
+            return false
+        }
+
+        let point = position ?? SIMD2<Float>(0.5, 0.5)
+        godEnergy -= power.cost
+        pulses.append(WorldPulse(position: point, createdAt: Date(), hue: power.hue, power: power))
+
+        switch power {
+        case .nutrientBloom:
+            for _ in 0..<38 where nutrients.count < 420 {
+                nutrients.append(makeNutrient(near: point, spread: 0.10))
+            }
+            eventMessage = "Nutrient Bloom created a new feeding ground."
+
+        case .mutationPulse:
+            let parent = nearestCreature(to: point) ?? champion
+            guard let parent else {
+                eventMessage = "No living genome was close enough to mutate."
+                return false
+            }
+            let previousRate = mutationRate
+            mutationRate = min(0.42, mutationRate + 0.22)
+            for _ in 0..<9 where creatures.count < 260 {
+                var child = makeCreature(parent: parent)
+                child.position = wrap(point + SIMD2<Float>(rng.signedFloat(), rng.signedFloat()) * 0.055)
+                creatures.append(child)
+                totalBirths += 1
+            }
+            mutationRate = previousRate
+            eventMessage = "A mutation burst created nine experimental descendants."
+
+        case .sanctuary:
+            hazard = max(0.02, hazard - 0.12)
+            foodRate = min(2.2, foodRate + 0.08)
+            for index in creatures.indices {
+                let distance = simd_length(wrappedDelta(from: point, to: creatures[index].position))
+                if distance < 0.22 {
+                    creatures[index].energy = min(2.2, creatures[index].energy + 0.38)
+                }
+            }
+            for _ in 0..<18 where nutrients.count < 420 {
+                nutrients.append(makeNutrient(near: point, spread: 0.14))
+            }
+            eventMessage = "A sanctuary restored nearby life and softened the global hazard."
+
+        case .selectionStorm:
+            triggerStorm()
+            selectionChallengeActive = true
+            selectionChallengeCompleted = false
+            selectionSurvivalTime = 0
+            selectionPopulationFloor = max(35, metrics.population * 2 / 5)
+            eventMessage = "Selection Storm active: keep at least \(selectionPopulationFloor) organisms alive."
+
+        case .genesis:
+            for _ in 0..<28 where creatures.count < 260 {
+                var founder = makeCreature(parent: nil)
+                founder.position = wrap(point + SIMD2<Float>(rng.signedFloat(), rng.signedFloat()) * 0.08)
+                creatures.append(founder)
+            }
+            eventMessage = "Genesis introduced 28 unrelated neural genomes."
+        }
+
+        evolutionScore += Int(power.cost * 2)
+        updateMetrics(force: true)
+        evaluateMission()
+        return true
+    }
+
+    func dismissBreakthrough() {
+        breakthrough = nil
+    }
+
     func seedLife(count: Int = 18) {
-        for _ in 0..<count where creatures.count < 240 {
+        for _ in 0..<count where creatures.count < 260 {
             creatures.append(makeCreature(parent: nil))
         }
+        eventMessage = "New founder organisms entered the world."
         updateMetrics(force: true)
     }
 
@@ -93,9 +248,23 @@ final class SimulationEngine {
         mutationRate = 0.08
         foodRate = 1
         hazard = 0.16
+        godEnergy = 68
+        evolutionScore = 0
+        missionIndex = 0
+        completedMissions = 0
+        breakthrough = nil
+        selectedPower = .nutrientBloom
+        selectionChallengeActive = false
+        selectionChallengeCompleted = false
+        selectionSurvivalTime = 0
+        ecosystemHoldTime = 0
+        missionBaselineBirths = 0
+        lastObservedBirths = 0
+        lastObservedSpecies = 0
         rng = SplitMix64(seed: UInt64.random(in: 1...UInt64.max))
         seedWorld(founders: 64, food: 110)
         runTeacher(manual: true)
+        eventMessage = "A completely new reality has begun."
     }
 
     func runTeacher(manual: Bool = true) {
@@ -140,14 +309,13 @@ final class SimulationEngine {
             at: 0
         )
         teacherHistory = Array(teacherHistory.prefix(24))
-        if manual { updateMetrics(force: true) }
-    }
-
-    var nextTeacherReviewText: String {
-        let next = lastTeacherReview.addingTimeInterval(3600)
-        let remaining = max(0, Int(next.timeIntervalSinceNow))
-        let minutes = remaining / 60
-        return minutes == 0 ? "due now" : "in \(minutes)m"
+        if manual {
+            godEnergy = min(100, godEnergy + 8)
+            evolutionScore += max(10, score / 2)
+            eventMessage = "Teacher review complete: \(focus)."
+            updateMetrics(force: true)
+        }
+        evaluateMission()
     }
 
     private func checkTeacherDue() {
@@ -169,7 +337,7 @@ final class SimulationEngine {
         elapsed += Double(dt)
         let season = Float((sin(elapsed * 0.035) + 1) * 0.5)
         let foodSpawnChance = dt * (5 + 10 * foodRate) * (0.65 + season * 0.6)
-        if rng.nextFloat() < foodSpawnChance, nutrients.count < 360 {
+        if rng.nextFloat() < foodSpawnChance, nutrients.count < 420 {
             nutrients.append(makeNutrient())
         }
 
@@ -218,7 +386,7 @@ final class SimulationEngine {
                 nutrients.remove(at: foodIndex)
             }
 
-            if outputs.w > 0.35, creature.energy > 1.35, creatures.count + babies.count < 240 {
+            if outputs.w > 0.35, creature.energy > 1.35, creatures.count + babies.count < 260 {
                 creature.energy *= 0.52
                 var child = makeCreature(parent: creature)
                 child.position = wrap(creature.position + SIMD2<Float>(rng.signedFloat(), rng.signedFloat()) * 0.018)
@@ -239,15 +407,84 @@ final class SimulationEngine {
         if creatures.count < 12 {
             seedLife(count: 20 - creatures.count)
         }
+
+        godEnergy = min(100, godEnergy + dt * (0.55 + metrics.diversity * 0.45 + Float(teacherScore) / 240))
+        pulses.removeAll { Date().timeIntervalSince($0.createdAt) > 2.2 }
+
+        if selectionChallengeActive {
+            if creatures.count < selectionPopulationFloor {
+                selectionChallengeActive = false
+                selectionSurvivalTime = 0
+                eventMessage = "The storm broke the ecosystem. Rebuild and try again."
+            } else {
+                selectionSurvivalTime += dt
+                if selectionSurvivalTime >= 15 {
+                    selectionChallengeActive = false
+                    selectionChallengeCompleted = true
+                    eventMessage = "Natural selection complete: resilient lineages survived."
+                    evolutionScore += 450
+                }
+            }
+        }
+
+        if metrics.population >= 100, metrics.meanEnergy >= 0.65, metrics.diversity >= 0.45 {
+            ecosystemHoldTime += dt
+        } else {
+            ecosystemHoldTime = max(0, ecosystemHoldTime - dt * 0.6)
+        }
+
         updateMetrics(force: false)
+        updateScoreFromEmergence()
+        evaluateMission()
         checkTeacherDue()
     }
 
     private func seedWorld(founders: Int, food: Int) {
         for _ in 0..<founders { creatures.append(makeCreature(parent: nil)) }
         for _ in 0..<food { nutrients.append(makeNutrient()) }
-        runTeacher(manual: false)
         updateMetrics(force: true)
+        missionBaselineBirths = totalBirths
+        lastObservedBirths = totalBirths
+        lastObservedSpecies = metrics.species
+        runTeacher(manual: false)
+    }
+
+    private func updateScoreFromEmergence() {
+        if metrics.births > lastObservedBirths {
+            evolutionScore += (metrics.births - lastObservedBirths) * 4
+            lastObservedBirths = metrics.births
+        }
+        if metrics.species > lastObservedSpecies {
+            evolutionScore += (metrics.species - lastObservedSpecies) * 30
+            godEnergy = min(100, godEnergy + Float(metrics.species - lastObservedSpecies) * 1.5)
+            lastObservedSpecies = metrics.species
+        }
+    }
+
+    private func evaluateMission() {
+        guard breakthrough == nil, missionProgress >= 1 else { return }
+        let completed = currentMission
+        let unlocked: GodPower?
+        switch completed {
+        case .sparkOfLife: unlocked = .mutationPulse
+        case .selfReplication: unlocked = .selectionStorm
+        case .naturalSelection: unlocked = .sanctuary
+        case .speciation: unlocked = .genesis
+        case .livingEcosystem, .alienIntelligence: unlocked = nil
+        }
+
+        evolutionScore += completed.reward
+        godEnergy = min(100, godEnergy + 28)
+        completedMissions += 1
+        breakthrough = EvolutionBreakthrough(mission: completed, scoreReward: completed.reward, unlockedPower: unlocked)
+
+        if missionIndex < EvolutionMission.allCases.count - 1 {
+            missionIndex += 1
+            missionBaselineBirths = totalBirths
+            selectionChallengeCompleted = false
+            selectionSurvivalTime = 0
+            ecosystemHoldTime = 0
+        }
     }
 
     private func makeCreature(parent: Creature?) -> Creature {
@@ -278,8 +515,24 @@ final class SimulationEngine {
         )
     }
 
+    private func makeNutrient(near point: SIMD2<Float>, spread: Float) -> Nutrient {
+        Nutrient(
+            id: UUID(),
+            position: wrap(point + SIMD2<Float>(rng.signedFloat(), rng.signedFloat()) * spread),
+            value: 0.16 + rng.nextFloat() * 0.30,
+            hue: 95 + Double(rng.nextFloat() * 85)
+        )
+    }
+
     private func nearestFood(to position: SIMD2<Float>) -> Nutrient? {
         nutrients.min {
+            simd_length_squared(wrappedDelta(from: position, to: $0.position)) <
+            simd_length_squared(wrappedDelta(from: position, to: $1.position))
+        }
+    }
+
+    private func nearestCreature(to position: SIMD2<Float>) -> Creature? {
+        creatures.min {
             simd_length_squared(wrappedDelta(from: position, to: $0.position)) <
             simd_length_squared(wrappedDelta(from: position, to: $1.position))
         }
