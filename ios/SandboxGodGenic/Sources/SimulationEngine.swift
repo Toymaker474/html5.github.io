@@ -34,10 +34,6 @@ final class SimulationEngine {
         seedWorld(founders: 64, food: 110)
     }
 
-    deinit {
-        loopTask?.cancel()
-    }
-
     func start() {
         guard loopTask == nil else { return }
         lastTick = .now
@@ -57,8 +53,6 @@ final class SimulationEngine {
             lastTick = .now
             checkTeacherDue()
         case .inactive, .background:
-            // iOS suspends normal app execution. We intentionally pause instead of
-            // pretending the world or teacher continued running in the background.
             break
         @unknown default:
             break
@@ -146,10 +140,7 @@ final class SimulationEngine {
             at: 0
         )
         teacherHistory = Array(teacherHistory.prefix(24))
-
-        if manual {
-            updateMetrics(force: true)
-        }
+        if manual { updateMetrics(force: true) }
     }
 
     var nextTeacherReviewText: String {
@@ -248,7 +239,6 @@ final class SimulationEngine {
         if creatures.count < 12 {
             seedLife(count: 20 - creatures.count)
         }
-
         updateMetrics(force: false)
         checkTeacherDue()
     }
@@ -289,7 +279,10 @@ final class SimulationEngine {
     }
 
     private func nearestFood(to position: SIMD2<Float>) -> Nutrient? {
-        nutrients.min { simd_length_squared(wrappedDelta(from: position, to: $0.position)) < simd_length_squared(wrappedDelta(from: position, to: $1.position)) }
+        nutrients.min {
+            simd_length_squared(wrappedDelta(from: position, to: $0.position)) <
+            simd_length_squared(wrappedDelta(from: position, to: $1.position))
+        }
     }
 
     private func edibleFoodIndex(for creature: Creature) -> Int? {
@@ -316,10 +309,7 @@ final class SimulationEngine {
     }
 
     private func wrap(_ point: SIMD2<Float>) -> SIMD2<Float> {
-        SIMD2<Float>(
-            point.x - floor(point.x),
-            point.y - floor(point.y)
-        )
+        SIMD2<Float>(point.x - floor(point.x), point.y - floor(point.y))
     }
 
     private func updateMetrics(force: Bool) {
