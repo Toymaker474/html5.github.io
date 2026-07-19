@@ -37,6 +37,13 @@ jobs:
           grep -q "pennyspawn|q-arena|revenue-lab" pennyspawn-ai/index.html
           grep -q "/pennyspawn-ai/" pennyspawn-ai/index.html
           ! grep -q "keys.map(key => caches.delete(key))" pennyspawn-ai/index.html
+      - name: Confirm iPhone viewport safety
+        shell: bash
+        run: |
+          grep -q "viewport-fit=cover" pennyspawn-ai/index.html
+          grep -q "100dvh" pennyspawn-ai/index.html
+          grep -q "safe-area-inset-top" pennyspawn-ai/index.html
+          grep -q "safe-area-inset-bottom" pennyspawn-ai/index.html
       - name: Confirm retired runtime files are absent
         shell: bash
         run: |
