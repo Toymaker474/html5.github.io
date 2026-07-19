@@ -1,0 +1,67 @@
+name: Sandbox God Genic iOS
+
+on:
+  push:
+    paths:
+      - 'ios/SandboxGodGenic/**'
+      - '.github/workflows/ios-sandbox-god-genic.yml'
+  pull_request:
+    paths:
+      - 'ios/SandboxGodGenic/**'
+      - '.github/workflows/ios-sandbox-god-genic.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: ios/SandboxGodGenic
+        run: xcodegen generate
+
+      - name: Build iOS Simulator target
+        id: compile
+        continue-on-error: true
+        working-directory: ios/SandboxGodGenic
+        shell: bash
+        run: |
+          set +e
+          xcodebuild \
+            -quiet \
+            -project SandboxGodGenic.xcodeproj \
+            -scheme SandboxGodGenic \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build > build.log 2>&1
+          status=$?
+          echo "$status" > build.status
+          grep -E -C 3 'error:|fatal error:|BUILD FAILED|Command SwiftCompile failed' build.log | tail -n 220 || true
+          exit "$status"
+
+      - name: Upload compiler log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sandbox-god-genic-xcode-log
+          path: |
+            ios/SandboxGodGenic/build.log
+            ios/SandboxGodGenic/build.status
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Enforce successful build
+        if: steps.compile.outcome != 'success'
+        run: exit 1
