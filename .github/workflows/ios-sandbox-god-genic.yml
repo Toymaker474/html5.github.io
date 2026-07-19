@@ -30,12 +30,21 @@ jobs:
 
       - name: Build iOS Simulator target
         working-directory: ios/SandboxGodGenic
+        shell: bash
         run: |
+          set +e
           xcodebuild \
+            -quiet \
             -project SandboxGodGenic.xcodeproj \
             -scheme SandboxGodGenic \
             -configuration Debug \
             -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO \
-            build
+            build 2>&1 | tee build.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            echo "Compiler diagnostics:"
+            grep -E -C 3 'error:|fatal error:|BUILD FAILED|Command SwiftCompile failed' build.log | tail -n 220 || true
+            exit "$status"
+          fi
