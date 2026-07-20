@@ -3,6 +3,7 @@
   "short_name": "God Genic",
   "description": "Mobile scientific god simulation with physical alien anatomy, injuries, memory, climate, plants, evolution, and autonomous ecosystems.",
   "start_url": "./living-bodies/?v=9",
+  "fallback_start_url": "./god-sandbox/?v=8",
   "scope": "./",
   "display": "standalone",
   "background_color": "#02040a",
