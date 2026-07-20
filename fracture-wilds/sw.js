@@ -1,5 +1,16 @@
-const CACHE='fracture-wilds-v5';
-const CORE=['./','./index.html','./style.css?v=5','./game.js?v=5','./.payload/sim.js.part00','./.payload/sim.js.part01','./.payload/sim.js.part02','./.payload/game.js.part00','./.payload/game.js.part01','./.payload/game.js.part02','./.payload/style.css.part00','../manifest.webmanifest?v=5','../icon.svg?v=5'];
-self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>Promise.allSettled(CORE.map(u=>c.add(new Request(u,{cache:'reload'}))))).then(()=>self.skipWaiting())));
-self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
-self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;const u=new URL(e.request.url);if(u.origin!==location.origin)return;const networkFirst=e.request.mode==='navigate'||['script','style','worker'].includes(e.request.destination);e.respondWith(networkFirst?fetch(e.request,{cache:'no-store'}).then(r=>{if(r.ok)caches.open(CACHE).then(c=>c.put(e.request,r.clone()));return r}).catch(()=>caches.match(e.request).then(x=>x||caches.match('./index.html'))):caches.match(e.request).then(x=>x||fetch(e.request).then(r=>{if(r.ok)caches.open(CACHE).then(c=>c.put(e.request,r.clone()));return r}))) });
+const CACHE = 'fracture-wilds-v6';
+const CORE = ['./','./index.html','./style.css?v=6','./debug.js?v=6','./game.js?v=6','./sim.js?v=6','../manifest.webmanifest?v=6'];
+self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => Promise.allSettled(CORE.map(url => cache.add(new Request(url, { cache: 'reload' }))))).then(() => self.skipWaiting())));
+self.addEventListener('activate', event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim())));
+self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') return;
+  const url = new URL(event.request.url);
+  if (url.origin !== location.origin) return;
+  const networkFirst = event.request.mode === 'navigate' || ['script','style','worker'].includes(event.request.destination);
+  event.respondWith(networkFirst
+    ? fetch(event.request, { cache: 'no-store' }).then(response => {
+        if (response.ok) caches.open(CACHE).then(cache => cache.put(event.request, response.clone()));
+        return response;
+      }).catch(() => caches.match(event.request).then(hit => hit || caches.match('./index.html')))
+    : caches.match(event.request).then(hit => hit || fetch(event.request)));
+});
