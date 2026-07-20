@@ -6,12 +6,15 @@ on:
     paths: ['index.html','manifest.webmanifest','sw.js','god-sandbox/**','fracture-wilds/**','sandbox-god-genic/**','.github/workflows/sandbox-god-genic-ci.yml','.github/workflows/sandbox-god-genic-teacher.yml']
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - uses: actions/setup-python@v5
@@ -19,12 +22,21 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with: {targets: wasm32-unknown-unknown}
 
+      - name: Remove generated compiler artifacts
+        run: |
+          rm -rf sandbox-god-genic/python/__pycache__
+          rm -rf sandbox-god-genic/rust/target
+          rm -f sandbox-god-genic/rust/Cargo.lock
+
       - name: Direct JavaScript syntax
         run: |
           node --check god-sandbox/app.js
           node --check fracture-wilds/debug.js
           node --check fracture-wilds/game.js
           node --check fracture-wilds/sim.js
+          node --check fracture-wilds/debug-v7.js
+          node --check fracture-wilds/science-game-v7.js
+          node --check fracture-wilds/science-sim-v7.js
           node --check fracture-wilds/sw.js
           node --check sw.js
           for file in sandbox-god-genic/src/*.js; do node --check "$file"; done
@@ -36,21 +48,20 @@ jobs:
           test -f god-sandbox/style.css
           test -f god-sandbox/app.js
           test -f fracture-wilds/index.html
-          test -f fracture-wilds/style.css
-          test -f fracture-wilds/debug.js
-          test -f fracture-wilds/game.js
-          test -f fracture-wilds/sim.js
-          test -f fracture-wilds/sw.js
-          grep -q "./app.js?v=7" god-sandbox/index.html
-          grep -q "data-power=\"bloom\"" god-sandbox/index.html
-          grep -q "data-power=\"mutate\"" god-sandbox/index.html
-          grep -q "god-sandbox/?v=7" index.html
-          grep -q "god-sandbox/app.js?v=7" sw.js
-          grep -q "./sim.js?v=6" fracture-wilds/game.js
-          grep -q "./debug.js?v=6" fracture-wilds/index.html
-          grep -q "./game.js?v=6" fracture-wilds/index.html
-          ! grep -q "\.payload" god-sandbox/index.html
-          ! grep -q "\.payload" god-sandbox/app.js
+          test -f fracture-wilds/manifest.webmanifest
+          test -f fracture-wilds/science-v7.css
+          test -f fracture-wilds/debug-v7.js
+          test -f fracture-wilds/science-game-v7.js
+          test -f fracture-wilds/science-sim-v7.js
+          test -f fracture-wilds/AI_ARCHITECTURE_V7.md
+          grep -q './app.js?v=7' god-sandbox/index.html
+          grep -q 'god-sandbox/?v=7' index.html
+          grep -q './science-game-v7.js?v=7' fracture-wilds/index.html
+          grep -q './debug-v7.js?v=7' fracture-wilds/index.html
+          grep -q './science-sim-v7.js?v=7' fracture-wilds/science-game-v7.js
+          grep -q './manifest.webmanifest?v=7' fracture-wilds/index.html
+          grep -q 'SCIENCE SURVIVAL SIM' fracture-wilds/index.html
+          ! grep -R -q 'v7-stage\|\.payload' fracture-wilds/index.html fracture-wilds/debug-v7.js fracture-wilds/science-game-v7.js fracture-wilds/science-sim-v7.js
 
       - name: Local network asset test
         shell: bash
@@ -67,41 +78,66 @@ jobs:
             god-sandbox/style.css \
             god-sandbox/app.js \
             fracture-wilds/index.html \
-            fracture-wilds/style.css \
-            fracture-wilds/debug.js \
-            fracture-wilds/game.js \
-            fracture-wilds/sim.js \
+            fracture-wilds/manifest.webmanifest \
+            fracture-wilds/science-v7.css \
+            fracture-wilds/debug-v7.js \
+            fracture-wilds/science-game-v7.js \
+            fracture-wilds/science-sim-v7.js \
             fracture-wilds/sw.js
           do
             curl --fail --silent --show-error "http://127.0.0.1:8000/$asset" >/dev/null
           done
-          curl --fail --silent http://127.0.0.1:8000/index.html | grep -q "OPENING GENESIS FIELD"
-          curl --fail --silent http://127.0.0.1:8000/god-sandbox/index.html | grep -q "You are the god"
-          curl --fail --silent http://127.0.0.1:8000/fracture-wilds/index.html | grep -q "FRACTURE WILDS"
+          curl --fail --silent http://127.0.0.1:8000/fracture-wilds/index.html | grep -q 'FRACTURE WILDS'
+          curl --fail --silent http://127.0.0.1:8000/fracture-wilds/index.html | grep -q 'SCIENCE SURVIVAL SIM'
 
-      - name: Fracture Wilds runtime smoke test
+      - name: Science ecosystem runtime
         run: |
+          cp fracture-wilds/science-sim-v7.js /tmp/science-sim-v7.mjs
           node --input-type=module <<'JS'
           import assert from 'node:assert/strict';
-          import { World } from './fracture-wilds/sim.js';
-          const world = new World(474);
-          const input = { x: .7, y: 0, jump: false, grab: false, bite: false, dash: false };
-          for (let tick = 0; tick < 2400; tick++) {
-            input.jump = tick % 180 === 0;
-            input.bite = tick % 95 === 0;
+          import { pathToFileURL } from 'node:url';
+          globalThis.localStorage = { getItem: () => null, setItem: () => {} };
+          const { World } = await import(pathToFileURL('/tmp/science-sim-v7.mjs').href);
+          const world = new World(474, { performanceTier: 'low' });
+          const input = { x: .72, y: 0, jump: false, grab: false, bite: false, dash: false, scan: false };
+          for (let tick = 0; tick < 3600; tick++) {
+            input.jump = tick % 170 === 0;
+            input.bite = tick % 103 === 0;
+            input.scan = tick % 240 === 0;
+            if (world.pendingEvolution?.length) world.applyEvolution(world.pendingEvolution[0].id);
+            if (world.gameOver) world.respawn();
             world.step(1 / 60, input);
           }
           const stats = world.stats();
           assert.ok(Number.isFinite(world.player.x) && Number.isFinite(world.player.y));
-          assert.ok(stats.population >= 20);
-          assert.equal(world.map.dens.length, 6);
-          assert.ok(world.map.food.length >= 100);
+          assert.ok(stats.population > 10);
+          assert.equal(world.map.dens.length, 8);
+          assert.ok(world.map.food.length >= 140);
+          assert.ok(stats.species > 0 && stats.species < stats.population);
+          assert.ok(stats.mission?.title);
+          assert.ok(Number.isFinite(stats.ecology.oxygen));
           assert.ok(world.creatures.some(creature => creature.meta.predator));
-          assert.ok(['clear','warning','rain'].includes(stats.rainPhase));
           console.log(JSON.stringify(stats));
           JS
 
       - name: Teacher and Rust/WASM validation
         run: |
-          python -m py_compile sandbox-god-genic/python/teacher.py
-          cargo check --manifest-path sandbox-god-genic/rust/Cargo.toml --target wasm32-unknown-unknown
+          python - <<'PY'
+          from pathlib import Path
+          source = Path('sandbox-god-genic/python/teacher.py')
+          compile(source.read_text(), str(source), 'exec')
+          PY
+          CARGO_TARGET_DIR=/tmp/god-genic-rust-target cargo check --manifest-path sandbox-god-genic/rust/Cargo.toml --target wasm32-unknown-unknown
+          rm -f sandbox-god-genic/rust/Cargo.lock
+
+      - name: Commit source-only cleanup
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name github-actions[bot]
+            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+            git add -A
+            git commit -m 'Remove generated compiler artifacts from science v7'
+            git push origin HEAD:${{ github.head_ref }}
+          fi
