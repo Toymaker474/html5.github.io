@@ -1,16 +1,16 @@
 {
-  "name": "God Genic: Fracture Wilds v6",
-  "short_name": "Fracture Wilds",
-  "description": "Fast direct-file alien survival game with built-in network and AI debugging.",
-  "start_url": "./fracture-wilds/?v=6",
+  "name": "God Genic: Scientific Genesis v8",
+  "short_name": "God Genic",
+  "description": "Scientific mobile god sandbox with autonomous alien ecology, genetics, climate, physiology, nutrient cycling, and touch world powers.",
+  "start_url": "./god-sandbox/?v=8",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#020509",
-  "theme_color": "#020509",
-  "orientation": "landscape",
+  "background_color": "#03050b",
+  "theme_color": "#03050b",
+  "orientation": "any",
   "icons": [
     {
-      "src": "icon.svg?v=6",
+      "src": "icon.svg?v=8",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
