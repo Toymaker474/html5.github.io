@@ -1,9 +1,18 @@
-const CACHE = 'god-genic-root-v8-1';
+const CACHE = 'god-genic-root-v9-1';
 const CORE = [
   './',
   './index.html',
-  './manifest.webmanifest?v=8',
-  './icon.svg?v=8',
+  './manifest.webmanifest?v=9',
+  './icon.svg?v=9',
+  './living-bodies/',
+  './living-bodies/index.html',
+  './living-bodies/style.css?v=9',
+  './living-bodies/app.js?v=9',
+  './living-bodies/sim.js?v=9',
+  './living-bodies/core.js?v=9',
+  './living-bodies/environment.js?v=9',
+  './living-bodies/anatomy.js?v=9',
+  './living-bodies/behavior.js?v=9',
   './god-sandbox/',
   './god-sandbox/index.html',
   './god-sandbox/style.css?v=8',
@@ -34,7 +43,7 @@ self.addEventListener('fetch', event => {
       }).catch(async () => {
         const hit = await caches.match(event.request);
         if (hit) return hit;
-        if (event.request.mode === 'navigate') return caches.match('./god-sandbox/index.html');
+        if (event.request.mode === 'navigate') return caches.match('./living-bodies/index.html');
         return Response.error();
       })
     : caches.match(event.request).then(hit => hit || fetch(event.request))

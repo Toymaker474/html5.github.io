@@ -1,0 +1,79 @@
+name: Living Bodies v9 CI
+on:
+  push:
+    paths: ['index.html','manifest.webmanifest','sw.js','living-bodies/**','.github/workflows/living-bodies-v9-ci.yml']
+  pull_request:
+    paths: ['index.html','manifest.webmanifest','sw.js','living-bodies/**','.github/workflows/living-bodies-v9-ci.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-v9:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: JavaScript syntax
+        run: |
+          for file in living-bodies/*.js sw.js; do node --check "$file"; done
+      - name: Public architecture and feedback contract
+        run: |
+          for file in index.html manifest.webmanifest sw.js living-bodies/index.html living-bodies/style.css living-bodies/app.js living-bodies/sim.js living-bodies/core.js living-bodies/environment.js living-bodies/anatomy.js living-bodies/behavior.js; do test -f "$file"; done
+          grep -q './app.js?v=9' living-bodies/index.html
+          grep -q './sim.js?v=9' living-bodies/app.js
+          grep -q './core.js?v=9' living-bodies/sim.js
+          grep -q 'data-setting="device"' living-bodies/index.html
+          grep -q 'data-setting="anatomy"' living-bodies/index.html
+          grep -q 'data-power="inspect"' living-bodies/index.html
+          grep -q 'data-power="quake"' living-bodies/index.html
+          grep -q 'RATE WITHOUT TYPING' living-bodies/index.html
+          test "$(grep -o 'data-feedback=' living-bodies/index.html | wc -l)" -eq 6
+          grep -q 'visibilitychange' living-bodies/app.js
+          grep -q 'living-bodies/?v=9' index.html
+          grep -q 'living-bodies/?v=9' manifest.webmanifest
+          grep -q 'living-bodies/behavior.js?v=9' sw.js
+      - name: Local asset boot
+        run: |
+          python -m http.server 8000 >/tmp/living-bodies-http.log 2>&1 &
+          server=$!
+          trap 'kill $server' EXIT
+          sleep 1
+          for file in index.html manifest.webmanifest sw.js living-bodies/index.html living-bodies/style.css living-bodies/app.js living-bodies/sim.js living-bodies/core.js living-bodies/environment.js living-bodies/anatomy.js living-bodies/behavior.js; do curl --fail --silent --show-error "http://127.0.0.1:8000/$file" >/dev/null; done
+          curl --fail --silent http://127.0.0.1:8000/index.html | grep -q 'OPENING LIVING BODIES v9'
+          curl --fail --silent http://127.0.0.1:8000/living-bodies/index.html | grep -q 'Build the organisms'
+      - name: Multi-seed anatomy runtime
+        run: |
+          mkdir -p /tmp/living-bodies-v9
+          cp living-bodies/*.js /tmp/living-bodies-v9/
+          printf '{"type":"module"}\n' > /tmp/living-bodies-v9/package.json
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import { pathToFileURL } from 'node:url';
+          const { World } = await import(pathToFileURL('/tmp/living-bodies-v9/sim.js').href);
+          for (const seed of [474, 9001, 12345]) {
+            const world = new World(seed, { device: 'iphone', science: 'deep', population: 78, maxPopulation: 132, evolution: 5, climate: 6, anatomy: 'full', plants: 'deep', creepy: 7, injury: 6 });
+            for (let tick = 0; tick < 3600; tick++) {
+              if (tick === 200) world.applyPower('bloom', 3200, 900);
+              if (tick === 600) world.applyPower('storm', 2800, 900);
+              if (tick === 1000) world.applyPower('pull', 3600, 800);
+              if (tick === 1400) world.applyPower('mutate', 3000, 900);
+              if (tick === 1800) world.applyPower('sun', 3900, 700);
+              if (tick === 2200) world.applyPower('quake', 3400, 900);
+              world.step(1 / 60);
+            }
+            const stats = world.stats();
+            assert.ok(stats.population > 20 && stats.population <= 132);
+            assert.ok(stats.species >= 5);
+            assert.ok(stats.plants > 60);
+            assert.ok(stats.injured > 0);
+            assert.ok(stats.births > 0);
+            assert.ok(Number.isFinite(stats.meanTemperature));
+            assert.ok(Number.isFinite(stats.meanMoisture));
+            assert.ok(world.creatures.some(c => c.limbs.length >= 4));
+            assert.ok(world.creatures.every(c => Number.isFinite(c.x) && Number.isFinite(c.y) && Number.isFinite(c.energy) && Number.isFinite(c.bodyTemp) && c.points.every(p => Number.isFinite(p.x) && Number.isFinite(p.y))));
+            const inspected = world.inspectAt(world.creatures[0].x, world.creatures[0].y, 150);
+            assert.ok(inspected?.organs && inspected?.genes && inspected?.memory);
+            console.log(seed, JSON.stringify(stats));
+          }
+          JS
