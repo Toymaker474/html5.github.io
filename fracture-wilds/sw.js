@@ -1,5 +1,5 @@
 const CACHE='fracture-wilds-v7';
-const CORE=['./','./index.html','./style.css?v=6','./science-v7.css?v=7','./debug-v7.js?v=7','./science-game-v7.js?v=7','./science-sim-v7.js?v=7','../manifest.webmanifest?v=7','../icon.svg?v=7'];
+const CORE=['./','./index.html','./style.css?v=6','./science-v7.css?v=7','./debug-v7.js?v=7','./science-game-v7.js?v=7','./science-sim-v7.js?v=7','./manifest.webmanifest?v=7','../icon.svg?v=7'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>Promise.allSettled(CORE.map(url=>cache.add(new Request(url,{cache:'reload'}))))).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{
