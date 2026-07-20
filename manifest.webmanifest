@@ -1,16 +1,17 @@
 {
-  "name": "God Genic: Scientific Genesis v8",
+  "name": "God Genic v9: Living Bodies",
   "short_name": "God Genic",
-  "description": "Scientific mobile god sandbox with autonomous alien ecology, genetics, climate, physiology, nutrient cycling, and touch world powers.",
-  "start_url": "./god-sandbox/?v=8",
+  "description": "Mobile scientific god simulation with physical alien anatomy, injuries, memory, climate, plants, evolution, and autonomous ecosystems.",
+  "start_url": "./living-bodies/?v=9",
+  "fallback_start_url": "./god-sandbox/?v=8",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#03050b",
-  "theme_color": "#03050b",
+  "background_color": "#02040a",
+  "theme_color": "#02040a",
   "orientation": "any",
   "icons": [
     {
-      "src": "icon.svg?v=8",
+      "src": "icon.svg?v=9",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
