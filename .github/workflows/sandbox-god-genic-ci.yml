@@ -1,66 +1,109 @@
 name: God Genic CI
 on:
   push:
-    paths:
-      - "index.html"
-      - "manifest.webmanifest"
-      - "sw.js"
-      - "fracture-wilds/**"
-      - "sandbox-god-genic/**"
-      - ".github/workflows/sandbox-god-genic-ci.yml"
+    paths: ['index.html','manifest.webmanifest','sw.js','fracture-wilds/**','sandbox-god-genic/**','.github/workflows/sandbox-god-genic-ci.yml']
   pull_request:
-    paths:
-      - "index.html"
-      - "manifest.webmanifest"
-      - "sw.js"
-      - "fracture-wilds/**"
-      - "sandbox-god-genic/**"
-      - ".github/workflows/sandbox-god-genic-ci.yml"
+    paths: ['index.html','manifest.webmanifest','sw.js','fracture-wilds/**','sandbox-god-genic/**','.github/workflows/sandbox-god-genic-ci.yml']
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
       - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
+        with: {node-version: '22'}
       - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+        with: {python-version: '3.12'}
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
-      - name: Decode Fracture Wilds engine
+        with: {targets: wasm32-unknown-unknown}
+      - name: Generate direct public engine when missing
+        shell: bash
         run: |
-          cat fracture-wilds/.payload/sim.js.part* | base64 -d | gzip -d > /tmp/fracture-sim.js
-          cat fracture-wilds/.payload/game.js.part* | base64 -d | gzip -d > /tmp/fracture-game.js
-          cat fracture-wilds/.payload/style.css.part* | base64 -d | gzip -d > /tmp/fracture-style.css
-          node --check /tmp/fracture-sim.js
-          node --check /tmp/fracture-game.js
+          set -euo pipefail
+          if [ ! -f fracture-wilds/sim.js ]; then
+            cat fracture-wilds/.payload/sim.js.part* | base64 -d | gzip -d > fracture-wilds/sim.js
+            cat fracture-wilds/.payload/game.js.part* | base64 -d | gzip -d > fracture-wilds/game.js
+            cat fracture-wilds/.payload/style.css.part* | base64 -d | gzip -d > fracture-wilds/style.css
+            sed -i "s#'./sim.js?v=5'#'./sim.js?v=6'#g" fracture-wilds/game.js
+          fi
+          cat > fracture-wilds/debug.js <<'JS'
+          (()=>{'use strict';const ASSETS=['./index.html','./style.css?v=6','./debug.js?v=6','./game.js?v=6','./sim.js?v=6','./sw.js?v=6'],state={build:'6.0.0',errors:[],tests:[],online:navigator.onLine};const save=(type,value)=>{state.errors.push({time:new Date().toISOString(),type,message:String(value?.message||value)});state.errors=state.errors.slice(-12);render()};addEventListener('error',e=>save('error',e.error||e.message));addEventListener('unhandledrejection',e=>save('promise',e.reason));addEventListener('online',()=>{state.online=true;render()});addEventListener('offline',()=>{state.online=false;render()});const style=document.createElement('style');style.textContent='#fwdbg{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));z-index:9990;border:1px solid #70ffd566;border-radius:99px;background:#06131de8;color:#cffff1;padding:10px 13px;font:900 11px system-ui;letter-spacing:.08em;box-shadow:0 0 28px #48ffd744}#fwpanel{display:none;position:fixed;inset:0;z-index:9999;background:#01060bef;color:#eafffa;padding:18px;overflow:auto;font:13px system-ui}#fwpanel.on{display:grid;place-items:center}#fwcard{width:min(640px,100%);background:linear-gradient(145deg,#0b1d2a,#03080d);border:1px solid #70ffd544;border-radius:24px;padding:18px;box-shadow:0 24px 90px #000,0 0 60px #32ffd522}#fwrows{display:grid;gap:7px}.fwrow{display:grid;grid-template-columns:1fr auto;gap:10px;background:#0d1d28;border-radius:11px;padding:9px}.ok{color:#70ffd5}.bad{color:#ff7893}.wait{color:#ffd66e}.fwbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.fwbtns button,#fwclose{min-height:44px;border:0;border-radius:12px;background:#173040;color:#fff;font-weight:800}.fwbtns .accent{background:#70ffd5;color:#03110d}#fwlog{white-space:pre-wrap;word-break:break-word;background:#02080d;padding:10px;border-radius:12px;max-height:190px;overflow:auto}html[data-fw-safe="1"] *{filter:none!important;text-shadow:none!important;box-shadow:none!important}';document.head.append(style);function boot(){const button=document.createElement('button');button.id='fwdbg';button.textContent='⚙ DEBUG';const panel=document.createElement('section');panel.id='fwpanel';panel.innerHTML='<article id="fwcard"><button id="fwclose">CLOSE</button><h2>Fracture Debug Core</h2><p>Build 6 · plain files · network-first cache · AI-readable report</p><div id="fwrows"></div><div class="fwbtns"><button class="accent" id="fwtest">TEST NETWORK</button><button id="fwcopy">COPY REPORT</button><button id="fwfix">FIX CACHE + RELOAD</button><button id="fwsafe">SAFE GRAPHICS</button></div><pre id="fwlog">No errors captured.</pre></article>';document.body.append(button,panel);button.onclick=()=>panel.classList.add('on');panel.querySelector('#fwclose').onclick=()=>panel.classList.remove('on');panel.querySelector('#fwtest').onclick=test;panel.querySelector('#fwcopy').onclick=copy;panel.querySelector('#fwfix').onclick=fix;panel.querySelector('#fwsafe').onclick=()=>{const enabled=document.documentElement.dataset.fwSafe!=='1';document.documentElement.dataset.fwSafe=enabled?'1':'0';localStorage.setItem('fw_safe',enabled?'1':'0');render()};if(localStorage.getItem('fw_safe')==='1')document.documentElement.dataset.fwSafe='1';render();setTimeout(test,500)}async function test(){state.tests=ASSETS.map(url=>({url,pending:true}));render();state.tests=await Promise.all(ASSETS.map(async url=>{const start=performance.now();try{const r=await fetch(url,{cache:'no-store'});r.body?.cancel().catch(()=>{});return{url,ok:r.ok,status:r.status,ms:Math.round(performance.now()-start)}}catch(error){return{url,ok:false,status:0,ms:Math.round(performance.now()-start),error:String(error.message||error)}}));render()}function render(){const rows=document.querySelector('#fwrows'),log=document.querySelector('#fwlog');if(!rows)return;rows.innerHTML=[`<div class="fwrow"><span>Network</span><b class="${state.online?'ok':'bad'}">${state.online?'ONLINE':'OFFLINE'}</b></div>`,`<div class="fwrow"><span>Service worker</span><b class="${navigator.serviceWorker?.controller?'ok':'wait'}">${navigator.serviceWorker?.controller?'ACTIVE':'WAITING'}</b></div>`,...state.tests.map(x=>`<div class="fwrow"><span>${x.url}</span><b class="${x.pending?'wait':x.ok?'ok':'bad'}">${x.pending?'TESTING':x.ok?`${x.status} · ${x.ms}ms`:`FAIL ${x.status}`}</b></div>`)].join('');log.textContent=state.errors.length?JSON.stringify(state.errors,null,2):'No errors captured.'}async function report(){const c=navigator.connection||{};return{...state,url:location.href,userAgent:navigator.userAgent,serviceWorker:!!navigator.serviceWorker?.controller,connection:{type:c.effectiveType||null,rtt:c.rtt||null,downlink:c.downlink||null,saveData:c.saveData||false},cores:navigator.hardwareConcurrency||null,safe:document.documentElement.dataset.fwSafe==='1'}}async function copy(){const text=JSON.stringify(await report(),null,2);try{await navigator.clipboard.writeText(text)}catch{prompt('Copy debug report',text)}}async function fix(){await Promise.all((await caches.keys()).map(k=>caches.delete(k)));await Promise.all((await navigator.serviceWorker?.getRegistrations?.()||[]).map(r=>r.unregister()));location.replace(`${location.pathname}?v=6&fresh=${Date.now()}`)}window.__FW_DEBUG__={state,test,report,fix};document.readyState==='loading'?addEventListener('DOMContentLoaded',boot,{once:true}):boot()})();
+          JS
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          p=Path('fracture-wilds/index.html');s=p.read_text();s=s.replace('style.css?v=5','style.css?v=6').replace('<script type="module" src="./game.js?v=5"></script>','<script src="./debug.js?v=6"></script><script type="module" src="./game.js?v=6"></script>').replace('God Genic: Fracture Wilds</title>','God Genic: Fracture Wilds v6</title>');p.write_text(s)
+          p=Path('index.html');s=p.read_text().replace('manifest.webmanifest?v=5','manifest.webmanifest?v=6').replace('sw.js?v=5','sw.js?v=6').replace('fracture-wilds/?v=5','fracture-wilds/?v=6');p.write_text(s)
+          m=json.loads(Path('manifest.webmanifest').read_text());m.update({'name':'God Genic: Fracture Wilds v6','start_url':'./fracture-wilds/?v=6','description':'Fast direct-file alien survival game with built-in network and AI debugging.'});m['icons'][0]['src']='icon.svg?v=6';Path('manifest.webmanifest').write_text(json.dumps(m,indent=2)+'\n')
+          PY
+          cat >> fracture-wilds/style.css <<'CSS'
+          /* v6 visual polish */
+          .game-shell:after{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 45%,transparent 45%,rgba(0,5,12,.44) 100%);mix-blend-mode:multiply}.hud-card,.pill,.action,.stick{backdrop-filter:blur(14px) saturate(1.25)}.action:active{transform:scale(.92);filter:brightness(1.4)}.panel{box-shadow:0 30px 100px #000,0 0 70px rgba(75,255,212,.13)}
+          CSS
+          cat > fracture-wilds/sw.js <<'JS'
+          const CACHE='fracture-wilds-v6',CORE=['./','./index.html','./style.css?v=6','./debug.js?v=6','./game.js?v=6','./sim.js?v=6','../manifest.webmanifest?v=6'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>Promise.allSettled(CORE.map(u=>c.add(new Request(u,{cache:'reload'}))))).then(()=>self.skipWaiting())));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CACHE).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;const u=new URL(e.request.url);if(u.origin!==location.origin)return;const n=e.request.mode==='navigate'||['script','style','worker'].includes(e.request.destination);e.respondWith(n?fetch(e.request,{cache:'no-store'}).then(r=>{if(r.ok)caches.open(CACHE).then(c=>c.put(e.request,r.clone()));return r}).catch(()=>caches.match(e.request).then(x=>x||caches.match('./index.html'))):caches.match(e.request).then(x=>x||fetch(e.request)))});
+          JS
+          cat > sw.js <<'JS'
+          const CACHE='fracture-wilds-root-v6',CORE=['./','./index.html','./manifest.webmanifest?v=6','./fracture-wilds/','./fracture-wilds/index.html','./fracture-wilds/style.css?v=6','./fracture-wilds/debug.js?v=6','./fracture-wilds/game.js?v=6','./fracture-wilds/sim.js?v=6','./fracture-wilds/sw.js?v=6'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>Promise.allSettled(CORE.map(u=>c.add(new Request(u,{cache:'reload'}))))).then(()=>self.skipWaiting())));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CACHE).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;const u=new URL(e.request.url);if(u.origin!==location.origin)return;const n=e.request.mode==='navigate'||['script','style','worker'].includes(e.request.destination);e.respondWith(n?fetch(e.request,{cache:'no-store'}).then(r=>{if(r.ok)caches.open(CACHE).then(c=>c.put(e.request,r.clone()));return r}).catch(()=>caches.match(e.request).then(x=>x||caches.match('./fracture-wilds/index.html'))):caches.match(e.request).then(x=>x||fetch(e.request)))});
+          JS
+          cat > fracture-wilds/AI_DEBUG.md <<'MD'
+          # Fracture Wilds v6 AI Debug Map
+
+          The public game deliberately uses plain files and no bundler:
+
+          `index.html → debug.js → game.js → sim.js`
+
+          - `game.js`: controls, HUD, rendering, animation loop and install UI.
+          - `sim.js`: procedural tiles, physics, creature brains, predator/prey AI, food, dens and rain cycles.
+          - `debug.js`: global error capture, asset latency tests, cache repair and JSON report export.
+          - `sw.js`: network-first scripts/styles/workers with offline fallback.
+
+          Fast checks:
+
+          ```bash
+          node --check fracture-wilds/debug.js
           node --check fracture-wilds/game.js
+          node --check fracture-wilds/sim.js
+          node --check fracture-wilds/sw.js
+          ```
+
+          Runtime validation runs 2,400 fixed 1/60-second ticks and checks finite player coordinates, population, predators, six dens, at least 100 food nodes and valid rain state.
+          MD
+          node --check fracture-wilds/debug.js
+          node --check fracture-wilds/game.js
+          node --check fracture-wilds/sim.js
           node --check fracture-wilds/sw.js
           node --check sw.js
+      - name: Commit generated direct files to pull-request branch
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html manifest.webmanifest sw.js fracture-wilds/index.html fracture-wilds/style.css fracture-wilds/debug.js fracture-wilds/game.js fracture-wilds/sim.js fracture-wilds/sw.js fracture-wilds/AI_DEBUG.md
+          if ! git diff --cached --quiet; then
+            git commit -m 'Repair Fracture Wilds with direct files and network debugger'
+            git push origin HEAD:${{ github.head_ref }}
+          fi
       - name: Fracture Wilds runtime smoke test
         run: |
-          cp /tmp/fracture-sim.js /tmp/fracture-sim.mjs
           node --input-type=module <<'JS'
           import assert from 'node:assert/strict';
-          import {pathToFileURL} from 'node:url';
-          const {World}=await import(pathToFileURL('/tmp/fracture-sim.mjs').href);
-          const world=new World(474);
-          const input={x:.7,y:0,jump:false,grab:false,bite:false,dash:false};
+          import {World} from './fracture-wilds/sim.js';
+          const world=new World(474),input={x:.7,y:0,jump:false,grab:false,bite:false,dash:false};
           for(let i=0;i<2400;i++){input.jump=i%180===0;input.bite=i%95===0;world.step(1/60,input)}
           const stats=world.stats();
           assert.ok(Number.isFinite(world.player.x)&&Number.isFinite(world.player.y));
-          assert.ok(stats.population>=20);
-          assert.equal(world.map.dens.length,6);
-          assert.ok(world.map.food.length>=100);
-          assert.ok(world.creatures.some(c=>c.meta.predator));
-          assert.ok(['clear','warning','rain'].includes(stats.rainPhase));
-          console.log(JSON.stringify({population:stats.population,phase:stats.rainPhase,dens:world.map.dens.length,food:world.map.food.length}));
+          assert.ok(stats.population>=20);assert.equal(world.map.dens.length,6);assert.ok(world.map.food.length>=100);assert.ok(world.creatures.some(c=>c.meta.predator));assert.ok(['clear','warning','rain'].includes(stats.rainPhase));
+          console.log(JSON.stringify(stats));
           JS
-      - name: Legacy source validation
+      - name: Teacher and Rust validation
         run: |
           for f in sandbox-god-genic/src/*.js; do node --check "$f"; done
           python -m py_compile sandbox-god-genic/python/teacher.py
@@ -69,8 +112,8 @@ jobs:
         run: |
           test -f .nojekyll
           test -f fracture-wilds/index.html
+          test -f fracture-wilds/debug.js
           test -f fracture-wilds/game.js
-          test -f fracture-wilds/sw.js
-          test -f fracture-wilds/.payload/sim.js.part02
-          grep -q "FRACTURE WILDS" fracture-wilds/index.html
-          grep -q "fracture-wilds" index.html
+          test -f fracture-wilds/sim.js
+          test -f fracture-wilds/style.css
+          grep -q 'FRACTURE WILDS' fracture-wilds/index.html
