@@ -1,9 +1,9 @@
 name: God Genic CI
 on:
   push:
-    paths: ['index.html','manifest.webmanifest','sw.js','god-sandbox/**','fracture-wilds/**','sandbox-god-genic/**','v7-stage/**','.github/workflows/sandbox-god-genic-ci.yml','.github/workflows/sandbox-god-genic-teacher.yml']
+    paths: ['index.html','manifest.webmanifest','sw.js','god-sandbox/**','fracture-wilds/**','sandbox-god-genic/**','.github/workflows/sandbox-god-genic-ci.yml','.github/workflows/sandbox-god-genic-teacher.yml']
   pull_request:
-    paths: ['index.html','manifest.webmanifest','sw.js','god-sandbox/**','fracture-wilds/**','sandbox-god-genic/**','v7-stage/**','.github/workflows/sandbox-god-genic-ci.yml','.github/workflows/sandbox-god-genic-teacher.yml']
+    paths: ['index.html','manifest.webmanifest','sw.js','god-sandbox/**','fracture-wilds/**','sandbox-god-genic/**','.github/workflows/sandbox-god-genic-ci.yml','.github/workflows/sandbox-god-genic-teacher.yml']
   workflow_dispatch:
 permissions:
   contents: write
@@ -22,51 +22,11 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with: {targets: wasm32-unknown-unknown}
 
-      - name: Build Fracture Wilds science v7 direct modules
-        shell: bash
+      - name: Remove generated compiler artifacts
         run: |
-          set -euxo pipefail
-          if [ -d v7-stage ]; then
-            cat v7-stage/science-sim-v7.js.part* > /tmp/science-sim-v7.b64
-            base64 -d /tmp/science-sim-v7.b64 | gzip -dc > fracture-wilds/science-sim-v7.js
-
-            find v7-stage -maxdepth 1 -name 'science-game-v7.js.part*' -type f -print | sort > /tmp/game-parts.txt
-            cat $(cat /tmp/game-parts.txt) > /tmp/science-game-v7.b64
-            base64 -d /tmp/science-game-v7.b64 | gzip -dc > fracture-wilds/science-game-v7.js
-
-            for name in science-v7.css debug-v7.js sw.js manifest.webmanifest; do
-              cat v7-stage/${name}.part* | base64 -d | gzip -dc > fracture-wilds/${name}
-            done
-
-            cat > fracture-wilds/AI_ARCHITECTURE_V7.md <<'MD'
-          # Fracture Wilds Science v7 — AI Repair Map
-
-          ## Direct boot path
-          1. `index.html` loads the PWA shell.
-          2. `debug-v7.js` captures runtime and network failures before the game starts.
-          3. `science-game-v7.js` owns input, adaptive rendering, audio, HUD, scanner and frame scheduling.
-          4. `science-game-v7.js` imports `science-sim-v7.js`.
-          5. `science-sim-v7.js` owns biology, neural controllers, body genomes, chemistry, ecology, reproduction, weather and missions.
-          6. `sw.js` uses network-first delivery for HTML, scripts, styles and workers.
-
-          ## AI controller
-          `reflexes -> biological needs -> spatial memory -> 12x10x7 recurrent neural controller -> physical actions`
-
-          ## Compatibility contract
-          - Low tier reduces population, distant-agent updates, resolution and visual budgets.
-          - Medium, high and ultra progressively increase life density, particles, lighting, fog and creature detail.
-          - The simulation does not continue while iOS suspends or closes the page.
-
-          ## Fast repair commands
-          ```bash
-          node --check fracture-wilds/debug-v7.js
-          node --check fracture-wilds/science-game-v7.js
-          node --check fracture-wilds/science-sim-v7.js
-          node --check fracture-wilds/sw.js
-          ```
-          MD
-            rm -rf v7-stage
-          fi
+          rm -rf sandbox-god-genic/python/__pycache__
+          rm -rf sandbox-god-genic/rust/target
+          rm -f sandbox-god-genic/rust/Cargo.lock
 
       - name: Direct JavaScript syntax
         run: |
@@ -162,10 +122,15 @@ jobs:
 
       - name: Teacher and Rust/WASM validation
         run: |
-          python -m py_compile sandbox-god-genic/python/teacher.py
-          cargo check --manifest-path sandbox-god-genic/rust/Cargo.toml --target wasm32-unknown-unknown
+          python - <<'PY'
+          from pathlib import Path
+          source = Path('sandbox-god-genic/python/teacher.py')
+          compile(source.read_text(), str(source), 'exec')
+          PY
+          CARGO_TARGET_DIR=/tmp/god-genic-rust-target cargo check --manifest-path sandbox-god-genic/rust/Cargo.toml --target wasm32-unknown-unknown
+          rm -f sandbox-god-genic/rust/Cargo.lock
 
-      - name: Commit verified direct v7 files
+      - name: Commit source-only cleanup
         if: github.event_name == 'pull_request'
         shell: bash
         run: |
@@ -173,6 +138,6 @@ jobs:
             git config user.name github-actions[bot]
             git config user.email 41898282+github-actions[bot]@users.noreply.github.com
             git add -A
-            git commit -m 'Build Fracture Wilds science v7 direct files'
+            git commit -m 'Remove generated compiler artifacts from science v7'
             git push origin HEAD:${{ github.head_ref }}
           fi
