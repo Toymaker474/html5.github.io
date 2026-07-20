@@ -22,6 +22,7 @@ jobs:
       - name: Direct JavaScript syntax
         run: |
           node --check god-sandbox/app.js
+          node --check god-sandbox/sim.js
           node --check fracture-wilds/debug.js
           node --check fracture-wilds/game.js
           node --check fracture-wilds/sim.js
@@ -38,6 +39,7 @@ jobs:
           test -f god-sandbox/index.html
           test -f god-sandbox/style.css
           test -f god-sandbox/app.js
+          test -f god-sandbox/sim.js
           test -f fracture-wilds/index.html
           test -f fracture-wilds/manifest.webmanifest
           test -f fracture-wilds/science-v7.css
@@ -45,8 +47,14 @@ jobs:
           test -f fracture-wilds/science-game-v7.js
           test -f fracture-wilds/science-sim-v7.js
           test -f fracture-wilds/AI_ARCHITECTURE_V7.md
-          grep -q './app.js?v=7' god-sandbox/index.html
-          grep -q 'god-sandbox/?v=7' index.html
+          grep -q './app.js?v=8' god-sandbox/index.html
+          grep -q './sim.js?v=8' god-sandbox/app.js
+          grep -q 'data-setting="device"' god-sandbox/index.html
+          grep -q 'data-setting="science"' god-sandbox/index.html
+          grep -q 'data-power="sun"' god-sandbox/index.html
+          grep -q 'god-sandbox/?v=8' index.html
+          grep -q 'god-sandbox/?v=8' manifest.webmanifest
+          grep -q 'god-sandbox/sim.js?v=8' sw.js
           grep -q './science-game-v7.js?v=7' fracture-wilds/index.html
           grep -q './debug-v7.js?v=7' fracture-wilds/index.html
           grep -q './science-sim-v7.js?v=7' fracture-wilds/science-game-v7.js
@@ -70,6 +78,7 @@ jobs:
             god-sandbox/index.html \
             god-sandbox/style.css \
             god-sandbox/app.js \
+            god-sandbox/sim.js \
             fracture-wilds/index.html \
             fracture-wilds/manifest.webmanifest \
             fracture-wilds/science-v7.css \
@@ -80,8 +89,45 @@ jobs:
           do
             curl --fail --silent --show-error "http://127.0.0.1:8000/$asset" >/dev/null
           done
+          curl --fail --silent http://127.0.0.1:8000/index.html | grep -q 'OPENING SCIENTIFIC GENESIS'
+          curl --fail --silent http://127.0.0.1:8000/god-sandbox/index.html | grep -q 'Build the laws first'
           curl --fail --silent http://127.0.0.1:8000/fracture-wilds/index.html | grep -q 'FRACTURE WILDS'
           curl --fail --silent http://127.0.0.1:8000/fracture-wilds/index.html | grep -q 'SCIENCE SURVIVAL SIM'
+
+      - name: Scientific god sandbox runtime
+        run: |
+          cp god-sandbox/sim.js /tmp/god-sandbox-sim-v8.mjs
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import { pathToFileURL } from 'node:url';
+          const { World } = await import(pathToFileURL('/tmp/god-sandbox-sim-v8.mjs').href);
+          const world = new World(474, {
+            device: 'iphone', science: 'deep', population: 82,
+            maxPopulation: 130, evolution: 6, climate: 7
+          });
+          for (let tick = 0; tick < 3600; tick++) {
+            if (tick === 300) world.applyPower('bloom', 3200, 900);
+            if (tick === 700) world.applyPower('storm', 2800, 900);
+            if (tick === 1100) world.applyPower('pull', 3500, 800);
+            if (tick === 1500) world.applyPower('mutate', 3000, 900);
+            if (tick === 1900) world.applyPower('sun', 3800, 700);
+            world.step(1 / 60);
+          }
+          const stats = world.stats();
+          assert.ok(stats.population > 20 && stats.population <= 130);
+          assert.ok(stats.species >= 4);
+          assert.ok(stats.deaths > 0);
+          assert.ok(stats.biomass > 5);
+          assert.ok(stats.meanMoisture > 0.05 && stats.meanMoisture < 0.98);
+          assert.ok(Number.isFinite(stats.meanTemperature));
+          assert.ok(Number.isFinite(stats.diversity));
+          assert.ok(stats.climateCells >= 96);
+          assert.ok(world.creatures.every(creature =>
+            Number.isFinite(creature.x) && Number.isFinite(creature.y) &&
+            Number.isFinite(creature.energy) && Number.isFinite(creature.bodyTemp)
+          ));
+          console.log(JSON.stringify(stats));
+          JS
 
       - name: Science ecosystem runtime
         run: |
