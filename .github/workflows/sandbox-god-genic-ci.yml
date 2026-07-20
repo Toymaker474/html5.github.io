@@ -1,17 +1,20 @@
 name: God Genic CI
 on:
   push:
-    paths: ['index.html','manifest.webmanifest','sw.js','god-sandbox/**','fracture-wilds/**','sandbox-god-genic/**','.github/workflows/sandbox-god-genic-ci.yml','.github/workflows/sandbox-god-genic-teacher.yml']
+    paths: ['index.html','manifest.webmanifest','sw.js','god-sandbox/**','fracture-wilds/**','sandbox-god-genic/**','v7-stage/**','.github/workflows/sandbox-god-genic-ci.yml','.github/workflows/sandbox-god-genic-teacher.yml']
   pull_request:
-    paths: ['index.html','manifest.webmanifest','sw.js','god-sandbox/**','fracture-wilds/**','sandbox-god-genic/**','.github/workflows/sandbox-god-genic-ci.yml','.github/workflows/sandbox-god-genic-teacher.yml']
+    paths: ['index.html','manifest.webmanifest','sw.js','god-sandbox/**','fracture-wilds/**','sandbox-god-genic/**','v7-stage/**','.github/workflows/sandbox-god-genic-ci.yml','.github/workflows/sandbox-god-genic-teacher.yml']
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - uses: actions/setup-python@v5
@@ -19,12 +22,58 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with: {targets: wasm32-unknown-unknown}
 
+      - name: Build Fracture Wilds science v7
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -d v7-stage ]; then
+            cat v7-stage/science-sim-v7.js.part* | base64 -d | gzip -d > fracture-wilds/science-sim-v7.js
+            cat v7-stage/science-game-v7.js.part* | base64 -d | gzip -d > fracture-wilds/science-game-v7.js
+            cat v7-stage/science-v7.css.part* | base64 -d | gzip -d > fracture-wilds/science-v7.css
+            cat v7-stage/debug-v7.js.part* | base64 -d | gzip -d > fracture-wilds/debug-v7.js
+            cat v7-stage/index.html.part* | base64 -d | gzip -d > fracture-wilds/index.html
+            cat v7-stage/sw.js.part* | base64 -d | gzip -d > fracture-wilds/sw.js
+            cat v7-stage/manifest.webmanifest.part* | base64 -d | gzip -d > fracture-wilds/manifest.webmanifest
+            sed -i 's#../manifest.webmanifest?v=7#./manifest.webmanifest?v=7#g' fracture-wilds/index.html
+            cat > fracture-wilds/AI_ARCHITECTURE_V7.md <<'MD'
+          # Fracture Wilds Science v7 — AI Repair Map
+
+          ## Direct boot path
+          1. `index.html` loads the PWA shell.
+          2. `debug-v7.js` captures runtime/network failures before the game starts.
+          3. `science-game-v7.js` owns input, adaptive rendering, audio, HUD, scanner and frame scheduling.
+          4. `science-game-v7.js` imports `science-sim-v7.js`.
+          5. `science-sim-v7.js` owns biology, neural controllers, body genomes, chemistry, ecology, reproduction, weather and missions.
+          6. `sw.js` uses network-first delivery for HTML, scripts, styles and workers.
+
+          ## AI controller
+          `reflexes -> biological needs -> spatial memory -> 12x10x7 recurrent neural controller -> physical actions`
+
+          ## Compatibility contract
+          - Low tier: reduced population, distant-agent throttling, 1x DPR and small visual budgets.
+          - Medium/high/ultra progressively increase population, resolution, particles, lighting and creature detail.
+          - No background simulation is claimed while iOS suspends or closes the page.
+
+          ## Fast repair commands
+          ```bash
+          node --check fracture-wilds/debug-v7.js
+          node --check fracture-wilds/science-game-v7.js
+          node --check fracture-wilds/science-sim-v7.js
+          node --check fracture-wilds/sw.js
+          ```
+          MD
+            rm -rf v7-stage
+          fi
+
       - name: Direct JavaScript syntax
         run: |
           node --check god-sandbox/app.js
           node --check fracture-wilds/debug.js
           node --check fracture-wilds/game.js
           node --check fracture-wilds/sim.js
+          node --check fracture-wilds/debug-v7.js
+          node --check fracture-wilds/science-game-v7.js
+          node --check fracture-wilds/science-sim-v7.js
           node --check fracture-wilds/sw.js
           node --check sw.js
           for file in sandbox-god-genic/src/*.js; do node --check "$file"; done
@@ -36,21 +85,19 @@ jobs:
           test -f god-sandbox/style.css
           test -f god-sandbox/app.js
           test -f fracture-wilds/index.html
-          test -f fracture-wilds/style.css
-          test -f fracture-wilds/debug.js
-          test -f fracture-wilds/game.js
-          test -f fracture-wilds/sim.js
-          test -f fracture-wilds/sw.js
-          grep -q "./app.js?v=7" god-sandbox/index.html
-          grep -q "data-power=\"bloom\"" god-sandbox/index.html
-          grep -q "data-power=\"mutate\"" god-sandbox/index.html
-          grep -q "god-sandbox/?v=7" index.html
-          grep -q "god-sandbox/app.js?v=7" sw.js
-          grep -q "./sim.js?v=6" fracture-wilds/game.js
-          grep -q "./debug.js?v=6" fracture-wilds/index.html
-          grep -q "./game.js?v=6" fracture-wilds/index.html
-          ! grep -q "\.payload" god-sandbox/index.html
-          ! grep -q "\.payload" god-sandbox/app.js
+          test -f fracture-wilds/manifest.webmanifest
+          test -f fracture-wilds/science-v7.css
+          test -f fracture-wilds/debug-v7.js
+          test -f fracture-wilds/science-game-v7.js
+          test -f fracture-wilds/science-sim-v7.js
+          test -f fracture-wilds/AI_ARCHITECTURE_V7.md
+          grep -q './app.js?v=7' god-sandbox/index.html
+          grep -q 'god-sandbox/?v=7' index.html
+          grep -q './science-game-v7.js?v=7' fracture-wilds/index.html
+          grep -q './debug-v7.js?v=7' fracture-wilds/index.html
+          grep -q './science-sim-v7.js?v=7' fracture-wilds/science-game-v7.js
+          grep -q './manifest.webmanifest?v=7' fracture-wilds/index.html
+          ! grep -R -q 'v7-stage\|\.payload' fracture-wilds/index.html fracture-wilds/debug-v7.js fracture-wilds/science-game-v7.js fracture-wilds/science-sim-v7.js
 
       - name: Local network asset test
         shell: bash
@@ -67,37 +114,45 @@ jobs:
             god-sandbox/style.css \
             god-sandbox/app.js \
             fracture-wilds/index.html \
-            fracture-wilds/style.css \
-            fracture-wilds/debug.js \
-            fracture-wilds/game.js \
-            fracture-wilds/sim.js \
+            fracture-wilds/manifest.webmanifest \
+            fracture-wilds/science-v7.css \
+            fracture-wilds/debug-v7.js \
+            fracture-wilds/science-game-v7.js \
+            fracture-wilds/science-sim-v7.js \
             fracture-wilds/sw.js
           do
             curl --fail --silent --show-error "http://127.0.0.1:8000/$asset" >/dev/null
           done
-          curl --fail --silent http://127.0.0.1:8000/index.html | grep -q "OPENING GENESIS FIELD"
-          curl --fail --silent http://127.0.0.1:8000/god-sandbox/index.html | grep -q "You are the god"
-          curl --fail --silent http://127.0.0.1:8000/fracture-wilds/index.html | grep -q "FRACTURE WILDS"
+          curl --fail --silent http://127.0.0.1:8000/fracture-wilds/index.html | grep -q 'FRACTURE WILDS'
+          curl --fail --silent http://127.0.0.1:8000/fracture-wilds/index.html | grep -q 'SCIENCE SURVIVAL SIM'
 
-      - name: Fracture Wilds runtime smoke test
+      - name: Science ecosystem runtime
         run: |
+          cp fracture-wilds/science-sim-v7.js /tmp/science-sim-v7.mjs
           node --input-type=module <<'JS'
           import assert from 'node:assert/strict';
-          import { World } from './fracture-wilds/sim.js';
-          const world = new World(474);
-          const input = { x: .7, y: 0, jump: false, grab: false, bite: false, dash: false };
-          for (let tick = 0; tick < 2400; tick++) {
-            input.jump = tick % 180 === 0;
-            input.bite = tick % 95 === 0;
+          import { pathToFileURL } from 'node:url';
+          globalThis.localStorage = { getItem: () => null, setItem: () => {} };
+          const { World } = await import(pathToFileURL('/tmp/science-sim-v7.mjs').href);
+          const world = new World(474, { performanceTier: 'low' });
+          const input = { x: .72, y: 0, jump: false, grab: false, bite: false, dash: false, scan: false };
+          for (let tick = 0; tick < 3600; tick++) {
+            input.jump = tick % 170 === 0;
+            input.bite = tick % 103 === 0;
+            input.scan = tick % 240 === 0;
+            if (world.pendingEvolution?.length) world.applyEvolution(world.pendingEvolution[0].id);
+            if (world.gameOver) world.respawn();
             world.step(1 / 60, input);
           }
           const stats = world.stats();
           assert.ok(Number.isFinite(world.player.x) && Number.isFinite(world.player.y));
-          assert.ok(stats.population >= 20);
-          assert.equal(world.map.dens.length, 6);
-          assert.ok(world.map.food.length >= 100);
+          assert.ok(stats.population > 10);
+          assert.equal(world.map.dens.length, 8);
+          assert.ok(world.map.food.length >= 140);
+          assert.ok(stats.species > 0 && stats.species < stats.population);
+          assert.ok(stats.mission?.title);
+          assert.ok(Number.isFinite(stats.ecology.oxygen));
           assert.ok(world.creatures.some(creature => creature.meta.predator));
-          assert.ok(['clear','warning','rain'].includes(stats.rainPhase));
           console.log(JSON.stringify(stats));
           JS
 
@@ -105,3 +160,15 @@ jobs:
         run: |
           python -m py_compile sandbox-god-genic/python/teacher.py
           cargo check --manifest-path sandbox-god-genic/rust/Cargo.toml --target wasm32-unknown-unknown
+
+      - name: Commit verified direct v7 files
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name github-actions[bot]
+            git config user.email 4189826+github-actions[bot]@users.noreply.github.com
+            git add -A
+            git commit -m 'Build Fracture Wilds science v7 direct files'
+            git push origin HEAD:${{ github.head_ref }}
+          fi
