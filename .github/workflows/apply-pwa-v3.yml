@@ -1,0 +1,65 @@
+name: Apply God Genic PWA v3
+
+on:
+  push:
+    branches: [pwa-god-genic-v3]
+    paths:
+      - '.github/workflows/apply-pwa-v3.yml'
+      - 'sandbox-god-genic/src/upgrade-v3.js'
+      - 'sandbox-god-genic/src/bootstrap-v3.js'
+      - 'sandbox-god-genic/upgrade-v3.css'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: pwa-god-genic-v3
+      - name: Patch public PWA shell
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          p=Path('index.html')
+          s=p.read_text()
+          s=s.replace('./sandbox-god-genic/styles.css?v=1','./sandbox-god-genic/styles.css?v=3')
+          s=s.replace('<link rel="stylesheet" href="./sandbox-god-genic/styles.css?v=3">','<link rel="stylesheet" href="./sandbox-god-genic/styles.css?v=3"><link rel="stylesheet" href="./sandbox-god-genic/upgrade-v3.css?v=3">')
+          s=s.replace('LOCAL EVOLUTION ENGINE · BUILD 0.1','PLAYABLE EMERGENCE ENGINE · BUILD 0.3')
+          s=s.replace('./sandbox-god-genic/src/main.js?v=1','./sandbox-god-genic/src/bootstrap-v3.js?v=3')
+          s=s.replace('hourly teacher agent','two-hour adaptive teacher agent')
+          p.write_text(s)
+          m=json.loads(Path('manifest.webmanifest').read_text())
+          m['name']='Sandbox God Genic: Emergence Game'
+          m['description']='A free playable evolution world with tiny neural creatures, god powers, emergent species, and a two-hour adaptive teacher.'
+          m['start_url']='./?v=3'
+          m['icons'][0]['src']='icon.svg?v=3'
+          Path('manifest.webmanifest').write_text(json.dumps(m,indent=2)+'\n')
+          PY
+          cat > sw.js <<'EOF'
+          const CACHE='sandbox-god-genic-v3';
+          const CORE=['./','./index.html','./manifest.webmanifest?v=3','./icon.svg?v=3','./sandbox-god-genic/styles.css?v=3','./sandbox-god-genic/upgrade-v3.css?v=3','./sandbox-god-genic/src/bootstrap-v3.js?v=3','./sandbox-god-genic/src/upgrade-v3.js?v=3','./sandbox-god-genic/src/main.js?v=3','./sandbox-god-genic/src/world.js','./sandbox-god-genic/src/brain.js','./sandbox-god-genic/src/teacher.js','./sandbox-god-genic/src/renderer.js'];
+          self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>Promise.allSettled(CORE.map(url=>cache.add(new Request(url,{cache:'reload'}))))).then(()=>self.skipWaiting())));
+          self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
+          self.addEventListener('fetch',event=>{if(event.request.method!=='GET')return;const url=new URL(event.request.url);if(url.origin!==location.origin)return;const networkFirst=event.request.mode==='navigate'||['script','style','worker'].includes(event.request.destination);event.respondWith(networkFirst?fetch(event.request,{cache:'no-store'}).then(response=>{if(response.ok)caches.open(CACHE).then(cache=>cache.put(event.request,response.clone()));return response}).catch(()=>caches.match(event.request).then(hit=>hit||caches.match('./index.html'))):caches.match(event.request).then(hit=>hit||fetch(event.request).then(response=>{if(response.ok)caches.open(CACHE).then(cache=>cache.put(event.request,response.clone()));return response})))});
+          EOF
+      - name: Validate JavaScript and shell
+        run: |
+          node --check sandbox-god-genic/src/upgrade-v3.js
+          node --check sandbox-god-genic/src/bootstrap-v3.js
+          node --check sw.js
+          grep -q 'PLAYABLE EMERGENCE ENGINE · BUILD 0.3' index.html
+          grep -q 'bootstrap-v3.js?v=3' index.html
+          grep -q 'upgrade-v3.css?v=3' index.html
+      - name: Commit generated shell changes
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html manifest.webmanifest sw.js
+          git diff --cached --quiet || git commit -m 'Activate free playable God Genic PWA v3'
+          git push origin HEAD:pwa-god-genic-v3
