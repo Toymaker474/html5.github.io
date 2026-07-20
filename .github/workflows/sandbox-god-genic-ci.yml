@@ -22,54 +22,28 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with: {targets: wasm32-unknown-unknown}
 
-      - name: Decode science simulation
+      - name: Build Fracture Wilds science v7 direct modules
         shell: bash
         run: |
           set -euxo pipefail
           if [ -d v7-stage ]; then
             cat v7-stage/science-sim-v7.js.part* > /tmp/science-sim-v7.b64
-            base64 -d /tmp/science-sim-v7.b64 > /tmp/science-sim-v7.gz
-            gzip -t /tmp/science-sim-v7.gz
-            gzip -dc /tmp/science-sim-v7.gz > fracture-wilds/science-sim-v7.js
-          fi
+            base64 -d /tmp/science-sim-v7.b64 | gzip -dc > fracture-wilds/science-sim-v7.js
 
-      - name: Decode adaptive game renderer
-        shell: bash
-        run: |
-          set -euxo pipefail
-          if [ -d v7-stage ]; then
             find v7-stage -maxdepth 1 -name 'science-game-v7.js.part*' -type f -print | sort > /tmp/game-parts.txt
             cat $(cat /tmp/game-parts.txt) > /tmp/science-game-v7.b64
-            base64 -d /tmp/science-game-v7.b64 > /tmp/science-game-v7.gz
-            gzip -t /tmp/science-game-v7.gz
-            gzip -dc /tmp/science-game-v7.gz > fracture-wilds/science-game-v7.js
-          fi
+            base64 -d /tmp/science-game-v7.b64 | gzip -dc > fracture-wilds/science-game-v7.js
 
-      - name: Decode v7 shell assets
-        shell: bash
-        run: |
-          set -euxo pipefail
-          if [ -d v7-stage ]; then
-            for name in science-v7.css debug-v7.js index.html sw.js manifest.webmanifest; do
-              cat v7-stage/${name}.part* > /tmp/${name}.b64
-              base64 -d /tmp/${name}.b64 > /tmp/${name}.gz
-              gzip -t /tmp/${name}.gz
-              gzip -dc /tmp/${name}.gz > fracture-wilds/${name}
+            for name in science-v7.css debug-v7.js sw.js manifest.webmanifest; do
+              cat v7-stage/${name}.part* | base64 -d | gzip -dc > fracture-wilds/${name}
             done
-            sed -i 's#../manifest.webmanifest?v=7#./manifest.webmanifest?v=7#g' fracture-wilds/index.html
-          fi
 
-      - name: Add v7 AI repair map
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ -d v7-stage ]; then
             cat > fracture-wilds/AI_ARCHITECTURE_V7.md <<'MD'
           # Fracture Wilds Science v7 — AI Repair Map
 
           ## Direct boot path
           1. `index.html` loads the PWA shell.
-          2. `debug-v7.js` captures runtime/network failures before the game starts.
+          2. `debug-v7.js` captures runtime and network failures before the game starts.
           3. `science-game-v7.js` owns input, adaptive rendering, audio, HUD, scanner and frame scheduling.
           4. `science-game-v7.js` imports `science-sim-v7.js`.
           5. `science-sim-v7.js` owns biology, neural controllers, body genomes, chemistry, ecology, reproduction, weather and missions.
@@ -79,9 +53,9 @@ jobs:
           `reflexes -> biological needs -> spatial memory -> 12x10x7 recurrent neural controller -> physical actions`
 
           ## Compatibility contract
-          - Low tier: reduced population, distant-agent throttling, 1x DPR and small visual budgets.
-          - Medium/high/ultra progressively increase population, resolution, particles, lighting and creature detail.
-          - No background simulation is claimed while iOS suspends or closes the page.
+          - Low tier reduces population, distant-agent updates, resolution and visual budgets.
+          - Medium, high and ultra progressively increase life density, particles, lighting, fog and creature detail.
+          - The simulation does not continue while iOS suspends or closes the page.
 
           ## Fast repair commands
           ```bash
@@ -126,6 +100,7 @@ jobs:
           grep -q './debug-v7.js?v=7' fracture-wilds/index.html
           grep -q './science-sim-v7.js?v=7' fracture-wilds/science-game-v7.js
           grep -q './manifest.webmanifest?v=7' fracture-wilds/index.html
+          grep -q 'SCIENCE SURVIVAL SIM' fracture-wilds/index.html
           ! grep -R -q 'v7-stage\|\.payload' fracture-wilds/index.html fracture-wilds/debug-v7.js fracture-wilds/science-game-v7.js fracture-wilds/science-sim-v7.js
 
       - name: Local network asset test
