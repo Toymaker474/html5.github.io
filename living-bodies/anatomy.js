@@ -89,7 +89,8 @@ export const anatomyMethods = {
     const climate = this.climateAt(c.x), activity = clamp(Math.abs(c.vx) / 260 + Math.abs(c.vy) / 420, 0, 2);
     const metabolic = 0.0011 * c.genes.metabolism * (1 + activity * 0.65 + c.pain * 0.4);
     c.energy = clamp(c.energy - dt * metabolic, 0, 1);
-    c.hydration = clamp(c.hydration - dt * (0.00055 + Math.max(0, climate.temperature - 25) * 0.000035) / c.genes.hydration + climate.rain * dt * 0.0018, 0, 1);
+    const drinking = c.mode === 'seek-water' && c.grounded ? Math.max(0, climate.moisture - 0.58) * 0.012 : 0;
+    c.hydration = clamp(c.hydration - dt * (0.00055 + Math.max(0, climate.temperature - 25) * 0.000035) / c.genes.hydration + climate.rain * dt * 0.0018 + drinking * dt, 0, 1);
     const oxygenDemand = clamp(0.78 + activity * 0.13 + c.pain * 0.08, 0.7, 1.1);
     const oxygenTarget = clamp(climate.oxygen * c.organs.lungs / oxygenDemand, 0.35, 1);
     c.oxygen = lerp(c.oxygen, oxygenTarget, clamp(dt * 0.6, 0, 1));
