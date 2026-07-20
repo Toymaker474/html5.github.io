@@ -1,9 +1,9 @@
 name: God Genic CI
 on:
   push:
-    paths: ['index.html','manifest.webmanifest','sw.js','fracture-wilds/**','sandbox-god-genic/**','.github/workflows/sandbox-god-genic-ci.yml','.github/workflows/sandbox-god-genic-teacher.yml']
+    paths: ['index.html','manifest.webmanifest','sw.js','god-sandbox/**','fracture-wilds/**','sandbox-god-genic/**','.github/workflows/sandbox-god-genic-ci.yml','.github/workflows/sandbox-god-genic-teacher.yml']
   pull_request:
-    paths: ['index.html','manifest.webmanifest','sw.js','fracture-wilds/**','sandbox-god-genic/**','.github/workflows/sandbox-god-genic-ci.yml','.github/workflows/sandbox-god-genic-teacher.yml']
+    paths: ['index.html','manifest.webmanifest','sw.js','god-sandbox/**','fracture-wilds/**','sandbox-god-genic/**','.github/workflows/sandbox-god-genic-ci.yml','.github/workflows/sandbox-god-genic-teacher.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -21,6 +21,7 @@ jobs:
 
       - name: Direct JavaScript syntax
         run: |
+          node --check god-sandbox/app.js
           node --check fracture-wilds/debug.js
           node --check fracture-wilds/game.js
           node --check fracture-wilds/sim.js
@@ -31,18 +32,25 @@ jobs:
       - name: Public boot architecture
         run: |
           test -f .nojekyll
+          test -f god-sandbox/index.html
+          test -f god-sandbox/style.css
+          test -f god-sandbox/app.js
           test -f fracture-wilds/index.html
           test -f fracture-wilds/style.css
           test -f fracture-wilds/debug.js
           test -f fracture-wilds/game.js
           test -f fracture-wilds/sim.js
           test -f fracture-wilds/sw.js
+          grep -q "./app.js?v=7" god-sandbox/index.html
+          grep -q "data-power=\"bloom\"" god-sandbox/index.html
+          grep -q "data-power=\"mutate\"" god-sandbox/index.html
+          grep -q "god-sandbox/?v=7" index.html
+          grep -q "god-sandbox/app.js?v=7" sw.js
           grep -q "./sim.js?v=6" fracture-wilds/game.js
           grep -q "./debug.js?v=6" fracture-wilds/index.html
           grep -q "./game.js?v=6" fracture-wilds/index.html
-          ! grep -q "\.payload" fracture-wilds/index.html
-          ! grep -q "\.payload" fracture-wilds/game.js
-          grep -q "fracture-wilds/?v=6" index.html
+          ! grep -q "\.payload" god-sandbox/index.html
+          ! grep -q "\.payload" god-sandbox/app.js
 
       - name: Local network asset test
         shell: bash
@@ -55,6 +63,9 @@ jobs:
             index.html \
             manifest.webmanifest \
             sw.js \
+            god-sandbox/index.html \
+            god-sandbox/style.css \
+            god-sandbox/app.js \
             fracture-wilds/index.html \
             fracture-wilds/style.css \
             fracture-wilds/debug.js \
@@ -64,7 +75,8 @@ jobs:
           do
             curl --fail --silent --show-error "http://127.0.0.1:8000/$asset" >/dev/null
           done
-          curl --fail --silent http://127.0.0.1:8000/index.html | grep -q "ENTERING FRACTURE WILDS"
+          curl --fail --silent http://127.0.0.1:8000/index.html | grep -q "OPENING GENESIS FIELD"
+          curl --fail --silent http://127.0.0.1:8000/god-sandbox/index.html | grep -q "You are the god"
           curl --fail --silent http://127.0.0.1:8000/fracture-wilds/index.html | grep -q "FRACTURE WILDS"
 
       - name: Fracture Wilds runtime smoke test

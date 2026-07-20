@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#03050b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="God Genic">
+<meta name="description" content="An original mobile god sandbox with autonomous alien creatures, procedural ecology, and touch-driven world powers.">
+<link rel="manifest" href="../manifest.webmanifest?v=7">
+<link rel="stylesheet" href="./style.css?v=7">
+<title>God Genic — Genesis Field</title>
+</head>
+<body>
+<main id="shell">
+  <canvas id="game" aria-label="God Genic alien ecosystem sandbox"></canvas>
+
+  <header class="hud">
+    <div class="brand glass"><i></i><div><b>GOD GENIC</b><small id="biome">Genesis Field</small></div></div>
+    <div class="stats glass">
+      <span><b id="population">0</b><small>LIFE</small></span>
+      <span><b id="species">0</b><small>SPECIES</small></span>
+      <span><b id="fps">60</b><small>FPS</small></span>
+    </div>
+    <div class="top-actions">
+      <button id="installBtn" class="round glass" aria-label="Install">↓</button>
+      <button id="pauseBtn" class="round glass" aria-label="Pause">Ⅱ</button>
+    </div>
+  </header>
+
+  <div id="message" class="message show">Choose a power, then touch the world.</div>
+
+  <section class="powers" aria-label="God powers">
+    <button class="power selected" data-power="bloom"><i>✦</i><b>BLOOM</b><small>grow life</small></button>
+    <button class="power" data-power="pull"><i>◉</i><b>GRAVITY</b><small>pull matter</small></button>
+    <button class="power" data-power="storm"><i>ϟ</i><b>STORM</b><small>shockwave</small></button>
+    <button class="power" data-power="mutate"><i>⌬</i><b>MUTATE</b><small>change life</small></button>
+  </section>
+
+  <section id="intro" class="overlay show">
+    <article class="panel">
+      <div class="eyebrow">ORIGINAL AUTONOMOUS ECOSYSTEM</div>
+      <h1>You are the god.<br>The creatures are not you.</h1>
+      <p>Watch alien species hunt, flee, feed, breed, mutate, and physically move through a procedural world. Drag to move the camera. Pinch to zoom. Choose a power and touch the world.</p>
+      <div class="feature-grid">
+        <span><b>PHYSICS</b><small>spring bodies, gravity, collisions</small></span>
+        <span><b>BRAINS</b><small>fear, hunger, memory, pursuit</small></span>
+        <span><b>ORIGINAL</b><small>no copied characters or world</small></span>
+      </div>
+      <button id="enterBtn" class="primary">OPEN GENESIS FIELD</button>
+    </article>
+  </section>
+
+  <section id="pause" class="overlay">
+    <article class="panel">
+      <div class="eyebrow">WORLD PAUSED</div>
+      <h2>The ecosystem waits here.</h2>
+      <p>The simulation does not continue while iOS suspends or closes the app.</p>
+      <button id="resumeBtn" class="primary">RESUME</button>
+      <button id="newWorldBtn" class="secondary">NEW PROCEDURAL WORLD</button>
+      <button id="qualityBtn" class="secondary">GRAPHICS: <span id="qualityLabel">AUTO</span></button>
+      <div class="rating">
+        <div class="eyebrow">RATE WITHOUT TYPING <span id="ratingText"></span></div>
+        <div id="stars" class="stars"></div>
+        <div class="feedback">
+          <button data-feedback="More physics">More physics</button>
+          <button data-feedback="More creatures">More creatures</button>
+          <button data-feedback="More graphics">More graphics</button>
+          <button data-feedback="More powers">More powers</button>
+          <button data-feedback="More evolution">More evolution</button>
+          <button data-feedback="Run faster">Run faster</button>
+        </div>
+      </div>
+    </article>
+  </section>
+</main>
+<script type="module" src="./app.js?v=7"></script>
+</body>
+</html>

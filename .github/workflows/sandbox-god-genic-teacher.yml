@@ -20,14 +20,16 @@ jobs:
         run: |
           node --check sandbox-god-genic/src/teacher.js
           python -m py_compile sandbox-god-genic/python/teacher.py
-      - name: Check public Fracture Wilds v6 deployment
+      - name: Check public Genesis Field v7 deployment
         run: |
           base="https://toymaker474.github.io/html5.github.io"
           curl --fail --retry 3 --retry-delay 8 --max-time 30 "$base/" \
-            | grep -q "ENTERING FRACTURE WILDS"
-          curl --fail --retry 3 --retry-delay 8 --max-time 30 "$base/fracture-wilds/" \
-            | grep -q "FRACTURE WILDS"
-          for asset in style.css debug.js game.js sim.js sw.js; do
+            | grep -q "OPENING GENESIS FIELD"
+          curl --fail --retry 3 --retry-delay 8 --max-time 30 "$base/god-sandbox/" \
+            | grep -q "You are the god"
+          for asset in style.css app.js; do
             curl --fail --retry 3 --retry-delay 8 --max-time 30 \
-              "$base/fracture-wilds/$asset?v=6" >/dev/null
+              "$base/god-sandbox/$asset?v=7" >/dev/null
           done
+          curl --fail --retry 3 --retry-delay 8 --max-time 30 \
+            "$base/sw.js?v=7" >/dev/null
