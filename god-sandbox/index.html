@@ -129,6 +129,28 @@
     </article>
   </section>
 </main>
+<script>
+(() => {
+  const population = document.getElementById('populationSetting');
+  const label = document.getElementById('populationValue');
+  const deviceGroup = document.querySelector('[data-setting="device"]');
+  const inferredDevice = () => Math.min(innerWidth, innerHeight) >= 700 || Math.max(innerWidth, innerHeight) >= 1100 ? 'ipad' : 'iphone';
+  const syncPopulationCap = () => {
+    const selected = deviceGroup.querySelector('.selected')?.dataset.value || 'auto';
+    const device = selected === 'auto' ? inferredDevice() : selected;
+    const cap = device === 'ipad' ? 150 : 138;
+    population.max = String(cap);
+    if (Number(population.value) > cap) population.value = String(cap);
+    label.textContent = `${population.value} creatures`;
+  };
+  deviceGroup.addEventListener('click', event => {
+    if (!event.target.closest('button')) return;
+    queueMicrotask(syncPopulationCap);
+  });
+  addEventListener('resize', syncPopulationCap, { passive: true });
+  syncPopulationCap();
+})();
+</script>
 <script type="module" src="./app.js?v=8"></script>
 </body>
 </html>
