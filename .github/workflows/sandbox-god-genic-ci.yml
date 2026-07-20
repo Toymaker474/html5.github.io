@@ -11,6 +11,7 @@ on:
     paths:
       - "index.html"
       - "sandbox-god-genic/**"
+      - ".github/workflows/sandbox-god-genic-ci.yml"
   workflow_dispatch:
 jobs:
   validate:
@@ -27,8 +28,32 @@ jobs:
         with:
           targets: wasm32-unknown-unknown
       - name: JavaScript syntax
+        run: for f in sandbox-god-genic/src/*.js; do node --check "$f"; done
+      - name: Alien ecosystem runtime smoke test
+        shell: bash
         run: |
-          for f in sandbox-god-genic/src/*.js; do node --check "$f"; done
+          cat >/tmp/god-genic-smoke.mjs <<'JS'
+          import assert from 'node:assert/strict';
+          import {pathToFileURL} from 'node:url';
+          globalThis.localStorage={getItem:()=>null,setItem:()=>{}};
+          globalThis.window=globalThis;window.addEventListener=()=>{};window.dispatchEvent=()=>{};
+          globalThis.document={getElementById:()=>null,querySelector:()=>null,querySelectorAll:()=>[],createElement:()=>({}),head:{append:()=>{}}};
+          const root=process.cwd();
+          const {World}=await import(pathToFileURL(`${root}/sandbox-god-genic/src/world.js`).href);
+          await import(pathToFileURL(`${root}/sandbox-god-genic/src/ecosystem-v4.js`).href+'?v=4');
+          const world=new World(474,{params:{targetPopulation:60,foodGrowth:1.2,hazard:.25}});
+          for(let i=0;i<900;i++)world.step(1/60);
+          const m=world.metrics();
+          assert.ok(m.population>0);
+          assert.equal(Object.values(m.roles).reduce((a,b)=>a+b,0),m.population);
+          assert.equal(m.dens,11);
+          assert.ok(['clear','rain','aftermath'].includes(m.weather));
+          assert.ok(Number.isFinite(m.rain));
+          assert.ok(Array.isArray(world.v4.carcasses));
+          assert.ok(world.creatures.every(c=>c.role&&c.morph&&c.ai));
+          console.log(JSON.stringify({population:m.population,species:m.species,roles:m.roles,weather:m.weather}));
+          JS
+          node /tmp/god-genic-smoke.mjs
       - name: Python teacher syntax
         run: python -m py_compile sandbox-god-genic/python/teacher.py
       - name: Rust core
@@ -38,3 +63,8 @@ jobs:
           test -f index.html
           test -f sandbox-god-genic/src/world.js
           test -f sandbox-god-genic/src/teacher.js
+          test -f sandbox-god-genic/src/ecosystem-v4.js
+          test -f sandbox-god-genic/src/ecosystem-core-v4.js
+          test -f sandbox-god-genic/src/ecosystem-render-v4.js
+          test -f sandbox-god-genic/src/ecosystem-ui-v4.js
+          test -f sandbox-god-genic/src/rewarded-ad.js
