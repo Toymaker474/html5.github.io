@@ -20,6 +20,26 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: pwa-god-genic-v3
+
+      - name: Fix gameplay event routing
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('sandbox-god-genic/src/upgrade-v3.js')
+          s=p.read_text()
+          old="document.getElementById('worldCanvas')?.addEventListener('pointerdown',e=>{const r=window.__godRenderer;if(!r)return;"
+          new="document.getElementById('worldCanvas')?.addEventListener('pointerdown',e=>{e.stopImmediatePropagation();const r=window.__godRenderer;if(!r)return;"
+          if old in s:
+              s=s.replace(old,new,1)
+          old2="cast(state.power,x,y)});document.querySelectorAll('[data-v3star]')"
+          new2="cast(state.power,x,y)},{capture:true});const feedbackBtn=document.querySelector('.dock button[data-view=\"feedback\"]');if(feedbackBtn)feedbackBtn.onclick=()=>{document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id==='view-feedback'));document.querySelectorAll('.dock button').forEach(b=>b.classList.toggle('active',b===feedbackBtn));document.querySelector('.dashboard')?.scrollIntoView({behavior:'smooth',block:'start'})};document.querySelectorAll('[data-v3star]')"
+          if old2 not in s:
+              raise SystemExit('Expected gameplay binding pattern not found')
+          s=s.replace(old2,new2,1)
+          p.write_text(s)
+          PY
+
       - name: Patch public PWA shell
         shell: bash
         run: |
@@ -29,7 +49,8 @@ jobs:
           p=Path('index.html')
           s=p.read_text()
           s=s.replace('./sandbox-god-genic/styles.css?v=1','./sandbox-god-genic/styles.css?v=3')
-          s=s.replace('<link rel="stylesheet" href="./sandbox-god-genic/styles.css?v=3">','<link rel="stylesheet" href="./sandbox-god-genic/styles.css?v=3"><link rel="stylesheet" href="./sandbox-god-genic/upgrade-v3.css?v=3">')
+          if 'upgrade-v3.css?v=3' not in s:
+              s=s.replace('<link rel="stylesheet" href="./sandbox-god-genic/styles.css?v=3">','<link rel="stylesheet" href="./sandbox-god-genic/styles.css?v=3"><link rel="stylesheet" href="./sandbox-god-genic/upgrade-v3.css?v=3">')
           s=s.replace('LOCAL EVOLUTION ENGINE · BUILD 0.1','PLAYABLE EMERGENCE ENGINE · BUILD 0.3')
           s=s.replace('./sandbox-god-genic/src/main.js?v=1','./sandbox-god-genic/src/bootstrap-v3.js?v=3')
           s=s.replace('hourly teacher agent','two-hour adaptive teacher agent')
@@ -45,21 +66,26 @@ jobs:
           const CACHE='sandbox-god-genic-v3';
           const CORE=['./','./index.html','./manifest.webmanifest?v=3','./icon.svg?v=3','./sandbox-god-genic/styles.css?v=3','./sandbox-god-genic/upgrade-v3.css?v=3','./sandbox-god-genic/src/bootstrap-v3.js?v=3','./sandbox-god-genic/src/upgrade-v3.js?v=3','./sandbox-god-genic/src/main.js?v=3','./sandbox-god-genic/src/world.js','./sandbox-god-genic/src/brain.js','./sandbox-god-genic/src/teacher.js','./sandbox-god-genic/src/renderer.js'];
           self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>Promise.allSettled(CORE.map(url=>cache.add(new Request(url,{cache:'reload'}))))).then(()=>self.skipWaiting())));
-          self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
+          self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(k)))).then(()=>self.clients.claim())));
           self.addEventListener('fetch',event=>{if(event.request.method!=='GET')return;const url=new URL(event.request.url);if(url.origin!==location.origin)return;const networkFirst=event.request.mode==='navigate'||['script','style','worker'].includes(event.request.destination);event.respondWith(networkFirst?fetch(event.request,{cache:'no-store'}).then(response=>{if(response.ok)caches.open(CACHE).then(cache=>cache.put(event.request,response.clone()));return response}).catch(()=>caches.match(event.request).then(hit=>hit||caches.match('./index.html'))):caches.match(event.request).then(hit=>hit||fetch(event.request).then(response=>{if(response.ok)caches.open(CACHE).then(cache=>cache.put(event.request,response.clone()));return response})))});
           EOF
+          sed -i 's/caches.delete(k))/caches.delete(key))/g' sw.js
+
       - name: Validate JavaScript and shell
         run: |
           node --check sandbox-god-genic/src/upgrade-v3.js
           node --check sandbox-god-genic/src/bootstrap-v3.js
           node --check sw.js
+          grep -q 'capture:true' sandbox-god-genic/src/upgrade-v3.js
+          grep -q 'data-view="feedback"' sandbox-god-genic/src/upgrade-v3.js
           grep -q 'PLAYABLE EMERGENCE ENGINE · BUILD 0.3' index.html
           grep -q 'bootstrap-v3.js?v=3' index.html
           grep -q 'upgrade-v3.css?v=3' index.html
-      - name: Commit generated shell changes
+
+      - name: Commit generated changes
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add index.html manifest.webmanifest sw.js
-          git diff --cached --quiet || git commit -m 'Activate free playable God Genic PWA v3'
+          git add index.html manifest.webmanifest sw.js sandbox-god-genic/src/upgrade-v3.js
+          git diff --cached --quiet || git commit -m 'Finalize free playable God Genic PWA v3'
           git push origin HEAD:pwa-god-genic-v3
