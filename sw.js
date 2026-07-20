@@ -1,4 +1,4 @@
-const CACHE = 'god-genic-root-v8';
+const CACHE = 'god-genic-root-v8-1';
 const CORE = [
   './',
   './index.html',
@@ -14,7 +14,7 @@ const CORE = [
 ];
 self.addEventListener('install', event => event.waitUntil(
   caches.open(CACHE)
-    .then(cache => Promise.allSettled(CORE.map(url => cache.add(new Request(url, { cache: 'reload' })))))
+    .then(cache => Promise.all(CORE.map(url => cache.add(new Request(url, { cache: 'reload' })))))
     .then(() => self.skipWaiting())
 ));
 self.addEventListener('activate', event => event.waitUntil(
@@ -31,7 +31,12 @@ self.addEventListener('fetch', event => {
     ? fetch(event.request, { cache: 'no-store' }).then(response => {
         if (response.ok) caches.open(CACHE).then(cache => cache.put(event.request, response.clone()));
         return response;
-      }).catch(() => caches.match(event.request).then(hit => hit || caches.match('./god-sandbox/index.html')))
+      }).catch(async () => {
+        const hit = await caches.match(event.request);
+        if (hit) return hit;
+        if (event.request.mode === 'navigate') return caches.match('./god-sandbox/index.html');
+        return Response.error();
+      })
     : caches.match(event.request).then(hit => hit || fetch(event.request))
   );
 });
