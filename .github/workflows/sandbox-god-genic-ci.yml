@@ -1,9 +1,9 @@
 name: God Genic CI
 on:
   push:
-    paths: ['index.html','manifest.webmanifest','sw.js','fracture-wilds/**','sandbox-god-genic/**','.github/workflows/sandbox-god-genic-ci.yml']
+    paths: ['index.html','manifest.webmanifest','sw.js','fracture-wilds/**','sandbox-god-genic/**','.github/workflows/sandbox-god-genic-ci.yml','.github/workflows/sandbox-god-genic-teacher.yml']
   pull_request:
-    paths: ['index.html','manifest.webmanifest','sw.js','fracture-wilds/**','sandbox-god-genic/**','.github/workflows/sandbox-god-genic-ci.yml']
+    paths: ['index.html','manifest.webmanifest','sw.js','fracture-wilds/**','sandbox-god-genic/**','.github/workflows/sandbox-god-genic-ci.yml','.github/workflows/sandbox-god-genic-teacher.yml']
   workflow_dispatch:
 permissions:
   contents: read
