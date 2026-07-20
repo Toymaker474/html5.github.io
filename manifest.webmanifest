@@ -1,8 +1,8 @@
 {
-  "name": "God Genic: Fracture Wilds",
+  "name": "God Genic: Fracture Wilds v6",
   "short_name": "Fracture Wilds",
-  "description": "An original full-screen mobile alien survival game with physical movement, predator-prey AI, dens, rain cycles, evolution, and virtual Genic rewards.",
-  "start_url": "./fracture-wilds/?v=5",
+  "description": "Fast direct-file alien survival game with built-in network and AI debugging.",
+  "start_url": "./fracture-wilds/?v=6",
   "scope": "./",
   "display": "standalone",
   "background_color": "#020509",
@@ -10,7 +10,7 @@
   "orientation": "landscape",
   "icons": [
     {
-      "src": "icon.svg?v=5",
+      "src": "icon.svg?v=6",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
