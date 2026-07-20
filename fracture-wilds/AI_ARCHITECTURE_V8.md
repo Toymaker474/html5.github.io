@@ -24,6 +24,9 @@
 - Physics remains fixed at 60 Hz. Rendering follows the display refresh rate and changes quality automatically.
 - iOS suspension pauses the biosphere; no background evolution is claimed.
 
+## Validation contract
+The PR test executes 12,000 fixed simulation ticks, verifies stable soil and plant biomass, requires predators and multiple lineages, and rejects player ground speeds above the organism-scale ceiling.
+
 ## Fast checks
 ```bash
 node --check fracture-wilds/organism-core-v8.js
