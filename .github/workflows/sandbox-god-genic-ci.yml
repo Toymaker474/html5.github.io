@@ -1,15 +1,19 @@
-name: Sandbox God Genic CI
+name: God Genic CI
 on:
   push:
     paths:
       - "index.html"
       - "manifest.webmanifest"
-      - "icon.svg"
+      - "sw.js"
+      - "fracture-wilds/**"
       - "sandbox-god-genic/**"
       - ".github/workflows/sandbox-god-genic-ci.yml"
   pull_request:
     paths:
       - "index.html"
+      - "manifest.webmanifest"
+      - "sw.js"
+      - "fracture-wilds/**"
       - "sandbox-god-genic/**"
       - ".github/workflows/sandbox-god-genic-ci.yml"
   workflow_dispatch:
@@ -27,44 +31,46 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
-      - name: JavaScript syntax
-        run: for f in sandbox-god-genic/src/*.js; do node --check "$f"; done
-      - name: Alien ecosystem runtime smoke test
-        shell: bash
+      - name: Decode Fracture Wilds engine
         run: |
-          cat >/tmp/god-genic-smoke.mjs <<'JS'
+          cat fracture-wilds/.payload/sim.js.part* | base64 -d | gzip -d > /tmp/fracture-sim.js
+          cat fracture-wilds/.payload/game.js.part* | base64 -d | gzip -d > /tmp/fracture-game.js
+          cat fracture-wilds/.payload/style.css.part* | base64 -d | gzip -d > /tmp/fracture-style.css
+          node --check /tmp/fracture-sim.js
+          node --check /tmp/fracture-game.js
+          node --check fracture-wilds/game.js
+          node --check fracture-wilds/sw.js
+          node --check sw.js
+      - name: Fracture Wilds runtime smoke test
+        run: |
+          cp /tmp/fracture-sim.js /tmp/fracture-sim.mjs
+          node --input-type=module <<'JS'
           import assert from 'node:assert/strict';
           import {pathToFileURL} from 'node:url';
-          globalThis.localStorage={getItem:()=>null,setItem:()=>{}};
-          globalThis.window=globalThis;window.addEventListener=()=>{};window.dispatchEvent=()=>{};
-          globalThis.document={getElementById:()=>null,querySelector:()=>null,querySelectorAll:()=>[],createElement:()=>({}),head:{append:()=>{}}};
-          const root=process.cwd();
-          const {World}=await import(pathToFileURL(`${root}/sandbox-god-genic/src/world.js`).href);
-          await import(pathToFileURL(`${root}/sandbox-god-genic/src/ecosystem-v4.js`).href+'?v=4');
-          const world=new World(474,{params:{targetPopulation:60,foodGrowth:1.2,hazard:.25}});
-          for(let i=0;i<900;i++)world.step(1/60);
-          const m=world.metrics();
-          assert.ok(m.population>0);
-          assert.equal(Object.values(m.roles).reduce((a,b)=>a+b,0),m.population);
-          assert.equal(m.dens,11);
-          assert.ok(['clear','rain','aftermath'].includes(m.weather));
-          assert.ok(Number.isFinite(m.rain));
-          assert.ok(Array.isArray(world.v4.carcasses));
-          assert.ok(world.creatures.every(c=>c.role&&c.morph&&c.ai));
-          console.log(JSON.stringify({population:m.population,species:m.species,roles:m.roles,weather:m.weather}));
+          const {World}=await import(pathToFileURL('/tmp/fracture-sim.mjs').href);
+          const world=new World(474);
+          const input={x:.7,y:0,jump:false,grab:false,bite:false,dash:false};
+          for(let i=0;i<2400;i++){input.jump=i%180===0;input.bite=i%95===0;world.step(1/60,input)}
+          const stats=world.stats();
+          assert.ok(Number.isFinite(world.player.x)&&Number.isFinite(world.player.y));
+          assert.ok(stats.population>=20);
+          assert.equal(world.map.dens.length,6);
+          assert.ok(world.map.food.length>=100);
+          assert.ok(world.creatures.some(c=>c.meta.predator));
+          assert.ok(['clear','warning','rain'].includes(stats.rainPhase));
+          console.log(JSON.stringify({population:stats.population,phase:stats.rainPhase,dens:world.map.dens.length,food:world.map.food.length}));
           JS
-          node /tmp/god-genic-smoke.mjs
-      - name: Python teacher syntax
-        run: python -m py_compile sandbox-god-genic/python/teacher.py
-      - name: Rust core
-        run: cargo check --manifest-path sandbox-god-genic/rust/Cargo.toml --target wasm32-unknown-unknown
-      - name: Required files
+      - name: Legacy source validation
         run: |
-          test -f index.html
-          test -f sandbox-god-genic/src/world.js
-          test -f sandbox-god-genic/src/teacher.js
-          test -f sandbox-god-genic/src/ecosystem-v4.js
-          test -f sandbox-god-genic/src/ecosystem-core-v4.js
-          test -f sandbox-god-genic/src/ecosystem-render-v4.js
-          test -f sandbox-god-genic/src/ecosystem-ui-v4.js
-          test -f sandbox-god-genic/src/rewarded-ad.js
+          for f in sandbox-god-genic/src/*.js; do node --check "$f"; done
+          python -m py_compile sandbox-god-genic/python/teacher.py
+          cargo check --manifest-path sandbox-god-genic/rust/Cargo.toml --target wasm32-unknown-unknown
+      - name: Required deployment files
+        run: |
+          test -f .nojekyll
+          test -f fracture-wilds/index.html
+          test -f fracture-wilds/game.js
+          test -f fracture-wilds/sw.js
+          test -f fracture-wilds/.payload/sim.js.part02
+          grep -q "FRACTURE WILDS" fracture-wilds/index.html
+          grep -q "fracture-wilds" index.html

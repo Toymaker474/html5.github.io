@@ -1,0 +1,1 @@
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020509;color:#dff;font-family:system-ui}body:before{content:'LOADING FRACTURE WILDS';position:fixed;inset:0;display:grid;place-items:center;font-size:12px;font-weight:900;letter-spacing:.18em}body:has(#loaderStatus):before{display:none}
