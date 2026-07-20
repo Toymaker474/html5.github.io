@@ -28,6 +28,13 @@ jobs:
           node --check fracture-wilds/debug-v7.js
           node --check fracture-wilds/science-game-v7.js
           node --check fracture-wilds/science-sim-v7.js
+          node --check fracture-wilds/debug-v8.js
+          node --check fracture-wilds/organism-core-v8.js
+          node --check fracture-wilds/organism-plants-v8.js
+          node --check fracture-wilds/organism-creatures-v8.js
+          node --check fracture-wilds/organism-world-v8.js
+          node --check fracture-wilds/organism-render-v8.js
+          node --check fracture-wilds/organism-game-v8.js
           node --check fracture-wilds/sw.js
           node --check sw.js
           for file in sandbox-god-genic/src/*.js; do node --check "$file"; done
@@ -40,21 +47,26 @@ jobs:
           test -f god-sandbox/app.js
           test -f fracture-wilds/index.html
           test -f fracture-wilds/manifest.webmanifest
-          test -f fracture-wilds/science-v7.css
-          test -f fracture-wilds/debug-v7.js
-          test -f fracture-wilds/science-game-v7.js
-          test -f fracture-wilds/science-sim-v7.js
-          test -f fracture-wilds/AI_ARCHITECTURE_V7.md
+          test -f fracture-wilds/organism-v8.css
+          test -f fracture-wilds/debug-v8.js
+          test -f fracture-wilds/organism-core-v8.js
+          test -f fracture-wilds/organism-plants-v8.js
+          test -f fracture-wilds/organism-creatures-v8.js
+          test -f fracture-wilds/organism-world-v8.js
+          test -f fracture-wilds/organism-render-v8.js
+          test -f fracture-wilds/organism-game-v8.js
           grep -q './app.js?v=7' god-sandbox/index.html
           grep -q 'god-sandbox/?v=7' index.html
-          grep -q './science-game-v7.js?v=7' fracture-wilds/index.html
-          grep -q './debug-v7.js?v=7' fracture-wilds/index.html
-          grep -q './science-sim-v7.js?v=7' fracture-wilds/science-game-v7.js
-          grep -q './manifest.webmanifest?v=7' fracture-wilds/index.html
-          grep -q '"start_url": "./?v=7"' fracture-wilds/manifest.webmanifest
-          grep -q './manifest.webmanifest?v=7' fracture-wilds/sw.js
-          grep -q 'SCIENCE SURVIVAL SIM' fracture-wilds/index.html
-          ! grep -R -q 'v7-stage\|\.payload' fracture-wilds/index.html fracture-wilds/debug-v7.js fracture-wilds/science-game-v7.js fracture-wilds/science-sim-v7.js
+          grep -q './organism-game-v8.js?v=8' fracture-wilds/index.html
+          grep -q './debug-v8.js?v=8' fracture-wilds/index.html
+          grep -q './organism-world-v8.js?v=8' fracture-wilds/organism-game-v8.js
+          grep -q './organism-plants-v8.js' fracture-wilds/organism-world-v8.js
+          grep -q './manifest.webmanifest?v=8' fracture-wilds/index.html
+          grep -q '"start_url": "./?v=8"' fracture-wilds/manifest.webmanifest
+          grep -q './manifest.webmanifest?v=8' fracture-wilds/sw.js
+          grep -q 'SLOW ORGANISM PHYSICS' fracture-wilds/index.html
+          grep -q 'FOOT-PLANT GAITS' fracture-wilds/index.html
+          ! grep -R -q '\.payload\|v8-stage' fracture-wilds/index.html fracture-wilds/debug-v8.js fracture-wilds/organism-*-v8.js
 
       - name: Local network asset test
         shell: bash
@@ -72,45 +84,64 @@ jobs:
             god-sandbox/app.js \
             fracture-wilds/index.html \
             fracture-wilds/manifest.webmanifest \
-            fracture-wilds/science-v7.css \
-            fracture-wilds/debug-v7.js \
-            fracture-wilds/science-game-v7.js \
-            fracture-wilds/science-sim-v7.js \
+            fracture-wilds/style.css \
+            fracture-wilds/organism-v8.css \
+            fracture-wilds/debug-v8.js \
+            fracture-wilds/organism-core-v8.js \
+            fracture-wilds/organism-plants-v8.js \
+            fracture-wilds/organism-creatures-v8.js \
+            fracture-wilds/organism-world-v8.js \
+            fracture-wilds/organism-render-v8.js \
+            fracture-wilds/organism-game-v8.js \
             fracture-wilds/sw.js
           do
             curl --fail --silent --show-error "http://127.0.0.1:8000/$asset" >/dev/null
           done
           curl --fail --silent http://127.0.0.1:8000/fracture-wilds/index.html | grep -q 'FRACTURE WILDS'
-          curl --fail --silent http://127.0.0.1:8000/fracture-wilds/index.html | grep -q 'SCIENCE SURVIVAL SIM'
+          curl --fail --silent http://127.0.0.1:8000/fracture-wilds/index.html | grep -q 'LIVING PLANT ECOLOGY'
 
-      - name: Science ecosystem runtime
+      - name: Organism ecosystem runtime
         run: |
-          cp fracture-wilds/science-sim-v7.js /tmp/science-sim-v7.mjs
+          mkdir -p /tmp/fw-v8-ci
+          cp fracture-wilds/organism-core-v8.js /tmp/fw-v8-ci/
+          cp fracture-wilds/organism-plants-v8.js /tmp/fw-v8-ci/
+          cp fracture-wilds/organism-creatures-v8.js /tmp/fw-v8-ci/
+          cp fracture-wilds/organism-world-v8.js /tmp/fw-v8-ci/
+          printf '{"type":"module"}\n' > /tmp/fw-v8-ci/package.json
           node --input-type=module <<'JS'
           import assert from 'node:assert/strict';
           import { pathToFileURL } from 'node:url';
           globalThis.localStorage = { getItem: () => null, setItem: () => {} };
-          const { World } = await import(pathToFileURL('/tmp/science-sim-v7.mjs').href);
+          const { World } = await import(pathToFileURL('/tmp/fw-v8-ci/organism-world-v8.js').href);
+          const { MAP_W, MAP_H } = await import(pathToFileURL('/tmp/fw-v8-ci/organism-core-v8.js').href);
           const world = new World(474, { performanceTier: 'low' });
-          const input = { x: .72, y: 0, jump: false, grab: false, bite: false, dash: false, scan: false };
-          for (let tick = 0; tick < 3600; tick++) {
-            input.jump = tick % 170 === 0;
-            input.bite = tick % 103 === 0;
-            input.scan = tick % 240 === 0;
+          const input = { x: .76, y: 0, jump: false, grab: false, bite: false, dash: false, scan: false };
+          let maxGroundSpeed = 0;
+          for (let tick = 0; tick < 12000; tick++) {
+            input.x = tick % 1400 < 1050 ? .76 : -.42;
+            input.jump = tick % 470 === 0;
+            input.bite = tick % 150 === 0;
+            input.scan = tick % 360 === 0;
+            input.dash = tick % 900 > 760 && tick % 900 < 840;
             if (world.pendingEvolution?.length) world.applyEvolution(world.pendingEvolution[0].id);
             if (world.gameOver) world.respawn();
             world.step(1 / 60, input);
+            if (world.player.grounded) maxGroundSpeed = Math.max(maxGroundSpeed, Math.abs(world.player.vx));
           }
           const stats = world.stats();
+          assert.equal(MAP_W, 224);
+          assert.equal(MAP_H, 64);
           assert.ok(Number.isFinite(world.player.x) && Number.isFinite(world.player.y));
           assert.ok(stats.population > 10);
-          assert.equal(world.map.dens.length, 8);
-          assert.ok(world.map.food.length >= 140);
-          assert.ok(stats.species > 0 && stats.species < stats.population);
+          assert.ok(stats.plants > 60);
+          assert.ok(stats.biomass > 30);
+          assert.ok(Number.isFinite(stats.soilMoisture));
+          assert.ok(stats.species > 0);
           assert.ok(stats.mission?.title);
           assert.ok(Number.isFinite(stats.ecology.oxygen));
           assert.ok(world.creatures.some(creature => creature.meta.predator));
-          console.log(JSON.stringify(stats));
+          assert.ok(maxGroundSpeed < 140, `ground speed was ${maxGroundSpeed}`);
+          console.log(JSON.stringify({ ...stats, maxGroundSpeed }));
           JS
 
       - name: Teacher and Rust/WASM validation
