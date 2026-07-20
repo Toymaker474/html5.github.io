@@ -7,48 +7,96 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="God Genic">
-<meta name="description" content="An original mobile god sandbox with autonomous alien creatures, procedural ecology, and touch-driven world powers.">
-<link rel="manifest" href="../manifest.webmanifest?v=7">
-<link rel="stylesheet" href="./style.css?v=7">
-<title>God Genic — Genesis Field</title>
+<meta name="description" content="An original mobile scientific god sandbox with autonomous alien creatures, genetics, climate, nutrient cycling, and touch-driven world powers.">
+<link rel="manifest" href="../manifest.webmanifest?v=8">
+<link rel="stylesheet" href="./style.css?v=8">
+<title>God Genic — Scientific Genesis v8</title>
 </head>
 <body>
 <main id="shell">
-  <canvas id="game" aria-label="God Genic alien ecosystem sandbox"></canvas>
+  <canvas id="game" aria-label="God Genic scientific alien ecosystem sandbox"></canvas>
 
   <header class="hud">
-    <div class="brand glass"><i></i><div><b>GOD GENIC</b><small id="biome">Genesis Field</small></div></div>
-    <div class="stats glass">
+    <div class="brand glass"><i></i><div><b>GOD GENIC</b><small id="biome">Scientific Genesis v8</small></div></div>
+    <div class="stats glass" aria-label="Live ecosystem statistics">
       <span><b id="population">0</b><small>LIFE</small></span>
       <span><b id="species">0</b><small>SPECIES</small></span>
+      <span><b id="generation">1</b><small>GEN</small></span>
+      <span><b id="temperature">--</b><small>°C</small></span>
+      <span><b id="moisture">--</b><small>WATER</small></span>
       <span><b id="fps">60</b><small>FPS</small></span>
     </div>
     <div class="top-actions">
+      <button id="scienceBtn" class="round glass" aria-label="Cycle scientific overlay">∿</button>
       <button id="installBtn" class="round glass" aria-label="Install">↓</button>
       <button id="pauseBtn" class="round glass" aria-label="Pause">Ⅱ</button>
     </div>
   </header>
 
-  <div id="message" class="message show">Choose a power, then touch the world.</div>
+  <div id="scienceLegend" class="science-legend glass" hidden></div>
+  <div id="message" class="message show">Configure the world before the simulation begins.</div>
 
   <section class="powers" aria-label="God powers">
-    <button class="power selected" data-power="bloom"><i>✦</i><b>BLOOM</b><small>grow life</small></button>
-    <button class="power" data-power="pull"><i>◉</i><b>GRAVITY</b><small>pull matter</small></button>
-    <button class="power" data-power="storm"><i>ϟ</i><b>STORM</b><small>shockwave</small></button>
-    <button class="power" data-power="mutate"><i>⌬</i><b>MUTATE</b><small>change life</small></button>
+    <button class="power selected" data-power="bloom"><i>✦</i><b>BLOOM</b><small>water + nutrients</small></button>
+    <button class="power" data-power="pull"><i>◉</i><b>GRAVITY</b><small>force field</small></button>
+    <button class="power" data-power="storm"><i>ϟ</i><b>STORM</b><small>rain + impulse</small></button>
+    <button class="power" data-power="mutate"><i>⌬</i><b>MUTATE</b><small>edit genes</small></button>
+    <button class="power" data-power="sun"><i>☼</i><b>SUN</b><small>heat + light</small></button>
   </section>
 
   <section id="intro" class="overlay show">
-    <article class="panel">
-      <div class="eyebrow">ORIGINAL AUTONOMOUS ECOSYSTEM</div>
-      <h1>You are the god.<br>The creatures are not you.</h1>
-      <p>Watch alien species hunt, flee, feed, breed, mutate, and physically move through a procedural world. Drag to move the camera. Pinch to zoom. Choose a power and touch the world.</p>
-      <div class="feature-grid">
-        <span><b>PHYSICS</b><small>spring bodies, gravity, collisions</small></span>
-        <span><b>BRAINS</b><small>fear, hunger, memory, pursuit</small></span>
-        <span><b>ORIGINAL</b><small>no copied characters or world</small></span>
+    <article class="panel setup-panel">
+      <div class="eyebrow">SCIENTIFIC GENESIS v8</div>
+      <h1>You are the god.<br>Build the laws first.</h1>
+      <p>The world will not begin until these settings are applied. Creatures remain autonomous and inherit metabolism, vision, fertility, thermal tolerance, aggression, social behavior, hydration efficiency, and body size.</p>
+
+      <div class="setting-group">
+        <div class="setting-head"><b>DEVICE PROFILE</b><small>controls safe simulation limits</small></div>
+        <div class="segmented" data-setting="device">
+          <button data-value="auto" class="selected">AUTO</button>
+          <button data-value="iphone">iPHONE</button>
+          <button data-value="ipad">iPAD</button>
+        </div>
       </div>
-      <button id="enterBtn" class="primary">OPEN GENESIS FIELD</button>
+
+      <div class="setting-group">
+        <div class="setting-head"><b>GRAPHICS</b><small>adaptive resolution and effects</small></div>
+        <div class="segmented" data-setting="graphics">
+          <button data-value="auto" class="selected">AUTO</button>
+          <button data-value="battery">BATTERY</button>
+          <button data-value="high">HIGH</button>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <div class="setting-head"><b>SCIENCE DEPTH</b><small>climate cells, physiology, social AI</small></div>
+        <div class="segmented" data-setting="science">
+          <button data-value="standard">STANDARD</button>
+          <button data-value="deep" class="selected">DEEP</button>
+        </div>
+      </div>
+
+      <label class="slider-row">
+        <span><b>STARTING LIFE</b><small id="populationValue">82 creatures</small></span>
+        <input id="populationSetting" type="range" min="36" max="150" step="2" value="82">
+      </label>
+      <label class="slider-row">
+        <span><b>EVOLUTION RATE</b><small id="evolutionValue">5 / 10</small></span>
+        <input id="evolutionSetting" type="range" min="1" max="10" step="1" value="5">
+      </label>
+      <label class="slider-row">
+        <span><b>CLIMATE VOLATILITY</b><small id="climateValue">5 / 10</small></span>
+        <input id="climateSetting" type="range" min="1" max="10" step="1" value="5">
+      </label>
+
+      <div class="feature-grid">
+        <span><b>PHYSIOLOGY</b><small>energy, water, body heat, stress</small></span>
+        <span><b>ECOLOGY</b><small>biomass, rain, nutrients, decay</small></span>
+        <span><b>EVOLUTION</b><small>inheritance, mutation, selection</small></span>
+      </div>
+      <button id="enterBtn" class="primary">CREATE AND START WORLD</button>
+      <button id="defaultsBtn" class="secondary">RESTORE SAFE DEFAULTS</button>
+      <div class="micro">The simulation pauses when this page is hidden and does not continue while iOS suspends or closes the app.</div>
     </article>
   </section>
 
@@ -57,8 +105,14 @@
       <div class="eyebrow">WORLD PAUSED</div>
       <h2>The ecosystem waits here.</h2>
       <p>The simulation does not continue while iOS suspends or closes the app.</p>
+      <div class="pause-science">
+        <span><b id="biomassStat">0</b><small>BIOMASS</small></span>
+        <span><b id="diversityStat">0</b><small>DIVERSITY</small></span>
+        <span><b id="birthDeathStat">0 / 0</b><small>BIRTH / DEATH</small></span>
+      </div>
       <button id="resumeBtn" class="primary">RESUME</button>
-      <button id="newWorldBtn" class="secondary">NEW PROCEDURAL WORLD</button>
+      <button id="settingsBtn" class="secondary">CHANGE WORLD SETTINGS</button>
+      <button id="newWorldBtn" class="secondary">NEW WORLD, SAME SETTINGS</button>
       <button id="qualityBtn" class="secondary">GRAPHICS: <span id="qualityLabel">AUTO</span></button>
       <div class="rating">
         <div class="eyebrow">RATE WITHOUT TYPING <span id="ratingText"></span></div>
@@ -75,6 +129,28 @@
     </article>
   </section>
 </main>
-<script type="module" src="./app.js?v=7"></script>
+<script>
+(() => {
+  const population = document.getElementById('populationSetting');
+  const label = document.getElementById('populationValue');
+  const deviceGroup = document.querySelector('[data-setting="device"]');
+  const inferredDevice = () => Math.min(innerWidth, innerHeight) >= 700 || Math.max(innerWidth, innerHeight) >= 1100 ? 'ipad' : 'iphone';
+  const syncPopulationCap = () => {
+    const selected = deviceGroup.querySelector('.selected')?.dataset.value || 'auto';
+    const device = selected === 'auto' ? inferredDevice() : selected;
+    const cap = device === 'ipad' ? 150 : 138;
+    population.max = String(cap);
+    if (Number(population.value) > cap) population.value = String(cap);
+    label.textContent = `${population.value} creatures`;
+  };
+  deviceGroup.addEventListener('click', event => {
+    if (!event.target.closest('button')) return;
+    queueMicrotask(syncPopulationCap);
+  });
+  addEventListener('resize', syncPopulationCap, { passive: true });
+  syncPopulationCap();
+})();
+</script>
+<script type="module" src="./app.js?v=8"></script>
 </body>
 </html>

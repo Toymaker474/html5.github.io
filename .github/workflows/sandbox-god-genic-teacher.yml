@@ -20,16 +20,16 @@ jobs:
         run: |
           node --check sandbox-god-genic/src/teacher.js
           python -m py_compile sandbox-god-genic/python/teacher.py
-      - name: Check public Genesis Field v7 deployment
+      - name: Check public Scientific Genesis v8 deployment
         run: |
           base="https://toymaker474.github.io/html5.github.io"
           curl --fail --retry 3 --retry-delay 8 --max-time 30 "$base/" \
-            | grep -q "OPENING GENESIS FIELD"
+            | grep -q "OPENING SCIENTIFIC GENESIS"
           curl --fail --retry 3 --retry-delay 8 --max-time 30 "$base/god-sandbox/" \
-            | grep -q "You are the god"
-          for asset in style.css app.js; do
+            | grep -q "Build the laws first"
+          for asset in style.css app.js sim.js; do
             curl --fail --retry 3 --retry-delay 8 --max-time 30 \
-              "$base/god-sandbox/$asset?v=7" >/dev/null
+              "$base/god-sandbox/$asset?v=8" >/dev/null
           done
           curl --fail --retry 3 --retry-delay 8 --max-time 30 \
-            "$base/sw.js?v=7" >/dev/null
+            "$base/sw.js?v=8" >/dev/null
