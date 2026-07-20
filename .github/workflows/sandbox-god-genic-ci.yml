@@ -6,27 +6,18 @@ on:
     paths: ['index.html','manifest.webmanifest','sw.js','god-sandbox/**','fracture-wilds/**','sandbox-god-genic/**','.github/workflows/sandbox-god-genic-ci.yml','.github/workflows/sandbox-god-genic-teacher.yml']
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref || github.ref_name }}
-          fetch-depth: 0
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - uses: dtolnay/rust-toolchain@stable
         with: {targets: wasm32-unknown-unknown}
-
-      - name: Remove generated compiler artifacts
-        run: |
-          rm -rf sandbox-god-genic/python/__pycache__
-          rm -rf sandbox-god-genic/rust/target
-          rm -f sandbox-god-genic/rust/Cargo.lock
 
       - name: Direct JavaScript syntax
         run: |
@@ -60,6 +51,8 @@ jobs:
           grep -q './debug-v7.js?v=7' fracture-wilds/index.html
           grep -q './science-sim-v7.js?v=7' fracture-wilds/science-game-v7.js
           grep -q './manifest.webmanifest?v=7' fracture-wilds/index.html
+          grep -q '"start_url": "./?v=7"' fracture-wilds/manifest.webmanifest
+          grep -q './manifest.webmanifest?v=7' fracture-wilds/sw.js
           grep -q 'SCIENCE SURVIVAL SIM' fracture-wilds/index.html
           ! grep -R -q 'v7-stage\|\.payload' fracture-wilds/index.html fracture-wilds/debug-v7.js fracture-wilds/science-game-v7.js fracture-wilds/science-sim-v7.js
 
@@ -128,16 +121,3 @@ jobs:
           compile(source.read_text(), str(source), 'exec')
           PY
           CARGO_TARGET_DIR=/tmp/god-genic-rust-target cargo check --manifest-path sandbox-god-genic/rust/Cargo.toml --target wasm32-unknown-unknown
-          rm -f sandbox-god-genic/rust/Cargo.lock
-
-      - name: Commit source-only cleanup
-        if: github.event_name == 'pull_request'
-        shell: bash
-        run: |
-          if [ -n "$(git status --porcelain)" ]; then
-            git config user.name github-actions[bot]
-            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-            git add -A
-            git commit -m 'Remove generated compiler artifacts from science v7'
-            git push origin HEAD:${{ github.head_ref }}
-          fi
