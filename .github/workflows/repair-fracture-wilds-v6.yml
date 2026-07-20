@@ -11,12 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: main
+        with: {ref: main}
       - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Decode direct public engine files
+        with: {node-version: '22'}
+      - name: Build direct public files
         shell: bash
         run: |
           set -euo pipefail
@@ -26,142 +24,38 @@ jobs:
           sed -i "s#'./sim.js?v=5'#'./sim.js?v=6'#g" fracture-wilds/game.js
           node --check fracture-wilds/sim.js
           node --check fracture-wilds/game.js
-      - name: Add network and AI debugger
+      - name: Add compact network debugger
         shell: bash
         run: |
           cat > fracture-wilds/debug.js <<'JS'
-          (()=>{
-            'use strict';
-            const BUILD='6.0.0';
-            const ASSETS=['./index.html','./style.css?v=6','./debug.js?v=6','./game.js?v=6','./sim.js?v=6','./sw.js?v=6'];
-            const state={build:BUILD,started:new Date().toISOString(),errors:[],tests:[],online:navigator.onLine};
-            const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-            const remember=(kind,value)=>{state.errors.push({time:new Date().toISOString(),kind,message:String(value?.message||value)});state.errors=state.errors.slice(-12);render()};
-            addEventListener('error',e=>remember('error',e.error||e.message));
-            addEventListener('unhandledrejection',e=>remember('promise',e.reason));
-            addEventListener('online',()=>{state.online=true;render()});
-            addEventListener('offline',()=>{state.online=false;render()});
-            const css=`
-              #fwDebugButton{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));z-index:9000;border:1px solid #7fffe066;border-radius:999px;padding:10px 13px;background:#06131ddd;color:#baffec;font:900 11px system-ui;letter-spacing:.09em;box-shadow:0 0 24px #45ffd544;backdrop-filter:blur(12px)}
-              #fwDebugPanel{position:fixed;inset:0;z-index:9998;display:none;place-items:center;padding:18px;background:#01050bea;color:#eafffa;font:13px system-ui;overflow:auto}
-              #fwDebugPanel.open{display:grid}#fwDebugCard{width:min(680px,100%);max-height:92vh;overflow:auto;border:1px solid #64f8d844;border-radius:24px;background:linear-gradient(145deg,#091722,#03070d);padding:20px;box-shadow:0 30px 90px #000,0 0 60px #3cf4d322}
-              #fwDebugCard h2{margin:0 0 4px;font-size:22px}#fwDebugCard .sub{color:#8da7b5;margin-bottom:14px}#fwDebugCard pre{white-space:pre-wrap;word-break:break-word;background:#02070b;border:1px solid #20333d;border-radius:14px;padding:12px;color:#b9d9e5;max-height:220px;overflow:auto}
-              .fwRows{display:grid;gap:7px}.fwRow{display:grid;grid-template-columns:1fr auto;gap:10px;padding:9px 10px;border-radius:12px;background:#0a1822}.fwOk{color:#70ffd5}.fwBad{color:#ff7793}.fwWait{color:#ffd66e}.fwButtons{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:14px}.fwButtons button{min-height:46px;border:0;border-radius:14px;background:#132431;color:#eafffa;font-weight:850}.fwButtons .accent{background:#70ffd5;color:#03110c}.fwClose{float:right;border:0;background:transparent;color:#fff;font-size:24px}
-              html[data-fw-safe='1'] *{text-shadow:none!important;filter:none!important}html[data-fw-safe='1'] canvas{image-rendering:auto}
-            `;
-            const style=document.createElement('style');style.textContent=css;document.head.append(style);
-            const button=document.createElement('button');button.id='fwDebugButton';button.textContent='⚙ DEBUG';button.setAttribute('aria-label','Open network debugger');
-            const panel=document.createElement('section');panel.id='fwDebugPanel';panel.innerHTML=`<article id="fwDebugCard"><button class="fwClose" aria-label="Close">×</button><h2>Fracture Debug Core</h2><div class="sub">Build ${BUILD} · plain files · AI-readable report</div><div id="fwDebugSummary"></div><div class="fwButtons"><button id="fwTest" class="accent">RUN NETWORK TEST</button><button id="fwCopy">COPY REPORT</button><button id="fwRepair">FIX CACHE + RELOAD</button><button id="fwSafe">SAFE GRAPHICS</button></div><pre id="fwDebugLog">No errors captured.</pre></article>`;
-            document.addEventListener('DOMContentLoaded',()=>{document.body.append(button,panel);bind();render();setTimeout(runTests,500)},{once:true});
-            function bind(){button.onclick=()=>panel.classList.add('open');panel.querySelector('.fwClose').onclick=()=>panel.classList.remove('open');panel.onclick=e=>{if(e.target===panel)panel.classList.remove('open')};panel.querySelector('#fwTest').onclick=runTests;panel.querySelector('#fwCopy').onclick=copyReport;panel.querySelector('#fwRepair').onclick=repair;panel.querySelector('#fwSafe').onclick=()=>{document.documentElement.dataset.fwSafe='1';localStorage.setItem('fw_safe','1');render()};if(localStorage.getItem('fw_safe')==='1')document.documentElement.dataset.fwSafe='1'}
-            async function testAsset(url){const started=performance.now();try{const r=await fetch(url,{cache:'no-store'});const ms=Math.round(performance.now()-started);if(r.body)r.body.cancel().catch(()=>{});return{url,ok:r.ok,status:r.status,ms}}catch(error){return{url,ok:false,status:0,ms:Math.round(performance.now()-started),error:String(error.message||error)}}
-            async function runTests(){state.tests=ASSETS.map(url=>({url,pending:true}));render();state.tests=await Promise.all(ASSETS.map(testAsset));render();return state.tests}
-            async function swInfo(){const reg=await Promise.race([navigator.serviceWorker?.getRegistration?.(),new Promise(r=>setTimeout(()=>r(null),800))]);return{supported:'serviceWorker'in navigator,controller:!!navigator.serviceWorker?.controller,scope:reg?.scope||null,active:reg?.active?.state||null}}
-            async function report(){const connection=navigator.connection||{};return{...state,url:location.href,userAgent:navigator.userAgent,visibility:document.visibilityState,safe:document.documentElement.dataset.fwSafe==='1',connection:{effectiveType:connection.effectiveType||null,downlink:connection.downlink||null,rtt:connection.rtt||null,saveData:connection.saveData||false},serviceWorker:await swInfo(),memory:navigator.deviceMemory||null,cores:navigator.hardwareConcurrency||null}}
-            async function copyReport(){const text=JSON.stringify(await report(),null,2);try{await navigator.clipboard.writeText(text);button.textContent='✓ COPIED';setTimeout(()=>button.textContent='⚙ DEBUG',1400)}catch{prompt('Copy this debug report',text)}}
-            async function repair(){const names=await caches.keys();await Promise.all(names.map(n=>caches.delete(n)));const regs=await navigator.serviceWorker?.getRegistrations?.()||[];await Promise.all(regs.map(r=>r.unregister()));location.replace(`${location.pathname}?v=6&fresh=${Date.now()}`)}
-            function render(){const summary=panel.querySelector?.('#fwDebugSummary'),log=panel.querySelector?.('#fwDebugLog');if(!summary||!log)return;const conn=navigator.connection;const sw=navigator.serviceWorker?.controller?'ACTIVE':'WAITING';const rows=[`<div class="fwRow"><span>Network</span><b class="${state.online?'fwOk':'fwBad'}">${state.online?'ONLINE':'OFFLINE'}</b></div>`,`<div class="fwRow"><span>Service worker</span><b class="${sw==='ACTIVE'?'fwOk':'fwWait'}">${sw}</b></div>`,`<div class="fwRow"><span>Connection</span><b>${esc(conn?.effectiveType||'unknown')} ${conn?.rtt?`· ${conn.rtt}ms`:''}</b></div>`,...state.tests.map(t=>`<div class="fwRow"><span>${esc(t.url)}</span><b class="${t.pending?'fwWait':t.ok?'fwOk':'fwBad'}">${t.pending?'TESTING':t.ok?`${t.status} · ${t.ms}ms`:`FAIL ${t.status||''}`}</b></div>`)].join('');summary.innerHTML=`<div class="fwRows">${rows}</div>`;log.textContent=state.errors.length?JSON.stringify(state.errors,null,2):'No runtime errors captured.'}
-            window.__FW_DEBUG__={state,runTests,report,repair};
-          })();
+          (()=>{'use strict';const A=['./style.css?v=6','./game.js?v=6','./sim.js?v=6','./sw.js?v=6'],S={build:'6.0.0',errors:[],tests:[]};addEventListener('error',e=>S.errors.push(String(e.error?.message||e.message)));addEventListener('unhandledrejection',e=>S.errors.push(String(e.reason?.message||e.reason)));const st=document.createElement('style');st.textContent='#fwdbg{position:fixed;right:12px;bottom:12px;z-index:9990;border:1px solid #70ffd566;border-radius:99px;background:#06131ddd;color:#cffff1;padding:10px 13px;font:900 11px system-ui}#fwpanel{display:none;position:fixed;inset:0;z-index:9999;background:#01060bed;color:#eafffa;padding:18px;overflow:auto;font:13px system-ui}#fwpanel.on{display:grid;place-items:center}#fwcard{width:min(620px,100%);background:#07131d;border:1px solid #70ffd544;border-radius:22px;padding:18px;box-shadow:0 20px 80px #000}#fwrows{display:grid;gap:7px}.fwrow{display:grid;grid-template-columns:1fr auto;gap:10px;background:#0d1d28;border-radius:11px;padding:9px}.ok{color:#70ffd5}.bad{color:#ff7893}.wait{color:#ffd66e}.fwbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.fwbtns button,#fwclose{min-height:44px;border:0;border-radius:12px;background:#173040;color:#fff;font-weight:800}.fwbtns .accent{background:#70ffd5;color:#03110d}#fwlog{white-space:pre-wrap;word-break:break-word;background:#02080d;padding:10px;border-radius:12px;max-height:180px;overflow:auto}';document.head.append(st);function boot(){const b=document.createElement('button');b.id='fwdbg';b.textContent='⚙ DEBUG';const p=document.createElement('section');p.id='fwpanel';p.innerHTML='<article id="fwcard"><button id="fwclose">CLOSE</button><h2>Fracture Debug Core</h2><p>Build 6 · direct files · no hidden payload loader</p><div id="fwrows"></div><div class="fwbtns"><button class="accent" id="fwtest">TEST NETWORK</button><button id="fwcopy">COPY REPORT</button><button id="fwfix">FIX CACHE + RELOAD</button><button id="fwsafe">SAFE GRAPHICS</button></div><pre id="fwlog">No errors captured.</pre></article>';document.body.append(b,p);b.onclick=()=>p.classList.add('on');p.querySelector('#fwclose').onclick=()=>p.classList.remove('on');p.querySelector('#fwtest').onclick=test;p.querySelector('#fwcopy').onclick=copy;p.querySelector('#fwfix').onclick=fix;p.querySelector('#fwsafe').onclick=()=>{document.documentElement.dataset.safe='1';localStorage.setItem('fw_safe','1')};if(localStorage.getItem('fw_safe')==='1')document.documentElement.dataset.safe='1';render();setTimeout(test,600)}async function test(){S.tests=A.map(url=>({url,pending:true}));render();S.tests=await Promise.all(A.map(async url=>{const t=performance.now();try{const r=await fetch(url,{cache:'no-store'});r.body?.cancel().catch(()=>{});return{url,ok:r.ok,status:r.status,ms:Math.round(performance.now()-t)}}catch(e){return{url,ok:false,status:0,ms:Math.round(performance.now()-t),error:String(e.message||e)}}));render()}function render(){const r=document.querySelector('#fwrows'),l=document.querySelector('#fwlog');if(!r)return;r.innerHTML=[`<div class="fwrow"><span>Network</span><b class="${navigator.onLine?'ok':'bad'}">${navigator.onLine?'ONLINE':'OFFLINE'}</b></div>`,`<div class="fwrow"><span>Service worker</span><b class="${navigator.serviceWorker?.controller?'ok':'wait'}">${navigator.serviceWorker?.controller?'ACTIVE':'WAITING'}</b></div>`,...S.tests.map(x=>`<div class="fwrow"><span>${x.url}</span><b class="${x.pending?'wait':x.ok?'ok':'bad'}">${x.pending?'TESTING':x.ok?`${x.status} · ${x.ms}ms`:`FAIL ${x.status}`}</b></div>`)].join('');l.textContent=S.errors.length?JSON.stringify(S.errors,null,2):'No errors captured.'}async function report(){return{...S,url:location.href,online:navigator.onLine,userAgent:navigator.userAgent,serviceWorker:!!navigator.serviceWorker?.controller,cores:navigator.hardwareConcurrency||null}}async function copy(){const v=JSON.stringify(await report(),null,2);try{await navigator.clipboard.writeText(v)}catch{prompt('Copy debug report',v)}}async function fix(){await Promise.all((await caches.keys()).map(k=>caches.delete(k)));await Promise.all((await navigator.serviceWorker?.getRegistrations?.()||[]).map(r=>r.unregister()));location.replace(`${location.pathname}?v=6&fresh=${Date.now()}`)}window.__FW_DEBUG__={state:S,test,report,fix};document.readyState==='loading'?addEventListener('DOMContentLoaded',boot,{once:true}):boot()})();
           JS
           node --check fracture-wilds/debug.js
-      - name: Replace loader, cache, manifest, and documentation
+      - name: Switch PWA to direct v6 files
         shell: bash
         run: |
-          set -euo pipefail
           python - <<'PY'
           from pathlib import Path
           import json
-          p=Path('fracture-wilds/index.html')
-          s=p.read_text()
-          s=s.replace('style.css?v=5','style.css?v=6')
-          s=s.replace('<script type="module" src="./game.js?v=5"></script>','<script src="./debug.js?v=6"></script><script type="module" src="./game.js?v=6"></script>')
-          s=s.replace('<title>God Genic: Fracture Wilds</title>','<title>God Genic: Fracture Wilds v6</title>')
-          p.write_text(s)
-          m=json.loads(Path('manifest.webmanifest').read_text())
-          m.update({'name':'God Genic: Fracture Wilds v6','short_name':'Fracture Wilds','start_url':'./fracture-wilds/?v=6','description':'A fast direct-file mobile alien survival ecosystem with built-in network and AI debugging.'})
-          if m.get('icons'): m['icons'][0]['src']='icon.svg?v=6'
-          Path('manifest.webmanifest').write_text(json.dumps(m,indent=2)+'\n')
+          p=Path('fracture-wilds/index.html');s=p.read_text();s=s.replace('style.css?v=5','style.css?v=6').replace('<script type="module" src="./game.js?v=5"></script>','<script src="./debug.js?v=6"></script><script type="module" src="./game.js?v=6"></script>').replace('God Genic: Fracture Wilds</title>','God Genic: Fracture Wilds v6</title>');p.write_text(s)
+          p=Path('index.html');s=p.read_text().replace('manifest.webmanifest?v=5','manifest.webmanifest?v=6').replace('sw.js?v=5','sw.js?v=6').replace('fracture-wilds/?v=5','fracture-wilds/?v=6');p.write_text(s)
+          m=json.loads(Path('manifest.webmanifest').read_text());m.update({'name':'God Genic: Fracture Wilds v6','start_url':'./fracture-wilds/?v=6','description':'Fast direct-file alien survival game with built-in network debugging.'});m['icons'][0]['src']='icon.svg?v=6';Path('manifest.webmanifest').write_text(json.dumps(m,indent=2)+'\n')
           PY
           cat > fracture-wilds/sw.js <<'JS'
-          const CACHE='fracture-wilds-v6';
-          const CORE=['./','./index.html','./style.css?v=6','./debug.js?v=6','./game.js?v=6','./sim.js?v=6','../manifest.webmanifest?v=6','../icon.svg?v=6'];
-          self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>Promise.allSettled(CORE.map(u=>c.add(new Request(u,{cache:'reload'}))))).then(()=>self.skipWaiting())));
-          self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
-          self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;const u=new URL(e.request.url);if(u.origin!==location.origin)return;const dynamic=e.request.mode==='navigate'||['script','style','worker'].includes(e.request.destination);e.respondWith(dynamic?fetch(e.request,{cache:'no-store'}).then(r=>{if(r.ok)caches.open(CACHE).then(c=>c.put(e.request,r.clone()));return r}).catch(()=>caches.match(e.request).then(x=>x||caches.match('./index.html'))):caches.match(e.request).then(x=>x||fetch(e.request).then(r=>{if(r.ok)caches.open(CACHE).then(c=>c.put(e.request,r.clone()));return r})))});
+          const CACHE='fracture-wilds-v6',CORE=['./','./index.html','./style.css?v=6','./debug.js?v=6','./game.js?v=6','./sim.js?v=6','../manifest.webmanifest?v=6'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>Promise.allSettled(CORE.map(u=>c.add(new Request(u,{cache:'reload'}))))).then(()=>self.skipWaiting())));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CACHE).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;const u=new URL(e.request.url);if(u.origin!==location.origin)return;const n=e.request.mode==='navigate'||['script','style','worker'].includes(e.request.destination);e.respondWith(n?fetch(e.request,{cache:'no-store'}).then(r=>{if(r.ok)caches.open(CACHE).then(c=>c.put(e.request,r.clone()));return r}).catch(()=>caches.match(e.request).then(x=>x||caches.match('./index.html'))):caches.match(e.request).then(x=>x||fetch(e.request)))});
           JS
           cat > sw.js <<'JS'
-          const CACHE='fracture-wilds-root-v6';
-          const CORE=['./','./index.html','./manifest.webmanifest?v=6','./icon.svg?v=6','./fracture-wilds/','./fracture-wilds/index.html','./fracture-wilds/style.css?v=6','./fracture-wilds/debug.js?v=6','./fracture-wilds/game.js?v=6','./fracture-wilds/sim.js?v=6','./fracture-wilds/sw.js?v=6'];
-          self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>Promise.allSettled(CORE.map(u=>c.add(new Request(u,{cache:'reload'}))))).then(()=>self.skipWaiting())));
-          self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
-          self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;const u=new URL(e.request.url);if(u.origin!==location.origin)return;const dynamic=e.request.mode==='navigate'||['script','style','worker'].includes(e.request.destination);e.respondWith(dynamic?fetch(e.request,{cache:'no-store'}).then(r=>{if(r.ok)caches.open(CACHE).then(c=>c.put(e.request,r.clone()));return r}).catch(()=>caches.match(e.request).then(x=>x||caches.match('./fracture-wilds/index.html'))):caches.match(e.request).then(x=>x||fetch(e.request).then(r=>{if(r.ok)caches.open(CACHE).then(c=>c.put(e.request,r.clone()));return r})))});
+          const CACHE='fracture-wilds-root-v6',CORE=['./','./index.html','./manifest.webmanifest?v=6','./fracture-wilds/','./fracture-wilds/index.html','./fracture-wilds/style.css?v=6','./fracture-wilds/debug.js?v=6','./fracture-wilds/game.js?v=6','./fracture-wilds/sim.js?v=6','./fracture-wilds/sw.js?v=6'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>Promise.allSettled(CORE.map(u=>c.add(new Request(u,{cache:'reload'}))))).then(()=>self.skipWaiting())));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CACHE).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;const u=new URL(e.request.url);if(u.origin!==location.origin)return;const n=e.request.mode==='navigate'||['script','style','worker'].includes(e.request.destination);e.respondWith(n?fetch(e.request,{cache:'no-store'}).then(r=>{if(r.ok)caches.open(CACHE).then(c=>c.put(e.request,r.clone()));return r}).catch(()=>caches.match(e.request).then(x=>x||caches.match('./fracture-wilds/index.html'))):caches.match(e.request).then(x=>x||fetch(e.request)))});
           JS
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('index.html')
-          s=p.read_text().replace('manifest.webmanifest?v=5','manifest.webmanifest?v=6').replace("sw.js?v=5","sw.js?v=6").replace("fracture-wilds/?v=5","fracture-wilds/?v=6")
-          p.write_text(s)
-          PY
-          cat > fracture-wilds/AI_DEBUG.md <<'MD'
-          # Fracture Wilds — AI Debug Map
-
-          Build v6 intentionally uses plain browser files and no bundler.
-
-          ## Boot path
-          1. `fracture-wilds/index.html`
-          2. `debug.js` installs error/network capture
-          3. `game.js` starts UI, input, renderer, and frame loop
-          4. `game.js` imports `sim.js`
-          5. `sw.js` provides network-first updates and offline fallback
-
-          ## Fast checks
-          ```bash
-          node --check fracture-wilds/debug.js
-          node --check fracture-wilds/game.js
-          node --check fracture-wilds/sim.js
-          node --check fracture-wilds/sw.js
-          ```
-
-          ## Runtime smoke test
-          Import `World` from `sim.js`, run 2400 fixed 1/60-second ticks, and assert finite player coordinates, at least 20 organisms, six dens, at least 100 food nodes, and a valid rain phase.
-
-          ## iPhone repair
-          Open the in-game `DEBUG` button, run Network Test, then use `FIX CACHE + RELOAD`. The copied JSON report is designed for AI-assisted diagnosis.
-          MD
-          rm -rf fracture-wilds/.payload
-          rm -f .github/workflows/repair-fracture-wilds-v6.yml
-          node --check fracture-wilds/sw.js
-          node --check sw.js
-      - name: Direct-file runtime test
+          node --check fracture-wilds/sw.js && node --check sw.js
+      - name: Runtime test and commit
         shell: bash
         run: |
           node --input-type=module <<'JS'
-          import assert from 'node:assert/strict';
-          import {World} from './fracture-wilds/sim.js';
-          const w=new World(474),i={x:.7,y:0,jump:false,grab:false,bite:false,dash:false};
-          for(let n=0;n<2400;n++){i.jump=n%180===0;i.bite=n%95===0;w.step(1/60,i)}
-          const s=w.stats();
-          assert.ok(Number.isFinite(w.player.x)&&Number.isFinite(w.player.y));
-          assert.ok(s.population>=20);assert.equal(w.map.dens.length,6);assert.ok(w.map.food.length>=100);assert.ok(['clear','warning','rain'].includes(s.rainPhase));
-          console.log(JSON.stringify(s));
+          import assert from 'node:assert/strict';import{World}from'./fracture-wilds/sim.js';const w=new World(474),i={x:.7,y:0,jump:false,grab:false,bite:false,dash:false};for(let n=0;n<2400;n++){i.jump=n%180===0;i.bite=n%95===0;w.step(1/60,i)}const s=w.stats();assert.ok(Number.isFinite(w.player.x));assert.ok(s.population>=20);assert.equal(w.map.dens.length,6);assert.ok(w.map.food.length>=100);console.log(s);
           JS
-      - name: Update permanent CI
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('.github/workflows/sandbox-god-genic-ci.yml')
-          s=p.read_text()
-          s=s.replace("cat fracture-wilds/.payload/sim.js.part* | base64 -d | gzip -d > /tmp/fw-sim.js\n          cat fracture-wilds/.payload/game.js.part* | base64 -d | gzip -d > /tmp/fw-game.js\n          node --check /tmp/fw-sim.js\n          node --check /tmp/fw-game.js", "node --check fracture-wilds/sim.js\n          node --check fracture-wilds/game.js\n          node --check fracture-wilds/debug.js")
-          s=s.replace("import {World} from '/tmp/fw-sim.js';", "import {World} from './fracture-wilds/sim.js';")
-          p.write_text(s)
-          PY
-      - name: Commit direct-file repair
-        shell: bash
-        run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add -A
-          git commit -m 'Repair Fracture Wilds with direct files and network debugger'
+          git add index.html manifest.webmanifest sw.js fracture-wilds/index.html fracture-wilds/style.css fracture-wilds/debug.js fracture-wilds/game.js fracture-wilds/sim.js fracture-wilds/sw.js
+          git commit -m 'Repair Fracture Wilds with direct files and debugger'
           git push origin HEAD:main
