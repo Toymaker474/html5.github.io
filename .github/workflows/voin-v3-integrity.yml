@@ -1,0 +1,51 @@
+name: VOIN V3 Integrity
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'voin-genetic-minds-v2/**'
+      - '.github/workflows/voin-v3-integrity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reconstruct engine
+        run: |
+          cat voin-genetic-minds-v2/app-parts/{01,02,03,04,05,06,07}.txt > /tmp/voin-v3-engine.js
+          test $(wc -c < /tmp/voin-v3-engine.js) -gt 45000
+      - name: JavaScript syntax
+        run: |
+          node --check /tmp/voin-v3-engine.js
+          node --check voin-genetic-minds-v2/app.js
+          node --check voin-genetic-minds-v2/gear-data.js
+          node --check voin-genetic-minds-v2/optimizer-worker.js
+      - name: Static integration checks
+        run: |
+          grep -q 'NSGA-II' voin-genetic-minds-v2/index.html
+          grep -q 'MAP-ELITES' voin-genetic-minds-v2/index.html
+          grep -q 'class SoundEngine' /tmp/voin-v3-engine.js
+          grep -q 'SEARCH 50K BUILDS' voin-genetic-minds-v2/index.html
+          grep -q "partCount=7" voin-genetic-minds-v2/app.js
+          grep -q 'Flamekeeper Sickles' voin-genetic-minds-v2/gear-data.js
+      - name: Validate DOM references
+        run: |
+          python - <<'PY'
+          import re, pathlib
+          html=pathlib.Path('voin-genetic-minds-v2/index.html').read_text()
+          js=pathlib.Path('/tmp/voin-v3-engine.js').read_text()
+          ids=set(re.findall(r'id="([^"]+)"',html))
+          refs=set(re.findall(r"\$\('([^']+)'\)",js))
+          missing=sorted(refs-ids)
+          assert not missing, f'Missing DOM IDs: {missing}'
+          print(f'validated {len(refs)} JS DOM references')
+          PY
