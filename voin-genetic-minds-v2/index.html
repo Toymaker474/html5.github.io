@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#070708" />
-  <title>VOIN Genetic Minds V2</title>
+  <meta name="theme-color" content="#08090b" />
+  <meta name="description" content="Research-driven VOIN genetic build optimizer and first-person combat visualization." />
+  <title>VOIN Genetic Minds — Inferno Research Build</title>
   <link rel="stylesheet" href="./styles.css" />
   <script type="importmap">
   {
@@ -16,97 +17,110 @@
   </script>
 </head>
 <body>
-  <main id="app">
-    <section class="game-shell">
-      <header class="topbar">
-        <div>
-          <div class="eyebrow">ANIMATED GLB COMBAT · GENETIC SURVIVAL LAB</div>
-          <h1>VOIN // GENETIC MINDS <span>V2</span></h1>
-        </div>
-        <div class="top-actions">
-          <button id="run" class="primary">AWAKEN MINDS</button>
-          <button id="breed">BREED NEXT</button>
-          <button id="auto">EVOLVE ×10</button>
-          <button id="reset">RESET</button>
-        </div>
-      </header>
+  <main class="shell">
+    <header class="masthead">
+      <div>
+        <div class="eyebrow">INFERNO 0.5 RESEARCH SURROGATE · NSGA-II + MAP-ELITES + UCB</div>
+        <h1>VOIN // GENETIC MINDS <span>V3</span></h1>
+        <p>Artificial Vindicators fight private worlds, learn during life, and evolve gear across generations.</p>
+      </div>
+      <div class="actions">
+        <button id="run" class="primary">AWAKEN MINDS</button>
+        <button id="breed">BREED NEXT</button>
+        <button id="auto">EVOLVE ×10</button>
+        <button id="optimizer">SEARCH 50K BUILDS</button>
+        <button id="sound" aria-pressed="false">SOUND OFF</button>
+        <button id="reset">RESET</button>
+      </div>
+    </header>
 
-      <section class="viewport-wrap">
-        <div id="viewport" aria-label="3D first-person genetic AI combat"></div>
-        <div class="vignette"></div>
-        <div class="grain"></div>
-        <div class="hud hud-top">
-          <div class="nameplate">
-            <b id="agentName">VEYRA</b>
-            <span id="lineage">STORMBORN</span>
-          </div>
-          <div class="counters">
-            <span><b id="gen">1</b> GEN</span>
-            <span><b id="alive">10</b> ALIVE</span>
-            <span><b id="ichor">0</b> ICHOR</span>
-          </div>
-        </div>
-        <div class="hud hearts" id="hearts"></div>
-        <div class="hud action-readout">
-          <small id="status">PAUSED</small>
-          <b id="action">ENTERING THE HOLLOW</b>
-          <span id="thought">I am alive. I must learn what this world punishes.</span>
-        </div>
-        <div class="crosshair"><i></i><i></i></div>
-        <div id="damageFlash" class="damage-flash"></div>
-        <div id="deathScreen" class="death-screen hidden">
-          <small id="deathKicker">GENOME FAILURE</small>
-          <b id="deathTitle">THE MIND DIED</b>
-          <span id="deathBody">Unbanked Ichor was lost.</span>
-        </div>
-      </section>
-
-      <section class="controls-panel">
-        <label>Region
-          <select id="region">
-            <option value="hollow">Chorister Hollow</option>
-            <option value="cathedral">Molten Cathedral</option>
-            <option value="frozen">Frozen Ruins</option>
-          </select>
-        </label>
-        <label>Goal
-          <select id="goal">
-            <option value="mixed">Survive + optimize</option>
-            <option value="ichor">Maximum Ichor</option>
-            <option value="loot">Maximum rare loot</option>
-            <option value="survival">Maximum survival</option>
-          </select>
-        </label>
-        <label>Mutation <output id="mutOut">10%</output>
-          <input id="mut" type="range" min="1" max="30" value="10" />
-        </label>
-        <label>Brutality <output id="hardOut">58%</output>
-          <input id="hard" type="range" min="20" max="100" value="58" />
-        </label>
-      </section>
-
-      <section class="lower-grid">
-        <aside class="mind-panel">
-          <div class="panel-title"><span>SELECTED MIND</span><b id="buildTitle">Mortal Heart · Sickles</b></div>
-          <div id="build" class="build-grid"></div>
-          <div class="panel-title"><span>DECISION PRESSURE</span><b id="decisionWinner">Waiting</b></div>
-          <div id="decisions" class="bars"></div>
-          <div class="panel-title"><span>INHERITED PERSONALITY</span><b>Genome</b></div>
-          <div id="traits" class="bars"></div>
-        </aside>
-
-        <section class="population-panel">
-          <div class="panel-title"><span>PARALLEL PRIVATE LIVES</span><b id="populationSummary">0 dead · 0 extracted</b></div>
-          <div id="agents" class="agents"></div>
-          <div class="panel-title"><span>INNER VOICE</span><b>Recent memory</b></div>
-          <div id="memory" class="memory"></div>
-        </section>
-      </section>
-
-      <footer>
-        Real animated GLB skeletons are loaded at runtime. Models and animations are transformed into pale horned enemies; the genetic simulation remains a research surrogate rather than copied VOIN code.
-      </footer>
+    <section class="metrics">
+      <article><b id="gen">1</b><span>generation</span></article>
+      <article><b id="alive">48</b><span>minds alive</span></article>
+      <article><b id="best">0</b><span>best Pareto score</span></article>
+      <article><b id="archive">0</b><span>behavior niches</span></article>
+      <article><b id="evaluations">0</b><span>build trials</span></article>
     </section>
+
+    <section class="viewport-card">
+      <div id="viewport" aria-label="First-person VOIN-inspired combat simulation"></div>
+      <div class="vignette"></div><div class="grain"></div><div id="damageFlash" class="damage-flash"></div>
+      <div class="hud hud-left">
+        <div class="agent-label"><b id="agentName">VEYRA</b><span id="lineage">STORMBORN</span></div>
+        <div id="hearts" class="hearts"></div>
+        <div class="ichor"><i></i><b id="ichor">0</b><span>ICHOR</span></div>
+      </div>
+      <div class="hud hud-right">
+        <div class="ability" id="ability1"><kbd>1</kbd><span>POWER</span><i></i></div>
+        <div class="ability" id="ability2"><kbd>2</kbd><span>RUNE</span><i></i></div>
+        <div class="ability" id="ability3"><kbd>3</kbd><span>DASH</span><i></i></div>
+        <div class="ability" id="ability4"><kbd>4</kbd><span>STRIKE</span><i></i></div>
+      </div>
+      <div class="crosshair"><i></i><i></i></div>
+      <div class="hud thought">
+        <small id="status">PAUSED</small>
+        <b id="action">ENTERING THE HOLLOW</b>
+        <span id="thought">I am alive. I must learn what this world punishes.</span>
+      </div>
+      <div id="deathScreen" class="end-screen hidden"><small id="endKicker">GENOME FAILURE</small><b id="endTitle">THE MIND DIED</b><span id="endBody">The trial ended.</span></div>
+    </section>
+
+    <section class="control-strip">
+      <label>Region<select id="region"><option value="hollow">Chorister Hollow</option><option value="cathedral">Thousand Names Atheneum</option><option value="inferno">Veins of the Solar Forge</option><option value="frozen">Grimmir Expanse</option></select></label>
+      <label>Search objective<select id="goal"><option value="balanced">Pareto balanced</option><option value="survival">Survival</option><option value="ichor">Ichor/min</option><option value="loot">Rare loot</option><option value="speed">Clear speed</option></select></label>
+      <label>Toughness <output id="hardOut">3</output><input id="hard" type="range" min="1" max="6" value="3" /></label>
+      <label>Mutation <output id="mutOut">10%</output><input id="mut" type="range" min="2" max="28" value="10" /></label>
+      <label>Visible swarm <output id="swarmOut">90</output><input id="swarm" type="range" min="20" max="180" value="90" /></label>
+    </section>
+
+    <section class="main-grid">
+      <aside class="panel mind-panel">
+        <div class="panel-title"><span>SELECTED MIND</span><b id="buildTitle"></b></div>
+        <div id="build" class="build-grid"></div>
+        <div class="panel-title"><span>WORLD MODEL</span><b id="intention">Observe</b></div>
+        <div id="beliefs" class="beliefs"></div>
+        <div class="panel-title"><span>UCB ACTION VALUES</span><b id="decisionWinner">Waiting</b></div>
+        <div id="decisions" class="bars"></div>
+        <div class="panel-title"><span>INHERITED GENOME</span><b>Personality</b></div>
+        <div id="traits" class="bars"></div>
+      </aside>
+
+      <section class="panel population-panel">
+        <div class="panel-title"><span>PARALLEL PRIVATE LIVES</span><b id="populationSummary"></b></div>
+        <div id="agents" class="agents"></div>
+        <div class="panel-title"><span>INNER VOICE + EPISODIC MEMORY</span><b id="learningSummary">0 learned actions</b></div>
+        <div id="memory" class="memory"></div>
+      </section>
+    </section>
+
+    <section class="research-grid">
+      <section class="panel optimizer-panel">
+        <div class="panel-title"><span>GEAR RESEARCH ENGINE</span><b id="optimizerStatus">Idle</b></div>
+        <p class="panel-copy">A Web Worker evaluates noisy combat episodes, keeps a Pareto front, preserves diverse behavior niches, and uses current community builds as priors—not as unquestioned truth.</p>
+        <div id="optimizerProgress" class="progress"><i></i></div>
+        <div id="optimizerResults" class="optimizer-results"><div class="empty">Press <b>SEARCH 50K BUILDS</b> to test the full modeled gear space.</div></div>
+      </section>
+
+      <section class="panel evidence-panel">
+        <div class="panel-title"><span>COMMUNITY EVIDENCE</span><b>Current research priors</b></div>
+        <div id="evidence" class="evidence"></div>
+      </section>
+    </section>
+
+    <section class="panel model-lab">
+      <div class="panel-title"><span>OPEN MODEL LAB</span><b>GLB / glTF hot-swap</b></div>
+      <p class="panel-copy">Export a rigged character from Blender or another glTF-compatible tool, then drop the file here. The app clones its skeleton, discovers animation clips, and uses it for the enemy simulation locally in your browser.</p>
+      <div class="model-controls">
+        <label class="file-button">CHOOSE GLB<input id="modelFile" type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" /></label>
+        <input id="modelUrl" type="url" placeholder="Or paste a public .glb URL" />
+        <button id="loadModel">LOAD MODEL</button>
+        <span id="modelStatus">Default open GLB soldier</span>
+      </div>
+    </section>
+
+    <footer>
+      Fan-made research visualization. It does not copy VOIN code, assets, or hidden formulas. Current public gear descriptions and community reports are encoded as uncertain priors and re-tested under randomized combat conditions.
+    </footer>
   </main>
   <script type="module" src="./app.js"></script>
 </body>
