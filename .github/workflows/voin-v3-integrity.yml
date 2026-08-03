@@ -6,6 +6,11 @@ on:
     paths:
       - 'voin-genetic-minds-v2/**'
       - '.github/workflows/voin-v3-integrity.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'voin-genetic-minds-v2/**'
+      - '.github/workflows/voin-v3-integrity.yml'
   workflow_dispatch:
 
 permissions:
