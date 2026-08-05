@@ -1,4 +1,4 @@
-const BUILD = 'robot-rig-v4-20260805';
+const BUILD = 'machine-organism-v5-20260805';
 
 function applyFieldLabGrade() {
   const canvas = document.getElementById('world');
@@ -10,7 +10,7 @@ function applyFieldLabGrade() {
 async function refreshServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
   try {
-    const registration = await navigator.serviceWorker.register('./sw.js?v=4', {
+    const registration = await navigator.serviceWorker.register('./sw.js?v=5', {
       updateViaCache: 'none',
     });
     await registration.update();

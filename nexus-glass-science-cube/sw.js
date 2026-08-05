@@ -1,9 +1,9 @@
-const CACHE='nexus-field-lab-v4';
+const CACHE='nexus-machine-organism-v5';
 const CORE=[
-  './style.css?v=4',
-  './main.js?v=4',
+  './style.css?v=5',
+  './main.js?v=5',
   './runtime-source.js?v=robot-rig-v4-20260805',
-  './manifest.webmanifest?v=4'
+  './manifest.webmanifest?v=5'
 ];
 
 self.addEventListener('install',event=>{

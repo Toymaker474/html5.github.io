@@ -45,8 +45,8 @@ const STRUCTURES = {
 };
 
 const DEFAULT_BLUEPRINT = {
-  name: 'FORAGER-A',
-  parts: { core: 1, battery: 2, wheel: 4, leg: 0, sensor: 2, cargo: 1, builder: 1, repair: 0, weapon: 0, solar: 1, armor: 1 },
+  name: 'MACHINE-ORGANISM-A',
+  parts: { core: 1, battery: 2, wheel: 0, leg: 4, sensor: 2, cargo: 1, builder: 1, repair: 0, weapon: 0, solar: 1, armor: 1 },
   traits: { curiosity: .65, caution: .35, aggression: .18, cooperation: .78, efficiency: .72, mutation: .11 }
 };
 
@@ -93,23 +93,23 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 1.6));
 renderer.setSize(innerWidth, innerHeight, false);
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x020712);
-scene.fog = new THREE.FogExp2(0x061020, 0.015);
+scene.background = new THREE.Color(0x090c0a);
+scene.fog = new THREE.FogExp2(0x111712, 0.022);
 
 const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, .1, 160);
-camera.position.set(18, 18, 24);
+camera.position.set(9.4, 6.6, 12.8);
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 1.5, 0);
+controls.target.set(0, .82, .45);
 controls.enableDamping = true;
 controls.dampingFactor = .07;
-controls.minDistance = 8;
-controls.maxDistance = 48;
+controls.minDistance = 5.5;
+controls.maxDistance = 34;
 controls.maxPolarAngle = Math.PI * .48;
 controls.screenSpacePanning = false;
 controls.touches.ONE = THREE.TOUCH.ROTATE;
 controls.touches.TWO = THREE.TOUCH.DOLLY_PAN;
 
-scene.add(new THREE.HemisphereLight(0x8feaff, 0x07111d, 1.45));
+scene.add(new THREE.HemisphereLight(0xc7d5c9, 0x17130e, 1.28));
 const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
 keyLight.position.set(8, 18, 10);
 keyLight.castShadow = true;
@@ -119,10 +119,10 @@ keyLight.shadow.camera.right = 24;
 keyLight.shadow.camera.top = 24;
 keyLight.shadow.camera.bottom = -24;
 scene.add(keyLight);
-const cyanLight = new THREE.PointLight(0x22d9ff, 35, 34, 2);
+const cyanLight = new THREE.PointLight(0xb9cfc2, 13, 26, 2);
 cyanLight.position.set(-10, 8, -8);
 scene.add(cyanLight);
-const magentaLight = new THREE.PointLight(0xa05cff, 26, 28, 2);
+const magentaLight = new THREE.PointLight(0xd08d42, 11, 22, 2);
 magentaLight.position.set(10, 6, 9);
 scene.add(magentaLight);
 
@@ -132,11 +132,28 @@ scene.add(worldGroup);
 const physics = new RAPIER.World({ x: 0, y: state.gravity, z: 0 });
 physics.timestep = 1 / 60;
 
+const floorGeometry = new THREE.PlaneGeometry(36, 36, 40, 40);
+const floorPositions = floorGeometry.attributes.position;
+const floorColors = [];
+const floorColor = new THREE.Color();
+for (let index = 0; index < floorPositions.count; index++) {
+  const x = floorPositions.getX(index);
+  const y = floorPositions.getY(index);
+  const edge = Math.max(Math.abs(x), Math.abs(y)) / 18;
+  const ripple = Math.sin(x * .43) * Math.cos(y * .37) * .055 + Math.sin((x + y) * .18) * .035;
+  floorPositions.setZ(index, ripple - edge * .025);
+  const mineral = .13 + .035 * Math.sin(x * .31 + y * .19);
+  floorColor.setRGB(mineral * .76, mineral * .88, mineral * .71);
+  floorColors.push(floorColor.r, floorColor.g, floorColor.b);
+}
+floorGeometry.setAttribute('color', new THREE.Float32BufferAttribute(floorColors, 3));
+floorGeometry.computeVertexNormals();
 const floorMesh = new THREE.Mesh(
-  new THREE.BoxGeometry(36, .35, 36),
-  new THREE.MeshStandardMaterial({ color: 0x071522, metalness: .58, roughness: .33 })
+  floorGeometry,
+  new THREE.MeshStandardMaterial({ vertexColors: true, metalness: .08, roughness: .96 })
 );
-floorMesh.position.y = -.2;
+floorMesh.rotation.x = -Math.PI / 2;
+floorMesh.position.y = .006;
 floorMesh.receiveShadow = true;
 floorMesh.userData.ground = true;
 worldGroup.add(floorMesh);
@@ -145,8 +162,9 @@ physics.createCollider(RAPIER.ColliderDesc.cuboid(18, .175, 18).setFriction(1), 
 
 const grid = new THREE.GridHelper(36, 36, 0x3ddfff, 0x16384a);
 grid.position.y = .001;
-grid.material.opacity = .28;
+grid.material.opacity = .075;
 grid.material.transparent = true;
+grid.position.y = .012;
 worldGroup.add(grid);
 
 const cubeEdges = new THREE.LineSegments(
@@ -169,6 +187,48 @@ const liquidZone = new THREE.Mesh(
 liquidZone.position.set(-10, .55, 9);
 liquidZone.userData.zone = 'liquid';
 worldGroup.add(liquidZone);
+
+const habitatGroup = new THREE.Group();
+worldGroup.add(habitatGroup);
+const habitatRockMat = new THREE.MeshStandardMaterial({ color: 0x252b24, roughness: .94, metalness: .04 });
+const habitatMineralMat = new THREE.MeshStandardMaterial({ color: 0x5d6d5e, roughness: .72, metalness: .18 });
+for (let index = 0; index < 24; index++) {
+  const angle = index * 2.399963 + .3;
+  const radius = 7.5 + (index % 6) * 1.55;
+  const x = Math.cos(angle) * radius;
+  const z = Math.sin(angle) * radius;
+  if (Math.abs(x + 10) < 4.8 && Math.abs(z - 9) < 4.1) continue;
+  const rock = new THREE.Mesh(
+    new THREE.DodecahedronGeometry(.25 + (index % 5) * .08, 0),
+    index % 4 === 0 ? habitatMineralMat : habitatRockMat
+  );
+  rock.position.set(x, .12 + (index % 3) * .035, z);
+  rock.scale.set(1.25 + (index % 2) * .5, .55 + (index % 4) * .12, .8 + (index % 3) * .22);
+  rock.rotation.set(index * .17, angle, index * .11);
+  rock.castShadow = true;
+  rock.receiveShadow = true;
+  habitatGroup.add(rock);
+}
+for (let index = 0; index < 7; index++) {
+  const vent = new THREE.Group();
+  const angle = index / 7 * Math.PI * 2 + .42;
+  const radius = 12.5 + (index % 2) * 1.8;
+  vent.position.set(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
+  const collar = new THREE.Mesh(
+    new THREE.CylinderGeometry(.42, .55, .18, 12),
+    new THREE.MeshStandardMaterial({ color: 0x30352f, metalness: .55, roughness: .62 })
+  );
+  collar.position.y = .09;
+  vent.add(collar);
+  const glow = new THREE.Mesh(
+    new THREE.CircleGeometry(.27, 16),
+    new THREE.MeshBasicMaterial({ color: index % 2 ? 0xb4773a : 0x748e7e, transparent: true, opacity: .34 })
+  );
+  glow.rotation.x = -Math.PI / 2;
+  glow.position.y = .185;
+  vent.add(glow);
+  habitatGroup.add(vent);
+}
 
 const interactive = [];
 const tempVec = new THREE.Vector3();
@@ -388,39 +448,233 @@ function createManipulator(side, kind, materials) {
   return { root: shoulder, upper, elbow, wrist, kind, side };
 }
 
+function organismRoleProfile(role, parts) {
+  const profiles = {
+    scout: { body: [.78, .34, 1.05], head: [.34, .23, .40], abdomen: [.48, .32, .55], posture: .92, gait: 1.08 },
+    constructor: { body: [.92, .40, 1.12], head: [.38, .25, .44], abdomen: [.58, .40, .62], posture: 1.02, gait: .82 },
+    medic: { body: [.82, .35, 1.05], head: [.36, .24, .42], abdomen: [.50, .35, .58], posture: .98, gait: .96 },
+    sentinel: { body: [.88, .38, 1.10], head: [.40, .25, .46], abdomen: [.50, .35, .56], posture: 1.06, gait: 1.12 },
+    hauler: { body: [1.02, .43, 1.25], head: [.35, .23, .42], abdomen: [.70, .48, .78], posture: 1.00, gait: .76 }
+  };
+  const profile = { ...profiles[role] };
+  profile.legCount = parts.leg > 0 ? Math.min(6, Math.max(4, parts.leg + 2)) : 0;
+  profile.wheelCount = parts.wheel > 0 ? Math.min(6, Math.max(4, parts.wheel)) : 0;
+  return profile;
+}
+
+const ORGANISM_PALETTES = {
+  scout: { shell: 0x596b65, ceramic: 0xa6b7ae, tissue: 0x29332e, signal: 0x8eb9a1, tool: 0xc49a55 },
+  constructor: { shell: 0x6f633f, ceramic: 0xb8aa78, tissue: 0x353024, signal: 0xd4a64e, tool: 0xd6b35f },
+  medic: { shell: 0x607261, ceramic: 0xb5c2b4, tissue: 0x29342c, signal: 0x94c5a4, tool: 0xd7ddd4 },
+  sentinel: { shell: 0x65453e, ceramic: 0xaf8173, tissue: 0x342522, signal: 0xd36e58, tool: 0xd8a071 },
+  hauler: { shell: 0x665f4e, ceramic: 0xb4aa8d, tissue: 0x312e27, signal: 0xbda56e, tool: 0xd0bc82 }
+};
+
+function organismMaterial(color, metalness = .42, roughness = .58, extra = {}) {
+  return new THREE.MeshStandardMaterial({ color, metalness, roughness, ...extra });
+}
+
+function organismEllipsoid(scale, material, segments = 24) {
+  const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, segments, Math.max(12, Math.floor(segments * .62))), material);
+  mesh.scale.set(scale[0], scale[1], scale[2]);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
+function organismBone(length, topRadius, bottomRadius, material, radial = 10) {
+  const mesh = new THREE.Mesh(new THREE.CylinderGeometry(topRadius, bottomRadius, length, radial), material);
+  mesh.position.y = -length * .5;
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
+function organismJoint(radius, material) {
+  const mesh = new THREE.Mesh(new THREE.SphereGeometry(radius, 14, 9), material);
+  mesh.castShadow = true;
+  return mesh;
+}
+
+function createOrganismLeg(side, z, phase, profile, materials, index) {
+  const root = new THREE.Group();
+  root.position.set(side * profile.body[0] * .78, profile.posture, z);
+
+  const hip = organismJoint(.14, materials.ceramic);
+  root.add(hip);
+
+  const coxa = new THREE.Group();
+  coxa.rotation.z = side * -.72;
+  root.add(coxa);
+  coxa.add(organismBone(.52, .075, .105, materials.frame));
+
+  const femur = new THREE.Group();
+  femur.position.y = -.52;
+  coxa.add(femur);
+  femur.add(organismJoint(.115, materials.signal));
+  const femurLength = .68 + (index % 2) * .07;
+  femur.add(organismBone(femurLength, .072, .105, materials.ceramic));
+
+  const tibia = new THREE.Group();
+  tibia.position.y = -femurLength;
+  femur.add(tibia);
+  tibia.add(organismJoint(.095, materials.frame));
+  const tibiaLength = .62 + ((index + 1) % 2) * .06;
+  tibia.add(organismBone(tibiaLength, .045, .078, materials.frame));
+
+  const ankle = new THREE.Group();
+  ankle.position.y = -tibiaLength;
+  tibia.add(ankle);
+  ankle.add(organismJoint(.07, materials.signal));
+  const foot = organismEllipsoid([.18, .055, .34], materials.pad, 14);
+  foot.position.set(0, -.08, -.13);
+  ankle.add(foot);
+
+  return { root, coxa, femur, tibia, ankle, foot, phase, side, z, contact: 0 };
+}
+
+function createOrganismWheelLimb(side, z, phase, profile, materials, index) {
+  const root = new THREE.Group();
+  root.position.set(side * profile.body[0] * .78, profile.posture * .86, z);
+  root.add(organismJoint(.14, materials.ceramic));
+
+  const arm = new THREE.Group();
+  arm.rotation.z = side * -.64;
+  root.add(arm);
+  arm.add(organismBone(.42, .075, .11, materials.frame));
+
+  const knuckle = new THREE.Group();
+  knuckle.position.y = -.42;
+  arm.add(knuckle);
+  knuckle.add(organismJoint(.11, materials.signal));
+
+  const wheelSpin = new THREE.Group();
+  wheelSpin.rotation.z = Math.PI / 2;
+  knuckle.add(wheelSpin);
+  const radius = .27 + (index % 2) * .025;
+  const tire = new THREE.Mesh(new THREE.TorusGeometry(radius, .085, 10, 24), materials.pad);
+  tire.rotation.x = Math.PI / 2;
+  tire.castShadow = true;
+  wheelSpin.add(tire);
+  const hub = new THREE.Mesh(new THREE.CylinderGeometry(.13, .13, .16, 14), materials.ceramic);
+  hub.castShadow = true;
+  wheelSpin.add(hub);
+  const iris = new THREE.Mesh(new THREE.CylinderGeometry(.045, .045, .17, 10), materials.signal);
+  wheelSpin.add(iris);
+
+  return { root, arm, knuckle, wheelSpin, phase, side, z, radius };
+}
+
+function createOrganismManipulator(side, kind, profile, materials) {
+  const root = new THREE.Group();
+  root.position.set(side * profile.body[0] * .62, profile.posture + .42, -.28);
+  root.add(organismJoint(.13, materials.ceramic));
+
+  const upper = new THREE.Group();
+  upper.rotation.z = side * -.38;
+  root.add(upper);
+  upper.add(organismBone(.46, .065, .095, materials.frame));
+
+  const elbow = new THREE.Group();
+  elbow.position.y = -.46;
+  upper.add(elbow);
+  elbow.add(organismJoint(.105, materials.signal));
+  elbow.add(organismBone(.38, .045, .075, materials.ceramic));
+
+  const wrist = new THREE.Group();
+  wrist.position.y = -.38;
+  elbow.add(wrist);
+  wrist.add(organismJoint(.075, materials.frame));
+
+  if (kind === 'builder') {
+    const palm = organismEllipsoid([.16, .09, .20], materials.tool, 12);
+    palm.position.z = -.11;
+    wrist.add(palm);
+    for (const fingerSide of [-1, 1]) {
+      const finger = organismBone(.26, .025, .045, materials.ceramic, 8);
+      finger.rotation.x = -.8;
+      finger.rotation.z = fingerSide * .34;
+      finger.position.set(fingerSide * .09, -.03, -.17);
+      wrist.add(finger);
+    }
+  } else if (kind === 'repair') {
+    const probe = new THREE.Mesh(new THREE.ConeGeometry(.12, .46, 10), materials.tool);
+    probe.rotation.x = -Math.PI / 2;
+    probe.position.z = -.23;
+    wrist.add(probe);
+    const halo = new THREE.Mesh(new THREE.TorusGeometry(.14, .025, 8, 18), materials.signal);
+    halo.position.z = -.34;
+    wrist.add(halo);
+  } else {
+    const blade = new THREE.Mesh(new THREE.ConeGeometry(.12, .62, 8), materials.tool);
+    blade.rotation.x = -Math.PI / 2;
+    blade.position.z = -.31;
+    wrist.add(blade);
+    const guard = new THREE.Mesh(new THREE.TorusGeometry(.14, .035, 8, 18), materials.frame);
+    guard.position.z = -.05;
+    wrist.add(guard);
+  }
+  return { root, upper, elbow, wrist, kind, side };
+}
+
+function createOrganismTail(profile, materials, role) {
+  const tailRoot = new THREE.Group();
+  tailRoot.position.set(0, profile.posture + .18, profile.body[2] * .72);
+  const segments = [];
+  let parent = tailRoot;
+  const count = role === 'sentinel' ? 6 : 4;
+  for (let index = 0; index < count; index++) {
+    const segment = new THREE.Group();
+    const length = .30 - index * .022;
+    segment.add(organismBone(length, .07 - index * .006, .10 - index * .007, index % 2 ? materials.frame : materials.ceramic, 9));
+    segment.rotation.x = -.32;
+    parent.add(segment);
+    segments.push(segment);
+    const next = new THREE.Group();
+    next.position.y = -length;
+    segment.add(next);
+    next.add(organismJoint(.085 - index * .007, materials.signal));
+    parent = next;
+  }
+  if (role === 'sentinel') {
+    const stinger = new THREE.Mesh(new THREE.ConeGeometry(.12, .52, 9), materials.tool);
+    stinger.position.y = -.28;
+    parent.add(stinger);
+  } else {
+    const antenna = organismEllipsoid([.09, .18, .09], materials.signal, 12);
+    antenna.position.y = -.14;
+    parent.add(antenna);
+  }
+  return { root: tailRoot, segments };
+}
+
+function createNeuralVein(points, material) {
+  const curve = new THREE.CatmullRomCurve3(points.map(point => new THREE.Vector3(...point)));
+  const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, 20, .018, 6, false), material);
+  mesh.castShadow = false;
+  return mesh;
+}
+
 function robotVisual(robot) {
-  const stats = robot.stats;
   const p = robot.blueprint.parts;
   const role = robotRole(p);
-  const palette = ROBOT_ROLE_PALETTE[role];
+  const profile = organismRoleProfile(role, p);
+  const palette = ORGANISM_PALETTES[role];
   const group = new THREE.Group();
-  group.name = `R-${robot.id}-${role}`;
+  group.name = `R-${robot.id}-${role}-machine-organism`;
+  robot.color = new THREE.Color(palette.shell);
 
-  robot.color = new THREE.Color(palette.paint);
-  const generationTint = new THREE.Color().setHSL((robot.generation * .071 + robot.id * .013) % 1, .24, .62);
   const materials = {
-    paint: robotMaterial(palette.paint, .64, .42),
-    accent: robotMaterial(palette.accent, .72, .3),
-    frame: robotMaterial(0x343a34, .82, .34),
-    dark: robotMaterial(0x151915, .88, .4),
-    tire: robotMaterial(0x0c0e0c, .1, .88),
-    tool: robotMaterial(palette.mark, .66, .3),
-    generation: robotMaterial(generationTint, .45, .38),
-    core: new THREE.MeshStandardMaterial({
-      color: 0xd4b268,
-      emissive: 0xc58b2c,
-      emissiveIntensity: 1.4,
-      metalness: .35,
-      roughness: .28
-    }),
-    lens: new THREE.MeshStandardMaterial({
-      color: 0x9fb4aa,
-      emissive: 0x657e72,
-      emissiveIntensity: 1.1,
-      metalness: .2,
-      roughness: .18
-    }),
-    damaged: robotMaterial(0x2a211c, .5, .76)
+    shell: organismMaterial(palette.shell, .44, .52),
+    ceramic: organismMaterial(palette.ceramic, .56, .36),
+    tissue: organismMaterial(palette.tissue, .18, .72),
+    frame: organismMaterial(0x202622, .74, .45),
+    pad: organismMaterial(0x0b0d0b, .04, .94),
+    signal: new THREE.MeshStandardMaterial({ color: palette.signal, emissive: palette.signal, emissiveIntensity: 1.1, metalness: .22, roughness: .28 }),
+    tool: organismMaterial(palette.tool, .58, .34),
+    core: new THREE.MeshStandardMaterial({ color: 0xcab16e, emissive: 0xb77a2d, emissiveIntensity: 1.8, metalness: .24, roughness: .22 }),
+    membrane: new THREE.MeshPhysicalMaterial({ color: palette.shell, transparent: true, opacity: .22, transmission: .18, roughness: .18, metalness: .08, depthWrite: false }),
+    damage: organismMaterial(0x251b17, .24, .82)
   };
 
   const locomotionRoot = new THREE.Group();
@@ -428,234 +682,233 @@ function robotVisual(robot) {
   locomotionRoot.add(bodyRoot);
   group.add(locomotionRoot);
 
-  const wide = role === 'constructor' || role === 'hauler';
-  const armored = role === 'sentinel';
-  const chassisWidth = wide ? 1.74 : armored ? 1.62 : 1.46;
-  const chassisLength = role === 'hauler' ? 2.18 : role === 'constructor' ? 2.08 : 1.84;
-  const bodyHeight = armored ? .70 : .60;
+  const thorax = organismEllipsoid(profile.body, materials.tissue, 28);
+  thorax.position.y = profile.posture + .22;
+  bodyRoot.add(thorax);
 
-  const frame = boxPart([chassisWidth * .9, .24, chassisLength * .86], materials.frame, [0, .58, 0]);
-  bodyRoot.add(frame);
+  const underside = organismEllipsoid([profile.body[0] * .66, profile.body[1] * .48, profile.body[2] * .74], materials.frame, 22);
+  underside.position.set(0, profile.posture - .04, .02);
+  bodyRoot.add(underside);
 
-  const shell = new THREE.Mesh(
-    new THREE.CylinderGeometry(chassisWidth * .49, chassisWidth * .55, chassisLength, 8, 1, false),
-    materials.paint
-  );
-  shell.rotation.x = Math.PI / 2;
-  shell.position.y = .78;
-  shell.scale.y = bodyHeight / (chassisWidth * .98);
-  shell.castShadow = true;
-  shell.receiveShadow = true;
-  bodyRoot.add(shell);
+  const abdomen = organismEllipsoid(profile.abdomen, role === 'hauler' ? materials.ceramic : materials.shell, 26);
+  abdomen.position.set(0, profile.posture + .24, profile.body[2] * .66);
+  abdomen.rotation.x = -.10;
+  bodyRoot.add(abdomen);
 
-  const belly = boxPart([chassisWidth * .66, .18, chassisLength * .68], materials.dark, [0, .44, .03]);
-  bodyRoot.add(belly);
+  const neck = new THREE.Group();
+  neck.position.set(0, profile.posture + .29, -profile.body[2] * .72);
+  bodyRoot.add(neck);
+  neck.add(organismJoint(.20, materials.frame));
 
-  const frontBumper = boxPart([chassisWidth * .78, .18, .16], materials.dark, [0, .54, -chassisLength * .54]);
-  bodyRoot.add(frontBumper);
-  const rearBumper = frontBumper.clone();
-  rearBumper.position.z *= -1;
-  bodyRoot.add(rearBumper);
+  const headRoot = new THREE.Group();
+  headRoot.position.z = -.22;
+  neck.add(headRoot);
+  const head = organismEllipsoid(profile.head, materials.ceramic, 24);
+  head.rotation.x = .08;
+  headRoot.add(head);
 
+  const face = organismEllipsoid([profile.head[0] * .76, profile.head[1] * .58, .14], materials.tissue, 18);
+  face.position.z = -profile.head[2] * .84;
+  headRoot.add(face);
+
+  const lensCount = Math.min(4, Math.max(2, p.sensor));
+  const lenses = [];
+  for (let index = 0; index < lensCount; index++) {
+    const lens = new THREE.Mesh(new THREE.SphereGeometry(.075, 14, 9), materials.signal);
+    const offset = (index - (lensCount - 1) / 2) * .16;
+    lens.position.set(offset, index % 2 ? -.055 : .045, -profile.head[2] * .96);
+    lens.scale.z = .44;
+    headRoot.add(lens);
+    lenses.push(lens);
+  }
+
+  const mandibles = [];
   for (const side of [-1, 1]) {
-    const rail = boxPart([.10, .19, chassisLength * .82], materials.accent, [side * chassisWidth * .49, .74, 0]);
-    bodyRoot.add(rail);
+    const mandible = new THREE.Group();
+    mandible.position.set(side * profile.head[0] * .52, -.08, -profile.head[2] * .70);
+    const jaw = organismBone(.40, .035, .075, materials.frame, 8);
+    jaw.rotation.x = -1.12;
+    jaw.rotation.z = side * .22;
+    mandible.add(jaw);
+    headRoot.add(mandible);
+    mandibles.push(mandible);
   }
 
-  const coreCage = new THREE.Group();
-  coreCage.position.set(0, 1.02, role === 'hauler' ? -.28 : .04);
-  bodyRoot.add(coreCage);
-  const core = new THREE.Mesh(new THREE.IcosahedronGeometry(.24, 1), materials.core);
-  core.castShadow = true;
+  const brainCage = new THREE.Group();
+  brainCage.position.set(0, profile.posture + .44, -.05);
+  bodyRoot.add(brainCage);
+  const core = new THREE.Mesh(new THREE.IcosahedronGeometry(.22, 2), materials.core);
   core.userData.core = true;
-  coreCage.add(core);
-  for (let i = 0; i < 3; i++) {
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(.32 + i * .018, .025, 6, 20), materials.frame);
-    ring.rotation.set(i === 0 ? Math.PI / 2 : 0, i === 1 ? Math.PI / 2 : 0, i === 2 ? Math.PI / 2 : 0);
-    coreCage.add(ring);
-  }
+  brainCage.add(core);
+  const coreShell = organismEllipsoid([.39, .27, .46], materials.membrane, 20);
+  brainCage.add(coreShell);
   robot.coreMesh = core;
 
-  const stripe = boxPart([chassisWidth * .54, .035, .16], materials.generation, [0, 1.105, -.30]);
-  bodyRoot.add(stripe);
-
-  const sensorMast = new THREE.Group();
-  sensorMast.position.set(0, 1.08, -chassisLength * .31);
-  bodyRoot.add(sensorMast);
-  const mast = cylinderPart(.055, .40, materials.dark, 8);
-  mast.position.y = .18;
-  sensorMast.add(mast);
-  const sensorHead = new THREE.Group();
-  sensorHead.position.y = .40;
-  sensorMast.add(sensorHead);
-  sensorHead.add(boxPart([.62, .24, .28], materials.frame));
-  const lensCount = Math.min(3, Math.max(1, p.sensor));
-  for (let i = 0; i < lensCount; i++) {
-    const lens = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, .045, 12), materials.lens);
-    lens.rotation.x = Math.PI / 2;
-    lens.position.set((i - (lensCount - 1) / 2) * .17, 0, -.16);
-    sensorHead.add(lens);
+  const neuralMaterials = [];
+  const neuralVeins = [];
+  for (const side of [-1, 1]) {
+    const material = new THREE.MeshStandardMaterial({ color: palette.signal, emissive: palette.signal, emissiveIntensity: .85, metalness: .05, roughness: .36 });
+    neuralMaterials.push(material);
+    const vein = createNeuralVein([
+      [0, profile.posture + .44, -.05],
+      [side * .30, profile.posture + .37, -.28],
+      [side * profile.body[0] * .52, profile.posture + .18, -.10],
+      [side * profile.body[0] * .72, profile.posture + .02, .20]
+    ], material);
+    bodyRoot.add(vein);
+    neuralVeins.push(vein);
   }
+  const dorsalMaterial = neuralMaterials[0].clone();
+  neuralMaterials.push(dorsalMaterial);
+  const dorsalVein = createNeuralVein([
+    [0, profile.posture + .46, -.20],
+    [0, profile.posture + profile.body[1] * .92, .18],
+    [0, profile.posture + profile.body[1] * .84, profile.body[2] * .72]
+  ], dorsalMaterial);
+  bodyRoot.add(dorsalVein);
+  neuralVeins.push(dorsalVein);
 
-  const wheels = [];
-  if (p.wheel > 0) {
-    const perSide = Math.max(1, Math.ceil(p.wheel / 2));
-    for (let sideIndex = 0; sideIndex < 2; sideIndex++) {
-      const side = sideIndex === 0 ? -1 : 1;
-      for (let row = 0; row < perSide; row++) {
-        const index = row * 2 + sideIndex;
-        if (index >= p.wheel) continue;
-        const z = perSide === 1 ? 0 : THREE.MathUtils.lerp(-chassisLength * .34, chassisLength * .34, row / (perSide - 1));
-        const wheel = createWheelAssembly(side, z, .31 + Math.min(.05, stats.mass * .002), materials);
-        locomotionRoot.add(wheel.root);
-        wheels.push(wheel);
-      }
-    }
+  const plates = [];
+  for (let index = 0; index < 4; index++) {
+    const plate = organismEllipsoid([profile.body[0] * (.92 - index * .07), profile.body[1] * .34, profile.body[2] * .20], index % 2 ? materials.ceramic : materials.shell, 18);
+    plate.position.set(0, profile.posture + profile.body[1] * .56, -profile.body[2] * .48 + index * profile.body[2] * .32);
+    plate.rotation.x = -.08 + index * .035;
+    bodyRoot.add(plate);
+    plates.push(plate);
   }
 
   const legs = [];
-  for (let i = 0; i < p.leg; i++) {
-    const side = i % 2 === 0 ? -1 : 1;
-    const pair = Math.floor(i / 2);
-    const z = p.leg <= 2 ? 0 : pair === 0 ? -.52 : .52;
-    const leg = createLegAssembly(side, z, i * Math.PI * .5, materials);
-    locomotionRoot.add(leg.root);
-    legs.push(leg);
+  if (profile.legCount) {
+    for (let index = 0; index < profile.legCount; index++) {
+      const side = index % 2 === 0 ? -1 : 1;
+      const pair = Math.floor(index / 2);
+      const pairs = Math.ceil(profile.legCount / 2);
+      const z = pairs === 1 ? 0 : THREE.MathUtils.lerp(-profile.body[2] * .52, profile.body[2] * .52, pair / (pairs - 1));
+      const leg = createOrganismLeg(side, z, pair * Math.PI + (side > 0 ? Math.PI : 0), profile, materials, index);
+      locomotionRoot.add(leg.root);
+      legs.push(leg);
+    }
   }
 
-  if (p.cargo > 0) {
-    const rack = new THREE.Group();
-    rack.position.set(0, 1.12, chassisLength * .27);
-    bodyRoot.add(rack);
-    const tray = boxPart([chassisWidth * .72, .13, .74], materials.dark);
-    rack.add(tray);
-    for (const side of [-1, 1]) {
-      rack.add(boxPart([.07, .42, .74], materials.frame, [side * chassisWidth * .36, .18, 0]));
-    }
-    const cargoBlocks = Math.min(3, p.cargo);
-    for (let i = 0; i < cargoBlocks; i++) {
-      const block = boxPart([.34, .30, .45], materials.accent, [(i - (cargoBlocks - 1) / 2) * .38, .22, .02]);
-      rack.add(block);
+  const wheelLimbs = [];
+  if (profile.wheelCount) {
+    for (let index = 0; index < profile.wheelCount; index++) {
+      const side = index % 2 === 0 ? -1 : 1;
+      const pair = Math.floor(index / 2);
+      const pairs = Math.ceil(profile.wheelCount / 2);
+      const z = pairs === 1 ? 0 : THREE.MathUtils.lerp(-profile.body[2] * .48, profile.body[2] * .48, pair / (pairs - 1));
+      const limb = createOrganismWheelLimb(side, z, index * Math.PI * .5, profile, materials, index);
+      locomotionRoot.add(limb.root);
+      wheelLimbs.push(limb);
     }
   }
 
   const manipulators = [];
   if (p.builder > 0) {
-    const arm = createManipulator(1, 'builder', materials);
-    bodyRoot.add(arm.root);
-    manipulators.push(arm);
+    const manipulator = createOrganismManipulator(1, 'builder', profile, materials);
+    bodyRoot.add(manipulator.root);
+    manipulators.push(manipulator);
   }
   if (p.repair > 0) {
-    const arm = createManipulator(-1, 'repair', materials);
-    bodyRoot.add(arm.root);
-    manipulators.push(arm);
+    const manipulator = createOrganismManipulator(-1, 'repair', profile, materials);
+    bodyRoot.add(manipulator.root);
+    manipulators.push(manipulator);
   }
   if (p.weapon > 0) {
-    const arm = createManipulator(1, 'weapon', materials);
-    arm.root.position.z = -.38;
-    bodyRoot.add(arm.root);
-    manipulators.push(arm);
+    const manipulator = createOrganismManipulator(1, 'weapon', profile, materials);
+    manipulator.root.position.z = -.56;
+    bodyRoot.add(manipulator.root);
+    manipulators.push(manipulator);
+  }
+
+  if (role === 'hauler' || p.cargo > 1) {
+    const cargoCavity = organismEllipsoid([profile.abdomen[0] * .72, profile.abdomen[1] * .48, profile.abdomen[2] * .70], materials.tissue, 20);
+    cargoCavity.position.copy(abdomen.position);
+    cargoCavity.position.y += .14;
+    bodyRoot.add(cargoCavity);
+    const cargoNodes = [];
+    for (let index = 0; index < Math.min(4, Math.max(2, p.cargo)); index++) {
+      const node = organismEllipsoid([.18, .14, .24], materials.signal, 12);
+      node.position.set((index % 2 ? 1 : -1) * .28, profile.posture + .56 + Math.floor(index / 2) * .22, profile.body[2] * .70);
+      bodyRoot.add(node);
+      cargoNodes.push(node);
+    }
   }
 
   if (p.solar > 0) {
-    const solarRoot = new THREE.Group();
-    solarRoot.position.set(0, 1.33, .30);
-    bodyRoot.add(solarRoot);
-    const panelCount = Math.min(3, p.solar);
-    for (let i = 0; i < panelCount; i++) {
-      const panel = boxPart([.48, .045, .66], robotMaterial(0x263a43, .24, .25), [(i - (panelCount - 1) / 2) * .52, 0, 0]);
-      solarRoot.add(panel);
-      for (let line = -1; line <= 1; line++) {
-        solarRoot.add(boxPart([.012, .052, .60], materials.accent, [panel.position.x + line * .12, .006, 0]));
-      }
+    const finRoot = new THREE.Group();
+    finRoot.position.set(0, profile.posture + profile.body[1] * 1.10, .35);
+    bodyRoot.add(finRoot);
+    for (let index = 0; index < Math.min(3, p.solar); index++) {
+      const fin = organismEllipsoid([.12, .48, .36], organismMaterial(0x263a36, .12, .28), 16);
+      fin.position.set((index - (Math.min(3, p.solar) - 1) / 2) * .28, .18, 0);
+      fin.rotation.z = (index - 1) * .16;
+      finRoot.add(fin);
     }
   }
 
-  if (p.armor > 0 || role === 'sentinel') {
-    const plateThickness = .10 + Math.min(.05, p.armor * .012);
-    const frontPlate = boxPart([chassisWidth * .72, .52, plateThickness], materials.accent, [0, .80, -chassisLength * .56]);
-    frontPlate.rotation.x = -.12;
-    bodyRoot.add(frontPlate);
-    for (const side of [-1, 1]) {
-      const sidePlate = boxPart([plateThickness, .46, chassisLength * .62], materials.accent, [side * chassisWidth * .54, .78, .05]);
-      sidePlate.rotation.z = side * .08;
-      bodyRoot.add(sidePlate);
-    }
-  }
-
-  if (role === 'constructor') {
-    const counterweight = boxPart([.74, .52, .50], materials.dark, [0, .94, chassisLength * .48]);
-    bodyRoot.add(counterweight);
-    counterweight.add(boxPart([.44, .08, .16], materials.tool, [0, .18, .28]));
-  } else if (role === 'medic') {
-    const medicalCase = boxPart([.70, .42, .48], materials.accent, [0, 1.04, chassisLength * .40]);
-    bodyRoot.add(medicalCase);
-    medicalCase.add(boxPart([.08, .24, .03], materials.generation, [0, 0, -.255]));
-    medicalCase.add(boxPart([.24, .08, .03], materials.generation, [0, 0, -.255]));
-  } else if (role === 'sentinel') {
-    const brow = boxPart([.86, .16, .28], materials.dark, [0, 1.22, -chassisLength * .33]);
-    bodyRoot.add(brow);
-  }
+  const tail = createOrganismTail(profile, materials, role);
+  bodyRoot.add(tail.root);
 
   const damageIndicators = [];
-  for (const side of [-1, 1]) {
-    const scar = boxPart([.045, .26, .48], materials.damaged, [side * chassisWidth * .555, .78, .24]);
-    scar.rotation.z = side * .28;
-    scar.visible = false;
-    bodyRoot.add(scar);
-    damageIndicators.push(scar);
+  for (let index = 0; index < 3; index++) {
+    const wound = organismEllipsoid([.15 + index * .025, .045, .24], materials.damage, 12);
+    wound.position.set(index % 2 ? .34 : -.36, profile.posture + profile.body[1] * .78, -.28 + index * .34);
+    wound.rotation.set(.28, index * .7, .16);
+    wound.visible = false;
+    bodyRoot.add(wound);
+    damageIndicators.push(wound);
   }
-  const looseWire = new THREE.Mesh(
-    new THREE.TorusGeometry(.18, .025, 6, 18, Math.PI * 1.35),
-    robotMaterial(0x4c2d21, .12, .7)
-  );
-  looseWire.position.set(-chassisWidth * .45, .50, -.36);
-  looseWire.rotation.y = Math.PI / 2;
-  looseWire.visible = false;
-  bodyRoot.add(looseWire);
-  damageIndicators.push(looseWire);
 
   const sensorCone = new THREE.Mesh(
-    new THREE.ConeGeometry(Math.min(3.7, stats.sensor * .25), Math.min(8, stats.sensor), 18, 1, true),
-    new THREE.MeshBasicMaterial({ color: 0x879f94, transparent: true, opacity: .035, side: THREE.DoubleSide, depthWrite: false })
+    new THREE.ConeGeometry(Math.min(3.3, robot.stats.sensor * .23), Math.min(7.5, robot.stats.sensor), 24, 1, true),
+    new THREE.MeshBasicMaterial({ color: palette.signal, transparent: true, opacity: .025, side: THREE.DoubleSide, depthWrite: false })
   );
   sensorCone.rotation.x = Math.PI / 2;
-  sensorCone.position.set(0, .95, -stats.sensor * .46);
+  sensorCone.position.set(0, profile.posture + .38, -robot.stats.sensor * .48);
   sensorCone.visible = false;
   group.add(sensorCone);
   robot.sensorCone = sensorCone;
 
   const ring = new THREE.Mesh(
-    new THREE.RingGeometry(1.0, 1.08, 32),
-    new THREE.MeshBasicMaterial({ color: palette.mark, transparent: true, opacity: .78, side: THREE.DoubleSide })
+    new THREE.RingGeometry(1.08, 1.13, 48),
+    new THREE.MeshBasicMaterial({ color: palette.signal, transparent: true, opacity: .58, side: THREE.DoubleSide })
   );
   ring.rotation.x = -Math.PI / 2;
-  ring.position.y = .04;
+  ring.position.y = .025;
   ring.visible = false;
   group.add(ring);
   robot.selectionRing = ring;
 
   robot.visualRig = {
+    version: 5,
     role,
+    profile,
     locomotionRoot,
     bodyRoot,
-    frame,
-    shell,
-    sensorHead,
-    wheels,
+    thorax,
+    abdomen,
+    neck,
+    headRoot,
+    mandibles,
+    brainCage,
+    plates,
+    lenses,
+    neuralMaterials,
     legs,
+    wheelLimbs,
     manipulators,
+    tail,
     damageIndicators,
-    coreCage,
-    motionPhase: robot.id * .73,
+    motionPhase: robot.id * .83,
     lastTime: state.time,
     lean: 0,
     roll: 0,
-    disabledTilt: 0,
-    baseBodyY: bodyRoot.position.y
+    collapse: 0,
+    scanPhase: robot.id * 1.71,
+    baseY: 1.08
   };
 
-  addCastShadow(group);
   group.userData.entity = robot;
   group.traverse(object => {
     if (object.isMesh) {
@@ -665,6 +918,7 @@ function robotVisual(robot) {
   });
   return group;
 }
+
 
 function removeRobotInteractive(robot) {
   for (let index = interactive.length - 1; index >= 0; index--) {
@@ -740,21 +994,36 @@ function spawnRobot(blueprint, position = { x: 0, y: 1.2, z: 0 }, lineage = {}) 
 function createResource(position, amount = 38) {
   const res = { kind: 'resource', id: state.nextResourceId++, amount, maxAmount: amount, position: { ...position }, temperature: state.ambientTemp };
   const group = new THREE.Group();
-  const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(.48 + amount * .004, 1), makeGlow(0x56f4ff, 2.8));
-  crystal.castShadow = true;
-  crystal.rotation.z = .2;
-  group.add(crystal);
-  const halo = new THREE.Mesh(new THREE.TorusGeometry(.65, .035, 8, 28), new THREE.MeshBasicMaterial({ color: 0x8dfaff, transparent: true, opacity: .58 }));
-  halo.rotation.x = Math.PI / 2;
-  group.add(halo);
-  group.position.set(position.x, .65, position.z);
+  const stoneMat = new THREE.MeshStandardMaterial({ color: 0x313b33, roughness: .88, metalness: .12 });
+  const veinMat = new THREE.MeshStandardMaterial({ color: 0x7fa092, emissive: 0x5f8372, emissiveIntensity: 1.1, roughness: .42, metalness: .24 });
+  const bed = new THREE.Mesh(new THREE.CylinderGeometry(.58, .78, .15, 9), stoneMat);
+  bed.position.y = .08;
+  bed.scale.z = 1.25;
+  bed.castShadow = true;
+  group.add(bed);
+  const shards = 3 + (res.id % 3);
+  for (let index = 0; index < shards; index++) {
+    const height = .34 + (index % 3) * .16 + amount * .0025;
+    const shard = new THREE.Mesh(new THREE.ConeGeometry(.12 + index * .025, height, 6), index % 2 ? stoneMat : veinMat);
+    shard.position.set((index - (shards - 1) / 2) * .20, .15 + height * .46, (index % 2 ? .16 : -.12));
+    shard.rotation.z = (index - 1) * .13;
+    shard.castShadow = true;
+    group.add(shard);
+  }
+  const pulse = new THREE.Mesh(new THREE.RingGeometry(.58, .64, 24), new THREE.MeshBasicMaterial({ color: 0x769887, transparent: true, opacity: .22, side: THREE.DoubleSide }));
+  pulse.rotation.x = -Math.PI / 2;
+  pulse.position.y = .17;
+  group.add(pulse);
+  res.pulse = pulse;
+  group.position.set(position.x, 0, position.z);
   group.userData.entity = res;
-  group.traverse(o => { if (o.isMesh) { o.userData.entity = res; interactive.push(o); } });
+  group.traverse(object => { if (object.isMesh) { object.userData.entity = res; interactive.push(object); } });
   res.mesh = group;
   worldGroup.add(group);
   state.resources.push(res);
   return res;
 }
+
 
 function createStructure(type, position, built = true) {
   const def = STRUCTURES[type];
@@ -814,20 +1083,60 @@ function createStructure(type, position, built = true) {
 function createBase() {
   const s = { kind: 'structure', id: state.nextStructureId++, type: 'base', name: 'COLONY CORE', position: { x: 0, z: 0 }, health: 500, maxHealth: 500, powered: true, built: true };
   const group = new THREE.Group();
-  const pad = new THREE.Mesh(new THREE.CylinderGeometry(3.3, 3.6, .55, 32), new THREE.MeshStandardMaterial({ color: 0x15293e, metalness: .8, roughness: .24 }));
-  pad.position.y = .28; pad.castShadow = true; group.add(pad);
-  const core = new THREE.Mesh(new THREE.IcosahedronGeometry(1.15, 2), makeGlow(0x4befff, 3.5));
-  core.position.y = 1.7; group.add(core); s.orb = core;
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(2.25, .09, 12, 48), makeGlow(0x7269ff, 2.7));
-  ring.rotation.x = Math.PI / 2; ring.position.y = .65; group.add(ring);
+  const dark = new THREE.MeshStandardMaterial({ color: 0x232a25, metalness: .58, roughness: .62 });
+  const ceramic = new THREE.MeshStandardMaterial({ color: 0x69786d, metalness: .42, roughness: .48 });
+  const signal = new THREE.MeshStandardMaterial({ color: 0xb49054, emissive: 0x9d6524, emissiveIntensity: 1.4, metalness: .18, roughness: .30 });
+
+  const pad = new THREE.Mesh(new THREE.CylinderGeometry(2.7, 3.05, .34, 28), dark);
+  pad.position.y = .17;
+  pad.castShadow = true;
+  pad.receiveShadow = true;
+  group.add(pad);
+
+  const nest = new THREE.Mesh(new THREE.TorusGeometry(1.65, .24, 12, 36), ceramic);
+  nest.rotation.x = Math.PI / 2;
+  nest.position.y = .42;
+  nest.castShadow = true;
+  group.add(nest);
+
+  const rotor = new THREE.Group();
+  rotor.position.y = .62;
+  group.add(rotor);
+  for (let index = 0; index < 5; index++) {
+    const rib = new THREE.Mesh(new THREE.TorusGeometry(.76 + index * .075, .032, 8, 30, Math.PI * 1.35), index % 2 ? ceramic : dark);
+    rib.rotation.set(Math.PI / 2, index * .48, index * .33);
+    rotor.add(rib);
+  }
+  const brain = new THREE.Mesh(new THREE.IcosahedronGeometry(.48, 2), signal);
+  brain.scale.y = .72;
+  rotor.add(brain);
+  s.orb = rotor;
+
+  for (let index = 0; index < 6; index++) {
+    const pylon = new THREE.Group();
+    const angle = index / 6 * Math.PI * 2;
+    pylon.position.set(Math.cos(angle) * 2.22, .34, Math.sin(angle) * 2.22);
+    pylon.rotation.y = -angle;
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(.09, .15, .72, 10), dark);
+    stem.position.y = .36;
+    pylon.add(stem);
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(.11, 12, 8), signal);
+    eye.position.set(0, .77, -.02);
+    pylon.add(eye);
+    group.add(pylon);
+  }
+
   group.userData.entity = s;
-  group.traverse(o => { if (o.isMesh) { o.userData.entity = s; interactive.push(o); } });
-  s.mesh = group; worldGroup.add(group);
+  group.traverse(object => { if (object.isMesh) { object.userData.entity = s; interactive.push(object); } });
+  s.mesh = group;
+  worldGroup.add(group);
   const body = physics.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, .3, 0));
-  s.body = body; s.collider = physics.createCollider(RAPIER.ColliderDesc.cylinder(.3, 3.3), body);
+  s.body = body;
+  s.collider = physics.createCollider(RAPIER.ColliderDesc.cylinder(.3, 2.8), body);
   state.structures.push(s);
   return s;
 }
+
 
 function createHazard(position, type = 'gas') {
   const h = { kind: 'hazard', id: `H${state.hazards.length + 1}`, type, position: { ...position }, radius: type === 'fire' ? 2.5 : 3.2, heat: type === 'fire' ? 95 : 28, damage: type === 'fire' ? 7 : 3.4, age: 0, life: 70 };
@@ -1244,123 +1553,142 @@ function sparkAt(position, color = 0x7ffaff) {
 }
 
 function syncVisuals() {
-  for (const r of state.robots) {
-    const p = r.body.translation();
-    const q = r.body.rotation();
-    const velocity = r.body.linvel();
-    const angular = r.body.angvel();
-    const rig = r.visualRig;
+  for (const robot of state.robots) {
+    const position = robot.body.translation();
+    const rotation = robot.body.rotation();
+    const velocity = robot.body.linvel();
+    const angular = robot.body.angvel();
+    const rig = robot.visualRig;
     const visualDt = rig ? clamp(state.time - rig.lastTime, 0, .06) : 0;
     const planarSpeed = Math.hypot(velocity.x, velocity.z);
 
-    r.mesh.position.set(p.x, p.y - .48, p.z);
-    r.mesh.quaternion.set(q.x, q.y, q.z, q.w);
+    robot.mesh.position.set(position.x, position.y - .48, position.z);
+    robot.mesh.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
 
-    if (rig) {
+    if (rig?.version === 5) {
       rig.lastTime = state.time;
-      const active = !r.disabled && r.health > 0 && r.energy > 0;
-      const moving = active && planarSpeed > .12;
-      if (moving) rig.motionPhase += planarSpeed * visualDt * 2.6;
+      const active = !robot.disabled && robot.health > 0 && robot.energy > 0;
+      const moving = active && planarSpeed > .10;
+      const speedRatio = clamp(planarSpeed / Math.max(1.5, robot.stats.speed), 0, 1.4);
+      if (moving) rig.motionPhase += planarSpeed * visualDt * 3.0 * rig.profile.gait;
+      else rig.motionPhase += visualDt * .35;
 
-      const desiredLean = moving ? clamp(planarSpeed / Math.max(2, r.stats.speed), 0, 1) * .075 : 0;
-      const desiredRoll = active ? clamp(-angular.y * .055, -.11, .11) : .08;
-      rig.lean = lerp(rig.lean, desiredLean, .12);
-      rig.roll = lerp(rig.roll, desiredRoll, .12);
-      rig.disabledTilt = lerp(rig.disabledTilt, active ? 0 : .38, active ? .09 : .035);
+      rig.collapse = lerp(rig.collapse, active ? 0 : 1, active ? .08 : .035);
+      rig.lean = lerp(rig.lean, moving ? speedRatio * .11 : 0, .11);
+      rig.roll = lerp(rig.roll, active ? clamp(-angular.y * .05, -.10, .10) : .16, .09);
 
-      const gaitBob = rig.legs.length && moving
-        ? Math.abs(Math.sin(rig.motionPhase * 2)) * .035
-        : 0;
-      const wheelBob = rig.wheels.length && moving
-        ? Math.sin(rig.motionPhase * 1.4) * .008
-        : 0;
-      rig.bodyRoot.position.y = rig.baseBodyY + gaitBob + wheelBob - rig.disabledTilt * .22;
-      rig.bodyRoot.rotation.x = -rig.lean + rig.disabledTilt * .18;
-      rig.bodyRoot.rotation.z = rig.roll + rig.disabledTilt * (r.id % 2 ? -.9 : .9);
+      const breathing = active ? Math.sin(state.time * 2.1 + robot.id) * .018 : 0;
+      const gaitBob = moving ? Math.abs(Math.sin(rig.motionPhase * 2)) * .045 : 0;
+      rig.bodyRoot.position.y = breathing + gaitBob - rig.collapse * .28;
+      rig.bodyRoot.rotation.x = -rig.lean + rig.collapse * .34;
+      rig.bodyRoot.rotation.z = rig.roll + rig.collapse * (robot.id % 2 ? -.38 : .38);
+      rig.thorax.scale.y = rig.profile.body[1] * (1 + breathing * .35);
+      rig.abdomen.rotation.x = -.10 + Math.sin(state.time * 1.35 + robot.id) * .025 - rig.collapse * .18;
 
-      for (const wheel of rig.wheels) {
-        if (moving && visualDt > 0) wheel.spin.rotation.y -= planarSpeed * visualDt / wheel.radius;
-        const compression = moving
-          ? Math.sin(rig.motionPhase * 1.7 + wheel.z * 2.8) * .018
-          : 0;
-        wheel.carrier.position.y = compression - rig.disabledTilt * .05;
+      const targetPosition = robot.target ? positionOf(robot.target) : null;
+      let targetYaw = Math.sin(state.time * .55 + rig.scanPhase) * .28;
+      if (targetPosition) {
+        const localTarget = new THREE.Vector3(targetPosition.x - position.x, 0, targetPosition.z - position.z);
+        const worldYaw = Math.atan2(localTarget.x, localTarget.z);
+        const bodyYaw = 2 * Math.atan2(rotation.y, rotation.w);
+        targetYaw = clamp(worldYaw - bodyYaw, -.72, .72);
+      }
+      rig.headRoot.rotation.y = lerp(rig.headRoot.rotation.y, targetYaw, .085);
+      rig.headRoot.rotation.x = .03 + Math.sin(state.time * 1.8 + robot.id) * .035 + rig.collapse * .25;
+      rig.neck.rotation.x = Math.sin(state.time * 1.1 + robot.id) * .018;
+
+      const energyRatio = clamp(robot.energy / robot.stats.maxEnergy, 0, 1);
+      const healthRatio = clamp(robot.health / robot.stats.maxHealth, 0, 1);
+      const neuralPulse = active ? .75 + energyRatio * 1.35 + Math.sin(state.time * 5.2 + robot.id) * .35 : .05;
+      for (let index = 0; index < rig.neuralMaterials.length; index++) {
+        rig.neuralMaterials[index].emissiveIntensity = neuralPulse * (1 - index * .08);
+      }
+      for (let index = 0; index < rig.lenses.length; index++) {
+        rig.lenses[index].material.emissiveIntensity = active ? .75 + Math.sin(state.time * 3.4 + index + robot.id) * .22 : .04;
+      }
+      robot.coreMesh.material.emissiveIntensity = active ? 1.1 + energyRatio * 2.2 + Math.sin(state.time * 4.7 + robot.id) * .35 : .035;
+      rig.brainCage.rotation.y += visualDt * (active ? .42 : .05);
+
+      for (let index = 0; index < rig.damageIndicators.length; index++) {
+        rig.damageIndicators[index].visible = healthRatio < .78 - index * .22;
       }
 
-      for (const leg of rig.legs) {
+      for (let index = 0; index < rig.legs.length; index++) {
+        const leg = rig.legs[index];
         const phase = rig.motionPhase + leg.phase;
-        const swing = moving ? Math.sin(phase) : 0;
+        const swing = moving ? Math.sin(phase) : Math.sin(state.time * .75 + leg.phase) * .08;
         const lift = moving ? Math.max(0, Math.sin(phase)) : 0;
-        const planted = moving ? Math.max(0, -Math.sin(phase)) : 0;
-        leg.root.rotation.x = swing * .48 - rig.disabledTilt * .35;
-        leg.upper.rotation.z = leg.side * (.08 + lift * .05);
-        leg.knee.rotation.x = .30 + lift * .72 + planted * .10 + rig.disabledTilt * .55;
-        leg.ankle.rotation.x = -.16 - leg.knee.rotation.x * .42 - leg.root.rotation.x * .28;
-        leg.root.position.y = leg.baseY + lift * .045 - rig.disabledTilt * .16;
-        leg.foot.rotation.y = swing * .07;
+        leg.root.rotation.y = swing * .28 * (leg.side > 0 ? -1 : 1);
+        leg.coxa.rotation.x = -.08 + swing * .32 - rig.collapse * .55;
+        leg.femur.rotation.x = -.48 - lift * .52 + Math.max(0, -swing) * .18 + rig.collapse * .72;
+        leg.tibia.rotation.x = .82 + lift * .72 - rig.collapse * .32;
+        leg.ankle.rotation.x = -.31 - lift * .25;
+        leg.root.position.y = rig.profile.posture - (moving ? lift * .045 : 0) - rig.collapse * .18;
       }
 
-      const scan = active ? Math.sin(state.time * .72 + r.id * .61) * .48 : 0;
-      rig.sensorHead.rotation.y = lerp(rig.sensorHead.rotation.y, scan, .08);
-      rig.sensorHead.rotation.x = active ? Math.sin(state.time * .45 + r.id) * .035 : -.18;
+      for (const limb of rig.wheelLimbs) {
+        limb.wheelSpin.rotation.x -= planarSpeed * visualDt / Math.max(.08, limb.radius);
+        const compression = moving ? Math.sin(rig.motionPhase + limb.phase) * .035 : Math.sin(state.time * .8 + limb.phase) * .012;
+        limb.arm.rotation.x = -.10 + compression - rig.collapse * .38;
+        limb.knuckle.position.y = -.42 + compression;
+      }
+
+      for (let index = 0; index < rig.tail.segments.length; index++) {
+        const segment = rig.tail.segments[index];
+        segment.rotation.z = Math.sin(state.time * 1.55 + index * .55 + robot.id) * (.10 + index * .018);
+        segment.rotation.x = -.32 + Math.sin(state.time * 1.2 + index * .4) * .035 - rig.collapse * .12;
+      }
+
+      for (const mandible of rig.mandibles) {
+        const working = ['GATHER', 'BUILD', 'ATTACK', 'REPAIR_ALLY'].includes(robot.state);
+        const bite = working ? Math.sin(state.time * 7.4 + robot.id) * .20 : .035;
+        mandible.rotation.y = mandible.position.x > 0 ? -bite : bite;
+      }
 
       for (const arm of rig.manipulators) {
-        let shoulderTarget = -.25;
-        let elbowTarget = .55;
-        let wristTarget = 0;
-        if (active && arm.kind === 'builder' && r.state === 'BUILD') {
-          const cycle = Math.sin(state.time * 4.4 + r.id);
-          shoulderTarget = -.68 + cycle * .28;
-          elbowTarget = .92 - cycle * .34;
-          wristTarget = -cycle * .45;
-        } else if (active && arm.kind === 'repair' && (r.state === 'SEEK_REPAIR' || r.state === 'REPAIR')) {
-          const cycle = Math.sin(state.time * 3.2 + r.id) * .10;
-          shoulderTarget = -.82 + cycle;
-          elbowTarget = 1.12 - cycle;
-          wristTarget = .20;
-        } else if (active && arm.kind === 'weapon' && r.state === 'ATTACK') {
-          const thrust = Math.max(0, Math.sin(state.time * 7 + r.id));
-          shoulderTarget = -1.02 + thrust * .24;
-          elbowTarget = .28 - thrust * .18;
-          wristTarget = thrust * .34;
-        }
-        arm.root.rotation.x = lerp(arm.root.rotation.x, shoulderTarget, .13);
-        arm.upper.rotation.z = lerp(arm.upper.rotation.z, arm.side * .16, .12);
-        arm.elbow.rotation.x = lerp(arm.elbow.rotation.x, elbowTarget, .13);
-        arm.wrist.rotation.z = lerp(arm.wrist.rotation.z, wristTarget, .16);
+        let reach = 0;
+        let cadence = 1.6;
+        if (arm.kind === 'builder' && robot.state === 'BUILD') { reach = .70; cadence = 5.2; }
+        if (arm.kind === 'repair' && ['SEEK_REPAIR', 'REPAIR_ALLY'].includes(robot.state)) { reach = .62; cadence = 4.4; }
+        if (arm.kind === 'weapon' && robot.state === 'ATTACK') { reach = .78; cadence = 7.4; }
+        const action = reach ? Math.max(0, Math.sin(state.time * cadence + robot.id)) : 0;
+        arm.upper.rotation.x = -.20 - reach * .56 - action * .22;
+        arm.upper.rotation.z = arm.side * (-.38 + reach * .18);
+        arm.elbow.rotation.x = .52 + reach * .38 + action * .28;
+        arm.wrist.rotation.y = Math.sin(state.time * cadence * .68 + robot.id) * (reach ? .30 : .06);
       }
 
-      const healthRatio = clamp(r.health / r.stats.maxHealth, 0, 1);
-      rig.damageIndicators.forEach((indicator, index) => {
-        indicator.visible = healthRatio < (index === 0 ? .72 : index === 1 ? .48 : .32);
-      });
-      rig.shell.material.roughness = .42 + (1 - healthRatio) * .28;
-      rig.shell.material.color.copy(r.color).multiplyScalar(.62 + healthRatio * .38);
+      robot.selectionRing.visible = state.selected === robot;
+      robot.sensorCone.visible = state.selected === robot;
+    } else {
+      robot.selectionRing.visible = state.selected === robot;
+      robot.sensorCone.visible = state.selected === robot;
     }
-
-    r.coreMesh.material.emissiveIntensity = r.disabled
-      ? .025
-      : .55 + 1.35 * (r.energy / r.stats.maxEnergy) + Math.sin(state.time * 3.1 + r.id) * .12;
-    r.selectionRing.visible = state.selected === r;
-    r.sensorCone.visible = state.selected === r;
   }
 
-  for (const d of state.drones) {
-    if (!d.body || d.disabled) continue;
-    const p = d.body.translation();
-    const q = d.body.rotation();
-    d.mesh.position.set(p.x, p.y, p.z);
-    d.mesh.quaternion.set(q.x, q.y, q.z, q.w);
-    d.mesh.rotation.y += .02;
+  for (const drone of state.drones) {
+    if (!drone.body || drone.disabled) continue;
+    const position = drone.body.translation();
+    const rotation = drone.body.rotation();
+    drone.mesh.position.set(position.x, position.y, position.z);
+    drone.mesh.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
+    drone.mesh.rotation.y += .02;
   }
-  for (const d of state.detached) {
-    const p = d.body.translation();
-    const q = d.body.rotation();
-    d.mesh.position.set(p.x, p.y, p.z);
-    d.mesh.quaternion.set(q.x, q.y, q.z, q.w);
+  for (const detached of state.detached) {
+    const position = detached.body.translation();
+    const rotation = detached.body.rotation();
+    detached.mesh.position.set(position.x, position.y, position.z);
+    detached.mesh.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
   }
-  for (const r of state.resources) r.mesh.rotation.y += .004;
-  for (const s of state.structures) if (s.orb) s.orb.rotation.y += .01;
+  for (const resource of state.resources) {
+    if (resource.pulse) {
+      resource.pulse.rotation.z += .003;
+      resource.pulse.material.opacity = .15 + Math.sin(state.time * 2.6 + resource.id) * .07;
+    }
+  }
+  for (const structure of state.structures) if (structure.orb) structure.orb.rotation.y += .004;
 }
+
 
 function chooseTool(tool) {
   state.activeTool = tool;
@@ -1612,24 +1940,61 @@ function loadGame() {
 }
 
 function initializeScenario() {
-  state.matter = 190; state.time = 0; state.tick = 0; state.objective = 'running'; state.nextRobotId = 1; state.nextStructureId = 1; state.nextResourceId = 1; state.nextDroneId = 1;
+  state.matter = 220;
+  state.time = 0;
+  state.tick = 0;
+  state.objective = 'running';
+  state.nextRobotId = 1;
+  state.nextStructureId = 1;
+  state.nextResourceId = 1;
+  state.nextDroneId = 1;
   if (!state.structures.length) createBase();
   for (const p of [
     { x: -8, z: -6 }, { x: 8, z: -7 }, { x: -12, z: 2 }, { x: 11, z: 5 }, { x: -4, z: 12 }, { x: 7, z: 12 }
   ]) createResource(p, rng.range(30, 52));
-  createStructure('charger', { x: 4.8, z: 0 });
-  createStructure('repair', { x: -4.8, z: 0 });
-  createHazard({ x: 7, z: -1 }, 'gas');
-  createHazard({ x: -9, z: -8 }, 'fire');
+  createStructure('charger', { x: 5.4, z: 1.4 });
+  createStructure('repair', { x: -5.2, z: 1.2 });
+  createHazard({ x: 8, z: -3 }, 'gas');
+  createHazard({ x: -10, z: -8 }, 'fire');
   createDrone({ x: 14, z: -12 });
-  const founderA = structuredClone(DEFAULT_BLUEPRINT);
-  const founderB = structuredClone(DEFAULT_BLUEPRINT); founderB.parts.builder = 0; founderB.parts.repair = 1; founderB.traits.cooperation = .9;
-  const founderC = structuredClone(DEFAULT_BLUEPRINT); founderC.parts.builder = 0; founderC.parts.weapon = 1; founderC.parts.cargo = 0; founderC.traits.aggression = .72;
-  spawnRobot(founderA, { x: 1, y: 1.2, z: 3 });
-  spawnRobot(founderB, { x: -1, y: 1.2, z: 3 });
-  spawnRobot(founderC, { x: 0, y: 1.2, z: -3 });
+
+  const constructor = structuredClone(DEFAULT_BLUEPRINT);
+  constructor.name = 'MANTIS-CONSTRUCTOR';
+  constructor.parts.wheel = 0;
+  constructor.parts.leg = 4;
+  constructor.parts.builder = 1;
+  constructor.parts.repair = 0;
+  constructor.parts.weapon = 0;
+  constructor.parts.cargo = 1;
+  constructor.traits.cooperation = .86;
+
+  const medic = structuredClone(DEFAULT_BLUEPRINT);
+  medic.name = 'ARACHNID-MEDIC';
+  medic.parts.wheel = 0;
+  medic.parts.leg = 4;
+  medic.parts.builder = 0;
+  medic.parts.repair = 1;
+  medic.parts.weapon = 0;
+  medic.traits.cooperation = .94;
+  medic.traits.caution = .58;
+
+  const sentinel = structuredClone(DEFAULT_BLUEPRINT);
+  sentinel.name = 'SCORPION-SENTINEL';
+  sentinel.parts.wheel = 0;
+  sentinel.parts.leg = 4;
+  sentinel.parts.builder = 0;
+  sentinel.parts.repair = 0;
+  sentinel.parts.weapon = 1;
+  sentinel.parts.cargo = 0;
+  sentinel.parts.armor = 2;
+  sentinel.traits.aggression = .76;
+
+  spawnRobot(constructor, { x: 3.0, y: 1.2, z: 3.8 });
+  spawnRobot(medic, { x: -3.1, y: 1.2, z: 3.2 });
+  spawnRobot(sentinel, { x: .2, y: 1.2, z: -4.8 });
   snapshot();
 }
+
 
 function hardReset() {
   clearDynamicWorld();
