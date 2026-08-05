@@ -1,8 +1,21 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import RAPIER from 'https://cdn.skypack.dev/@dimforge/rapier3d-compat';
 
 await RAPIER.init();
+
+
+const authoredLoader = new GLTFLoader();
+const AUTHORED_ASSET_URLS = {
+  trilobite: './assets/quaternius-scifi/Enemy_Trilobite/Enemy_Trilobite.gltf',
+  quadShell: './assets/quaternius-scifi/Enemy_QuadShell/Enemy_QuadShell.gltf',
+  eyeDrone: './assets/quaternius-scifi/Enemy_EyeDrone/Enemy_EyeDrone.gltf'
+};
+const AUTHORED_ASSETS = Object.fromEntries(await Promise.all(
+  Object.entries(AUTHORED_ASSET_URLS).map(async ([key, url]) => [key, await authoredLoader.loadAsync(url)])
+));
 
 const $ = (id) => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -93,24 +106,24 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 1.6));
 renderer.setSize(innerWidth, innerHeight, false);
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x020712);
-scene.fog = new THREE.FogExp2(0x061020, 0.015);
+scene.background = new THREE.Color(0x080b08);
+scene.fog = new THREE.FogExp2(0x11160f, 0.013);
 
 const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, .1, 160);
-camera.position.set(18, 18, 24);
+camera.position.set(9.8, 7.2, 13.5);
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 1.5, 0);
+controls.target.set(0, .9, .45);
 controls.enableDamping = true;
 controls.dampingFactor = .07;
-controls.minDistance = 8;
+controls.minDistance = 4.2;
 controls.maxDistance = 48;
 controls.maxPolarAngle = Math.PI * .48;
 controls.screenSpacePanning = false;
 controls.touches.ONE = THREE.TOUCH.ROTATE;
 controls.touches.TWO = THREE.TOUCH.DOLLY_PAN;
 
-scene.add(new THREE.HemisphereLight(0x8feaff, 0x07111d, 1.45));
-const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
+scene.add(new THREE.HemisphereLight(0xdfe8dc, 0x11150f, 1.9));
+const keyLight = new THREE.DirectionalLight(0xffe4bd, 3.5);
 keyLight.position.set(8, 18, 10);
 keyLight.castShadow = true;
 keyLight.shadow.mapSize.set(1024, 1024);
@@ -119,10 +132,10 @@ keyLight.shadow.camera.right = 24;
 keyLight.shadow.camera.top = 24;
 keyLight.shadow.camera.bottom = -24;
 scene.add(keyLight);
-const cyanLight = new THREE.PointLight(0x22d9ff, 35, 34, 2);
+const cyanLight = new THREE.PointLight(0x86a99b, 28, 30, 2);
 cyanLight.position.set(-10, 8, -8);
 scene.add(cyanLight);
-const magentaLight = new THREE.PointLight(0xa05cff, 26, 28, 2);
+const magentaLight = new THREE.PointLight(0xc58d4c, 22, 26, 2);
 magentaLight.position.set(10, 6, 9);
 scene.add(magentaLight);
 
@@ -134,7 +147,7 @@ physics.timestep = 1 / 60;
 
 const floorMesh = new THREE.Mesh(
   new THREE.BoxGeometry(36, .35, 36),
-  new THREE.MeshStandardMaterial({ color: 0x071522, metalness: .58, roughness: .33 })
+  new THREE.MeshStandardMaterial({ color: 0x171b15, metalness: .26, roughness: .78 })
 );
 floorMesh.position.y = -.2;
 floorMesh.receiveShadow = true;
@@ -143,15 +156,15 @@ worldGroup.add(floorMesh);
 const floorBody = physics.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, -.2, 0));
 physics.createCollider(RAPIER.ColliderDesc.cuboid(18, .175, 18).setFriction(1), floorBody);
 
-const grid = new THREE.GridHelper(36, 36, 0x3ddfff, 0x16384a);
+const grid = new THREE.GridHelper(36, 36, 0x69705f, 0x292e26);
 grid.position.y = .001;
-grid.material.opacity = .28;
+grid.material.opacity = .16;
 grid.material.transparent = true;
 worldGroup.add(grid);
 
 const cubeEdges = new THREE.LineSegments(
   new THREE.EdgesGeometry(new THREE.BoxGeometry(36, 18, 36)),
-  new THREE.LineBasicMaterial({ color: 0x65eaff, transparent: true, opacity: .36 })
+  new THREE.LineBasicMaterial({ color: 0x829183, transparent: true, opacity: .22 })
 );
 cubeEdges.position.y = 8.8;
 worldGroup.add(cubeEdges);
@@ -388,280 +401,268 @@ function createManipulator(side, kind, materials) {
   return { root: shoulder, upper, elbow, wrist, kind, side };
 }
 
-function robotVisual(robot) {
-  const stats = robot.stats;
+const AUTHORED_ROLE_STYLE = {
+  scout: { asset: 'eyeDrone', span: 1.35, core: 0xb9d7cd, mark: 0xd7b85f, y: .12 },
+  constructor: { asset: 'trilobite', span: 1.92, core: 0xf0ba58, mark: 0xd59b38, y: 0 },
+  medic: { asset: 'quadShell', span: 1.72, core: 0x9bd5bf, mark: 0xc8e4d6, y: 0 },
+  sentinel: { asset: 'quadShell', span: 1.78, core: 0xe27e62, mark: 0xd46850, y: 0 },
+  hauler: { asset: 'trilobite', span: 2.02, core: 0xc9a96a, mark: 0xb8924f, y: 0 }
+};
+
+function cloneAuthoredScene(asset) {
+  const root = SkeletonUtils.clone(asset.scene);
+  root.traverse(object => {
+    if (!object.isMesh) return;
+    object.castShadow = true;
+    object.receiveShadow = true;
+    if (Array.isArray(object.material)) object.material = object.material.map(material => material.clone());
+    else if (object.material) object.material = object.material.clone();
+  });
+  return root;
+}
+
+function hardwareMaterial(color, roughness = .42, metalness = .72) {
+  return new THREE.MeshStandardMaterial({ color, roughness, metalness });
+}
+
+function moduleBox(size, material, position) {
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), material);
+  mesh.position.set(...position);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
+function moduleCylinder(radius, length, material, position, rotation = [0, 0, 0], radial = 12) {
+  const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, length, radial), material);
+  mesh.position.set(...position);
+  mesh.rotation.set(...rotation);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
+function addAuthoredModules(robot, group, bounds, style) {
   const p = robot.blueprint.parts;
-  const role = robotRole(p);
-  const palette = ROBOT_ROLE_PALETTE[role];
-  const group = new THREE.Group();
-  group.name = `R-${robot.id}-${role}`;
-
-  robot.color = new THREE.Color(palette.paint);
-  const generationTint = new THREE.Color().setHSL((robot.generation * .071 + robot.id * .013) % 1, .24, .62);
-  const materials = {
-    paint: robotMaterial(palette.paint, .64, .42),
-    accent: robotMaterial(palette.accent, .72, .3),
-    frame: robotMaterial(0x343a34, .82, .34),
-    dark: robotMaterial(0x151915, .88, .4),
-    tire: robotMaterial(0x0c0e0c, .1, .88),
-    tool: robotMaterial(palette.mark, .66, .3),
-    generation: robotMaterial(generationTint, .45, .38),
-    core: new THREE.MeshStandardMaterial({
-      color: 0xd4b268,
-      emissive: 0xc58b2c,
-      emissiveIntensity: 1.4,
-      metalness: .35,
-      roughness: .28
-    }),
-    lens: new THREE.MeshStandardMaterial({
-      color: 0x9fb4aa,
-      emissive: 0x657e72,
-      emissiveIntensity: 1.1,
-      metalness: .2,
-      roughness: .18
-    }),
-    damaged: robotMaterial(0x2a211c, .5, .76)
-  };
-
-  const locomotionRoot = new THREE.Group();
-  const bodyRoot = new THREE.Group();
-  locomotionRoot.add(bodyRoot);
-  group.add(locomotionRoot);
-
-  const wide = role === 'constructor' || role === 'hauler';
-  const armored = role === 'sentinel';
-  const chassisWidth = wide ? 1.74 : armored ? 1.62 : 1.46;
-  const chassisLength = role === 'hauler' ? 2.18 : role === 'constructor' ? 2.08 : 1.84;
-  const bodyHeight = armored ? .70 : .60;
-
-  const frame = boxPart([chassisWidth * .9, .24, chassisLength * .86], materials.frame, [0, .58, 0]);
-  bodyRoot.add(frame);
-
-  const shell = new THREE.Mesh(
-    new THREE.CylinderGeometry(chassisWidth * .49, chassisWidth * .55, chassisLength, 8, 1, false),
-    materials.paint
-  );
-  shell.rotation.x = Math.PI / 2;
-  shell.position.y = .78;
-  shell.scale.y = bodyHeight / (chassisWidth * .98);
-  shell.castShadow = true;
-  shell.receiveShadow = true;
-  bodyRoot.add(shell);
-
-  const belly = boxPart([chassisWidth * .66, .18, chassisLength * .68], materials.dark, [0, .44, .03]);
-  bodyRoot.add(belly);
-
-  const frontBumper = boxPart([chassisWidth * .78, .18, .16], materials.dark, [0, .54, -chassisLength * .54]);
-  bodyRoot.add(frontBumper);
-  const rearBumper = frontBumper.clone();
-  rearBumper.position.z *= -1;
-  bodyRoot.add(rearBumper);
-
-  for (const side of [-1, 1]) {
-    const rail = boxPart([.10, .19, chassisLength * .82], materials.accent, [side * chassisWidth * .49, .74, 0]);
-    bodyRoot.add(rail);
-  }
+  const height = bounds.max.y - bounds.min.y;
+  const width = bounds.max.x - bounds.min.x;
+  const length = bounds.max.z - bounds.min.z;
+  const top = bounds.max.y;
+  const front = bounds.min.z;
+  const dark = hardwareMaterial(0x171b18, .5, .84);
+  const frame = hardwareMaterial(0x3a403a, .42, .8);
+  const mark = hardwareMaterial(style.mark, .34, .68);
+  const attachments = new THREE.Group();
+  attachments.name = 'functional-modules';
+  group.add(attachments);
 
   const coreCage = new THREE.Group();
-  coreCage.position.set(0, 1.02, role === 'hauler' ? -.28 : .04);
-  bodyRoot.add(coreCage);
-  const core = new THREE.Mesh(new THREE.IcosahedronGeometry(.24, 1), materials.core);
+  coreCage.position.set(0, top + .07, -length * .08);
+  const coreMaterial = new THREE.MeshStandardMaterial({
+    color: style.core,
+    emissive: style.core,
+    emissiveIntensity: 1.8,
+    roughness: .18,
+    metalness: .25,
+    transparent: true,
+    opacity: .92
+  });
+  const core = new THREE.Mesh(new THREE.IcosahedronGeometry(.14 + Math.min(.04, p.core * .02), 2), coreMaterial);
   core.castShadow = true;
-  core.userData.core = true;
   coreCage.add(core);
   for (let i = 0; i < 3; i++) {
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(.32 + i * .018, .025, 6, 20), materials.frame);
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(.20 + i * .025, .012, 6, 24),
+      new THREE.MeshStandardMaterial({ color: i === 1 ? style.mark : 0x667066, metalness: .84, roughness: .3 })
+    );
     ring.rotation.set(i === 0 ? Math.PI / 2 : 0, i === 1 ? Math.PI / 2 : 0, i === 2 ? Math.PI / 2 : 0);
     coreCage.add(ring);
   }
-  robot.coreMesh = core;
+  attachments.add(coreCage);
 
-  const stripe = boxPart([chassisWidth * .54, .035, .16], materials.generation, [0, 1.105, -.30]);
-  bodyRoot.add(stripe);
-
-  const sensorMast = new THREE.Group();
-  sensorMast.position.set(0, 1.08, -chassisLength * .31);
-  bodyRoot.add(sensorMast);
-  const mast = cylinderPart(.055, .40, materials.dark, 8);
-  mast.position.y = .18;
-  sensorMast.add(mast);
-  const sensorHead = new THREE.Group();
-  sensorHead.position.y = .40;
-  sensorMast.add(sensorHead);
-  sensorHead.add(boxPart([.62, .24, .28], materials.frame));
-  const lensCount = Math.min(3, Math.max(1, p.sensor));
-  for (let i = 0; i < lensCount; i++) {
-    const lens = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, .045, 12), materials.lens);
-    lens.rotation.x = Math.PI / 2;
-    lens.position.set((i - (lensCount - 1) / 2) * .17, 0, -.16);
-    sensorHead.add(lens);
+  const neuralLines = new THREE.Group();
+  for (let i = 0; i < 6; i++) {
+    const angle = i / 6 * Math.PI * 2;
+    const material = new THREE.LineBasicMaterial({ color: style.core, transparent: true, opacity: .48 });
+    const points = [
+      new THREE.Vector3(0, top + .05, -length * .08),
+      new THREE.Vector3(Math.cos(angle) * width * .32, top - height * .18, Math.sin(angle) * length * .28)
+    ];
+    neuralLines.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), material));
   }
+  attachments.add(neuralLines);
 
-  const wheels = [];
-  if (p.wheel > 0) {
-    const perSide = Math.max(1, Math.ceil(p.wheel / 2));
-    for (let sideIndex = 0; sideIndex < 2; sideIndex++) {
-      const side = sideIndex === 0 ? -1 : 1;
-      for (let row = 0; row < perSide; row++) {
-        const index = row * 2 + sideIndex;
-        if (index >= p.wheel) continue;
-        const z = perSide === 1 ? 0 : THREE.MathUtils.lerp(-chassisLength * .34, chassisLength * .34, row / (perSide - 1));
-        const wheel = createWheelAssembly(side, z, .31 + Math.min(.05, stats.mass * .002), materials);
-        locomotionRoot.add(wheel.root);
-        wheels.push(wheel);
-      }
-    }
-  }
-
-  const legs = [];
-  for (let i = 0; i < p.leg; i++) {
-    const side = i % 2 === 0 ? -1 : 1;
-    const pair = Math.floor(i / 2);
-    const z = p.leg <= 2 ? 0 : pair === 0 ? -.52 : .52;
-    const leg = createLegAssembly(side, z, i * Math.PI * .5, materials);
-    locomotionRoot.add(leg.root);
-    legs.push(leg);
+  const batteryCount = Math.min(3, p.battery || 0);
+  for (let i = 0; i < batteryCount; i++) {
+    const x = (i - (batteryCount - 1) / 2) * .27;
+    attachments.add(moduleCylinder(.075, .34, dark, [x, top + .02, length * .24], [Math.PI / 2, 0, 0], 10));
+    attachments.add(moduleCylinder(.046, .35, mark, [x, top + .02, length * .24], [Math.PI / 2, 0, 0], 10));
   }
 
   if (p.cargo > 0) {
     const rack = new THREE.Group();
-    rack.position.set(0, 1.12, chassisLength * .27);
-    bodyRoot.add(rack);
-    const tray = boxPart([chassisWidth * .72, .13, .74], materials.dark);
-    rack.add(tray);
-    for (const side of [-1, 1]) {
-      rack.add(boxPart([.07, .42, .74], materials.frame, [side * chassisWidth * .36, .18, 0]));
+    rack.position.set(0, top + .02, length * .30);
+    rack.add(moduleBox([Math.max(.62, width * .65), .09, Math.max(.42, length * .34)], dark, [0, 0, 0]));
+    const crates = Math.min(3, p.cargo);
+    for (let i = 0; i < crates; i++) {
+      rack.add(moduleBox([.24, .20, .30], i % 2 ? frame : mark, [(i - (crates - 1) / 2) * .27, .14, 0]));
     }
-    const cargoBlocks = Math.min(3, p.cargo);
-    for (let i = 0; i < cargoBlocks; i++) {
-      const block = boxPart([.34, .30, .45], materials.accent, [(i - (cargoBlocks - 1) / 2) * .38, .22, .02]);
-      rack.add(block);
+    attachments.add(rack);
+  }
+
+  const toolMounts = [];
+  const makeTool = (side, kind) => {
+    const mount = new THREE.Group();
+    mount.position.set(side * width * .48, top - height * .25, front + length * .20);
+    mount.add(moduleCylinder(.065, .30, frame, [side * .08, .06, -.04], [0, 0, side * .55], 10));
+    const head = new THREE.Group();
+    head.position.set(side * .16, .16, -.13);
+    if (kind === 'builder') {
+      head.add(moduleBox([.18, .12, .20], mark, [0, 0, 0]));
+      head.add(moduleBox([.035, .18, .07], dark, [-.075, -.02, -.13]));
+      head.add(moduleBox([.035, .18, .07], dark, [.075, -.02, -.13]));
+    } else if (kind === 'repair') {
+      head.add(moduleCylinder(.10, .18, mark, [0, 0, -.06], [Math.PI / 2, 0, 0], 12));
+      head.add(moduleCylinder(.018, .30, hardwareMaterial(style.core, .2, .3), [0, 0, -.25], [Math.PI / 2, 0, 0], 8));
+    } else {
+      const cutter = new THREE.Mesh(new THREE.ConeGeometry(.10, .42, 8), mark);
+      cutter.rotation.x = -Math.PI / 2;
+      cutter.position.z = -.20;
+      cutter.castShadow = true;
+      head.add(cutter);
     }
+    mount.add(head);
+    attachments.add(mount);
+    toolMounts.push({ mount, head, kind, side });
+  };
+  if (p.builder > 0) makeTool(1, 'builder');
+  if (p.repair > 0) makeTool(-1, 'repair');
+  if (p.weapon > 0) makeTool(1, 'weapon');
+
+  if (p.armor > 0) {
+    const plateMaterial = hardwareMaterial(0x596057, .48, .8);
+    attachments.add(moduleBox([Math.max(.52, width * .48), .055, Math.max(.36, length * .22)], plateMaterial, [0, top + .12, -length * .26]));
   }
 
-  const manipulators = [];
-  if (p.builder > 0) {
-    const arm = createManipulator(1, 'builder', materials);
-    bodyRoot.add(arm.root);
-    manipulators.push(arm);
-  }
-  if (p.repair > 0) {
-    const arm = createManipulator(-1, 'repair', materials);
-    bodyRoot.add(arm.root);
-    manipulators.push(arm);
-  }
-  if (p.weapon > 0) {
-    const arm = createManipulator(1, 'weapon', materials);
-    arm.root.position.z = -.38;
-    bodyRoot.add(arm.root);
-    manipulators.push(arm);
-  }
+  return { attachments, core, coreCage, neuralLines, toolMounts };
+}
 
-  if (p.solar > 0) {
-    const solarRoot = new THREE.Group();
-    solarRoot.position.set(0, 1.33, .30);
-    bodyRoot.add(solarRoot);
-    const panelCount = Math.min(3, p.solar);
-    for (let i = 0; i < panelCount; i++) {
-      const panel = boxPart([.48, .045, .66], robotMaterial(0x263a43, .24, .25), [(i - (panelCount - 1) / 2) * .52, 0, 0]);
-      solarRoot.add(panel);
-      for (let line = -1; line <= 1; line++) {
-        solarRoot.add(boxPart([.012, .052, .60], materials.accent, [panel.position.x + line * .12, .006, 0]));
-      }
-    }
+function findAuthoredClip(rig, candidates) {
+  for (const name of candidates) {
+    const clip = THREE.AnimationClip.findByName(rig.clips, name);
+    if (clip) return clip;
   }
+  return rig.clips[0] || null;
+}
 
-  if (p.armor > 0 || role === 'sentinel') {
-    const plateThickness = .10 + Math.min(.05, p.armor * .012);
-    const frontPlate = boxPart([chassisWidth * .72, .52, plateThickness], materials.accent, [0, .80, -chassisLength * .56]);
-    frontPlate.rotation.x = -.12;
-    bodyRoot.add(frontPlate);
-    for (const side of [-1, 1]) {
-      const sidePlate = boxPart([plateThickness, .46, chassisLength * .62], materials.accent, [side * chassisWidth * .54, .78, .05]);
-      sidePlate.rotation.z = side * .08;
-      bodyRoot.add(sidePlate);
-    }
+function playAuthoredClip(robot, candidates, fade = .16) {
+  const rig = robot.visualRig;
+  if (!rig?.mixer) return;
+  const clip = findAuthoredClip(rig, candidates);
+  if (!clip || rig.clipName === clip.name) return;
+  const previous = rig.action;
+  const next = rig.mixer.clipAction(clip);
+  next.enabled = true;
+  next.reset();
+  next.setEffectiveTimeScale(1);
+  next.setEffectiveWeight(1);
+  if (clip.name === 'TurnOff') {
+    next.setLoop(THREE.LoopOnce, 1);
+    next.clampWhenFinished = true;
+  } else {
+    next.setLoop(THREE.LoopRepeat, Infinity);
+    next.clampWhenFinished = false;
   }
+  next.play();
+  if (previous && previous !== next) previous.crossFadeTo(next, fade, false);
+  rig.action = next;
+  rig.clipName = clip.name;
+}
 
-  if (role === 'constructor') {
-    const counterweight = boxPart([.74, .52, .50], materials.dark, [0, .94, chassisLength * .48]);
-    bodyRoot.add(counterweight);
-    counterweight.add(boxPart([.44, .08, .16], materials.tool, [0, .18, .28]));
-  } else if (role === 'medic') {
-    const medicalCase = boxPart([.70, .42, .48], materials.accent, [0, 1.04, chassisLength * .40]);
-    bodyRoot.add(medicalCase);
-    medicalCase.add(boxPart([.08, .24, .03], materials.generation, [0, 0, -.255]));
-    medicalCase.add(boxPart([.24, .08, .03], materials.generation, [0, 0, -.255]));
-  } else if (role === 'sentinel') {
-    const brow = boxPart([.86, .16, .28], materials.dark, [0, 1.22, -chassisLength * .33]);
-    bodyRoot.add(brow);
-  }
+function authoredClipForRobot(robot, planarSpeed) {
+  if (robot.disabled || robot.health <= 0) return ['TurnOff', 'Hit', 'Idle'];
+  if (robot.state === 'ATTACK') return ['AttackAuto', 'Attack', 'Charge', 'BackFlip'];
+  if (robot.state === 'BUILD') return ['AttackAuto', 'Charge', 'Attack', 'Look'];
+  if (robot.state === 'REPAIR_ALLY' || robot.state === 'SEEK_REPAIR') return ['Look', 'Charging', 'Idle'];
+  if (robot.state === 'FLEE') return ['Run', 'Walk', 'BackFlip'];
+  if (planarSpeed > Math.max(1.4, robot.stats.speed * .42)) return ['Run', 'Walk', 'Idle'];
+  if (planarSpeed > .14) return ['Walk', 'Run', 'Idle'];
+  return ['Idle', 'Look', 'Hanging'];
+}
 
-  const damageIndicators = [];
-  for (const side of [-1, 1]) {
-    const scar = boxPart([.045, .26, .48], materials.damaged, [side * chassisWidth * .555, .78, .24]);
-    scar.rotation.z = side * .28;
-    scar.visible = false;
-    bodyRoot.add(scar);
-    damageIndicators.push(scar);
-  }
-  const looseWire = new THREE.Mesh(
-    new THREE.TorusGeometry(.18, .025, 6, 18, Math.PI * 1.35),
-    robotMaterial(0x4c2d21, .12, .7)
-  );
-  looseWire.position.set(-chassisWidth * .45, .50, -.36);
-  looseWire.rotation.y = Math.PI / 2;
-  looseWire.visible = false;
-  bodyRoot.add(looseWire);
-  damageIndicators.push(looseWire);
+function robotVisual(robot) {
+  const p = robot.blueprint.parts;
+  const role = robotRole(p);
+  const style = AUTHORED_ROLE_STYLE[role] || AUTHORED_ROLE_STYLE.scout;
+  const asset = AUTHORED_ASSETS[style.asset];
+  const group = new THREE.Group();
+  group.name = `R-${robot.id}-${role}-authored`;
+
+  const authoredRoot = new THREE.Group();
+  const model = cloneAuthoredScene(asset);
+  authoredRoot.add(model);
+  group.add(authoredRoot);
+
+  const rawBox = new THREE.Box3().setFromObject(model);
+  const rawSize = rawBox.getSize(new THREE.Vector3());
+  const scale = style.span / Math.max(rawSize.x, rawSize.z, .001);
+  model.scale.setScalar(scale);
+  model.updateMatrixWorld(true);
+  const scaledBox = new THREE.Box3().setFromObject(model);
+  const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
+  model.position.set(-scaledCenter.x, -scaledBox.min.y + style.y, -scaledCenter.z);
+  model.updateMatrixWorld(true);
+  const bounds = new THREE.Box3().setFromObject(model);
+
+  const modules = addAuthoredModules(robot, group, bounds, style);
+  robot.color = new THREE.Color(style.mark);
+  robot.coreMesh = modules.core;
 
   const sensorCone = new THREE.Mesh(
-    new THREE.ConeGeometry(Math.min(3.7, stats.sensor * .25), Math.min(8, stats.sensor), 18, 1, true),
-    new THREE.MeshBasicMaterial({ color: 0x879f94, transparent: true, opacity: .035, side: THREE.DoubleSide, depthWrite: false })
+    new THREE.ConeGeometry(Math.min(3.7, robot.stats.sensor * .25), Math.min(8, robot.stats.sensor), 20, 1, true),
+    new THREE.MeshBasicMaterial({ color: style.core, transparent: true, opacity: .035, side: THREE.DoubleSide, depthWrite: false })
   );
   sensorCone.rotation.x = Math.PI / 2;
-  sensorCone.position.set(0, .95, -stats.sensor * .46);
+  sensorCone.position.set(0, Math.max(.55, bounds.max.y * .58), -robot.stats.sensor * .46);
   sensorCone.visible = false;
   group.add(sensorCone);
   robot.sensorCone = sensorCone;
 
   const ring = new THREE.Mesh(
-    new THREE.RingGeometry(1.0, 1.08, 32),
-    new THREE.MeshBasicMaterial({ color: palette.mark, transparent: true, opacity: .78, side: THREE.DoubleSide })
+    new THREE.RingGeometry(Math.max(.78, style.span * .47), Math.max(.84, style.span * .51), 40),
+    new THREE.MeshBasicMaterial({ color: style.mark, transparent: true, opacity: .76, side: THREE.DoubleSide })
   );
   ring.rotation.x = -Math.PI / 2;
-  ring.position.y = .04;
+  ring.position.y = .025;
   ring.visible = false;
   group.add(ring);
   robot.selectionRing = ring;
 
+  const mixer = new THREE.AnimationMixer(model);
   robot.visualRig = {
+    version: 6,
     role,
-    locomotionRoot,
-    bodyRoot,
-    frame,
-    shell,
-    sensorHead,
-    wheels,
-    legs,
-    manipulators,
-    damageIndicators,
-    coreCage,
-    motionPhase: robot.id * .73,
+    style,
+    authoredRoot,
+    model,
+    mixer,
+    clips: asset.animations,
+    action: null,
+    clipName: '',
     lastTime: state.time,
+    baseY: authoredRoot.position.y,
+    modules,
+    pulse: robot.id * .71,
     lean: 0,
-    roll: 0,
-    disabledTilt: 0,
-    baseBodyY: bodyRoot.position.y
+    damage: 0
   };
+  playAuthoredClip(robot, ['Idle', 'Look', 'Hanging'], 0);
 
-  addCastShadow(group);
   group.userData.entity = robot;
   group.traverse(object => {
-    if (object.isMesh) {
-      object.userData.entity = robot;
-      interactive.push(object);
-    }
+    if (!object.isMesh) return;
+    object.userData.entity = robot;
+    interactive.push(object);
   });
   return group;
 }
@@ -1248,113 +1249,69 @@ function syncVisuals() {
     const p = r.body.translation();
     const q = r.body.rotation();
     const velocity = r.body.linvel();
-    const angular = r.body.angvel();
     const rig = r.visualRig;
-    const visualDt = rig ? clamp(state.time - rig.lastTime, 0, .06) : 0;
     const planarSpeed = Math.hypot(velocity.x, velocity.z);
-
     r.mesh.position.set(p.x, p.y - .48, p.z);
     r.mesh.quaternion.set(q.x, q.y, q.z, q.w);
 
-    if (rig) {
+    if (rig?.version === 6) {
+      const visualDt = clamp(state.time - rig.lastTime, 0, .06);
       rig.lastTime = state.time;
+      rig.mixer.update(visualDt);
+      playAuthoredClip(r, authoredClipForRobot(r, planarSpeed));
+
       const active = !r.disabled && r.health > 0 && r.energy > 0;
-      const moving = active && planarSpeed > .12;
-      if (moving) rig.motionPhase += planarSpeed * visualDt * 2.6;
-
-      const desiredLean = moving ? clamp(planarSpeed / Math.max(2, r.stats.speed), 0, 1) * .075 : 0;
-      const desiredRoll = active ? clamp(-angular.y * .055, -.11, .11) : .08;
+      const bob = rig.style.asset === 'eyeDrone' && active ? Math.sin(state.time * 2.6 + rig.pulse) * .055 : 0;
+      rig.authoredRoot.position.y = lerp(rig.authoredRoot.position.y, rig.baseY + bob, .12);
+      const desiredLean = active && planarSpeed > .18 ? clamp(planarSpeed / Math.max(2, r.stats.speed), 0, 1) * .075 : 0;
       rig.lean = lerp(rig.lean, desiredLean, .12);
-      rig.roll = lerp(rig.roll, desiredRoll, .12);
-      rig.disabledTilt = lerp(rig.disabledTilt, active ? 0 : .38, active ? .09 : .035);
+      rig.authoredRoot.rotation.x = -rig.lean;
+      rig.authoredRoot.rotation.z = lerp(rig.authoredRoot.rotation.z, active ? 0 : .28, active ? .08 : .03);
 
-      const gaitBob = rig.legs.length && moving
-        ? Math.abs(Math.sin(rig.motionPhase * 2)) * .035
-        : 0;
-      const wheelBob = rig.wheels.length && moving
-        ? Math.sin(rig.motionPhase * 1.4) * .008
-        : 0;
-      rig.bodyRoot.position.y = rig.baseBodyY + gaitBob + wheelBob - rig.disabledTilt * .22;
-      rig.bodyRoot.rotation.x = -rig.lean + rig.disabledTilt * .18;
-      rig.bodyRoot.rotation.z = rig.roll + rig.disabledTilt * (r.id % 2 ? -.9 : .9);
-
-      for (const wheel of rig.wheels) {
-        if (moving && visualDt > 0) wheel.spin.rotation.y -= planarSpeed * visualDt / wheel.radius;
-        const compression = moving
-          ? Math.sin(rig.motionPhase * 1.7 + wheel.z * 2.8) * .018
-          : 0;
-        wheel.carrier.position.y = compression - rig.disabledTilt * .05;
-      }
-
-      for (const leg of rig.legs) {
-        const phase = rig.motionPhase + leg.phase;
-        const swing = moving ? Math.sin(phase) : 0;
-        const lift = moving ? Math.max(0, Math.sin(phase)) : 0;
-        const planted = moving ? Math.max(0, -Math.sin(phase)) : 0;
-        leg.root.rotation.x = swing * .48 - rig.disabledTilt * .35;
-        leg.upper.rotation.z = leg.side * (.08 + lift * .05);
-        leg.knee.rotation.x = .30 + lift * .72 + planted * .10 + rig.disabledTilt * .55;
-        leg.ankle.rotation.x = -.16 - leg.knee.rotation.x * .42 - leg.root.rotation.x * .28;
-        leg.root.position.y = leg.baseY + lift * .045 - rig.disabledTilt * .16;
-        leg.foot.rotation.y = swing * .07;
-      }
-
-      const scan = active ? Math.sin(state.time * .72 + r.id * .61) * .48 : 0;
-      rig.sensorHead.rotation.y = lerp(rig.sensorHead.rotation.y, scan, .08);
-      rig.sensorHead.rotation.x = active ? Math.sin(state.time * .45 + r.id) * .035 : -.18;
-
-      for (const arm of rig.manipulators) {
-        let shoulderTarget = -.25;
-        let elbowTarget = .55;
-        let wristTarget = 0;
-        if (active && arm.kind === 'builder' && r.state === 'BUILD') {
-          const cycle = Math.sin(state.time * 4.4 + r.id);
-          shoulderTarget = -.68 + cycle * .28;
-          elbowTarget = .92 - cycle * .34;
-          wristTarget = -cycle * .45;
-        } else if (active && arm.kind === 'repair' && (r.state === 'SEEK_REPAIR' || r.state === 'REPAIR')) {
-          const cycle = Math.sin(state.time * 3.2 + r.id) * .10;
-          shoulderTarget = -.82 + cycle;
-          elbowTarget = 1.12 - cycle;
-          wristTarget = .20;
-        } else if (active && arm.kind === 'weapon' && r.state === 'ATTACK') {
-          const thrust = Math.max(0, Math.sin(state.time * 7 + r.id));
-          shoulderTarget = -1.02 + thrust * .24;
-          elbowTarget = .28 - thrust * .18;
-          wristTarget = thrust * .34;
-        }
-        arm.root.rotation.x = lerp(arm.root.rotation.x, shoulderTarget, .13);
-        arm.upper.rotation.z = lerp(arm.upper.rotation.z, arm.side * .16, .12);
-        arm.elbow.rotation.x = lerp(arm.elbow.rotation.x, elbowTarget, .13);
-        arm.wrist.rotation.z = lerp(arm.wrist.rotation.z, wristTarget, .16);
-      }
-
-      const healthRatio = clamp(r.health / r.stats.maxHealth, 0, 1);
-      rig.damageIndicators.forEach((indicator, index) => {
-        indicator.visible = healthRatio < (index === 0 ? .72 : index === 1 ? .48 : .32);
+      const energyRatio = clamp(r.energy / Math.max(1, r.stats.maxEnergy), 0, 1);
+      rig.modules.core.material.emissiveIntensity = r.disabled ? .03 : 1.0 + energyRatio * 2.2 + Math.sin(state.time * 5 + rig.pulse) * .25;
+      rig.modules.core.scale.setScalar(1 + Math.sin(state.time * 3.5 + rig.pulse) * .035);
+      rig.modules.coreCage.rotation.y += visualDt * (active ? .8 : .08);
+      rig.modules.neuralLines.children.forEach((line, index) => {
+        line.material.opacity = r.disabled ? .03 : .22 + energyRatio * .34 + Math.sin(state.time * 3 + index) * .08;
       });
-      rig.shell.material.roughness = .42 + (1 - healthRatio) * .28;
-      rig.shell.material.color.copy(r.color).multiplyScalar(.62 + healthRatio * .38);
+
+      const working = r.state === 'BUILD' || r.state === 'REPAIR_ALLY' || r.state === 'ATTACK';
+      rig.modules.toolMounts.forEach((tool, index) => {
+        const reach = working ? Math.sin(state.time * 7 + index) * .28 : 0;
+        tool.mount.rotation.x = lerp(tool.mount.rotation.x, working ? -.35 : 0, .14);
+        tool.head.rotation.y = reach;
+      });
+
+      const damage = 1 - clamp(r.health / Math.max(1, r.stats.maxHealth), 0, 1);
+      if (Math.abs(damage - rig.damage) > .03) {
+        rig.damage = damage;
+        rig.model.traverse(object => {
+          if (!object.isMesh || !object.material) return;
+          const materials = Array.isArray(object.material) ? object.material : [object.material];
+          materials.forEach(material => {
+            if (!material.color) return;
+            material.roughness = clamp((material.userData.baseRoughness ??= material.roughness ?? .5) + damage * .28, 0, 1);
+            material.emissiveIntensity = damage > .65 ? Math.sin(state.time * 12 + r.id) * .08 + .08 : 0;
+          });
+        });
+      }
+    } else if (r.coreMesh?.material) {
+      r.coreMesh.material.emissiveIntensity = r.disabled ? .05 : 1.3 + 1.7 * (r.energy / r.stats.maxEnergy);
     }
 
-    r.coreMesh.material.emissiveIntensity = r.disabled
-      ? .025
-      : .55 + 1.35 * (r.energy / r.stats.maxEnergy) + Math.sin(state.time * 3.1 + r.id) * .12;
     r.selectionRing.visible = state.selected === r;
     r.sensorCone.visible = state.selected === r;
   }
-
   for (const d of state.drones) {
     if (!d.body || d.disabled) continue;
-    const p = d.body.translation();
-    const q = d.body.rotation();
+    const p = d.body.translation(), q = d.body.rotation();
     d.mesh.position.set(p.x, p.y, p.z);
     d.mesh.quaternion.set(q.x, q.y, q.z, q.w);
     d.mesh.rotation.y += .02;
   }
   for (const d of state.detached) {
-    const p = d.body.translation();
-    const q = d.body.rotation();
+    const p = d.body.translation(), q = d.body.rotation();
     d.mesh.position.set(p.x, p.y, p.z);
     d.mesh.quaternion.set(q.x, q.y, q.z, q.w);
   }

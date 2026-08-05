@@ -1,9 +1,9 @@
-const CACHE='nexus-field-lab-v4';
+const CACHE='nexus-authored-robots-v6';
 const CORE=[
-  './style.css?v=4',
-  './main.js?v=4',
+  './style.css?v=6',
+  './main.js?v=6',
   './runtime-source.js?v=robot-rig-v4-20260805',
-  './manifest.webmanifest?v=4'
+  './manifest.webmanifest?v=6'
 ];
 
 self.addEventListener('install',event=>{
