@@ -8,6 +8,7 @@ on:
       - '.github/workflows/nexus-machine-organism-v5.yml'
       - 'nexus-glass-science-cube/patch-machine-organism-v5.py'
       - 'nexus-glass-science-cube/patch-machine-organism-v5.py.gz.b64'
+      - 'nexus-glass-science-cube/patch-machine-organism-v5-refine.py'
 
 permissions:
   contents: write
@@ -46,6 +47,9 @@ jobs:
       - name: Apply machine-organism V5 overhaul
         run: python nexus-glass-science-cube/patch-machine-organism-v5.py
 
+      - name: Refine anatomy and presentation
+        run: python nexus-glass-science-cube/patch-machine-organism-v5-refine.py
+
       - name: Update V5 identity and cache versions
         shell: python
         run: |
@@ -77,6 +81,7 @@ jobs:
       - name: Validate generated source
         run: |
           python -m py_compile nexus-glass-science-cube/patch-machine-organism-v5.py
+          python -m py_compile nexus-glass-science-cube/patch-machine-organism-v5-refine.py
           node --check nexus-glass-science-cube/runtime-source.js
           node --check nexus-glass-science-cube/main.js
           node --check nexus-glass-science-cube/sw.js
@@ -85,6 +90,7 @@ jobs:
           grep -q 'rig?.version === 5' nexus-glass-science-cube/runtime-source.js
           grep -q 'const habitatGroup' nexus-glass-science-cube/runtime-source.js
           grep -q 'MANTIS-CONSTRUCTOR' nexus-glass-science-cube/runtime-source.js
+          grep -q 'camera.position.set(9.4, 6.6, 12.8)' nexus-glass-science-cube/runtime-source.js
           grep -q 'machine-organism-v5-20260805' nexus-glass-science-cube/main.js
           grep -q 'main.js?v=5' nexus-glass-science-cube/index.html
 
@@ -121,7 +127,7 @@ jobs:
             if (message.type() === 'error') failures.push(`console: ${message.text()}`);
           });
 
-          await page.goto('http://127.0.0.1:4173/?machine-organism=v5', {
+          await page.goto('http://127.0.0.1:4173/?machine-organism=v5-refined', {
             waitUntil: 'domcontentloaded',
             timeout: 120000
           });
@@ -170,5 +176,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add nexus-glass-science-cube/runtime-source.js nexus-glass-science-cube/main.js nexus-glass-science-cube/sw.js nexus-glass-science-cube/index.html
-          git commit -m 'Build NEXUS machine-organism V5 habitat'
+          git commit -m 'Build refined NEXUS machine-organism V5 habitat'
           git push origin HEAD:${{ github.head_ref || github.ref_name }}
