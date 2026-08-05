@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0e0b" />
+  <title>NEXUS Science Core V7</title>
+  <style>
+    :root { color-scheme: dark; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #0b0e0b; }
+    #world { width: 100%; height: 100%; touch-action: none; display: block; }
+    #status {
+      position: fixed; top: max(10px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left));
+      max-width: calc(100vw - 20px); padding: 9px 11px; border: 1px solid #556052;
+      border-left: 4px solid #b69252; background: rgba(11, 14, 11, .88); color: #e6e0d3;
+      font-size: 11px; line-height: 1.45; letter-spacing: .03em; pointer-events: none;
+    }
+    #status strong { color: #d9bb78; }
+    #controls {
+      position: fixed; left: 50%; bottom: max(12px, env(safe-area-inset-bottom)); transform: translateX(-50%);
+      display: flex; gap: 8px; padding: 8px; border: 1px solid #41483f; background: rgba(10, 12, 10, .88);
+    }
+    button { min-width: 78px; min-height: 42px; border: 1px solid #697261; background: #20251f; color: #eee8dc; font: 700 11px ui-monospace, monospace; }
+    button:active { transform: translateY(1px); background: #31382f; }
+  </style>
+</head>
+<body>
+  <canvas id="world"></canvas>
+  <div id="status"><strong>V7 BOOT</strong><br />Loading MuJoCo WASM…</div>
+  <div id="controls">
+    <button id="pause">PAUSE</button>
+    <button id="reset">RESET</button>
+    <button id="mutate">MUTATE</button>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
