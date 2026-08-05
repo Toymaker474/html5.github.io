@@ -1,8 +1,28 @@
 const PART_COUNT = 6;
-const BUILD = '2026-08-04.2';
+const BUILD = '2026-08-04.3';
 const RAW_ROOT = 'https://raw.githubusercontent.com/Toymaker474/html5.github.io/main/.nexus-payload';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function applyFieldLabGrade() {
+  const canvas = document.getElementById('world');
+  if (canvas) {
+    canvas.style.filter = 'saturate(.72) contrast(1.08) brightness(.92)';
+    canvas.style.background = '#0d0f0c';
+  }
+}
+
+async function refreshServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    const registration = await navigator.serviceWorker.register('./sw.js?v=3', {
+      updateViaCache: 'none',
+    });
+    await registration.update();
+  } catch (error) {
+    console.warn('NEXUS service worker update skipped', error);
+  }
+}
 
 async function fetchText(url) {
   const response = await fetch(url, {
@@ -67,17 +87,37 @@ async function decodeSimulation() {
 function showBootError(error) {
   console.error('NEXUS simulation boot failure', error);
   const notice = document.createElement('div');
-  notice.style.cssText = 'position:fixed;inset:16px;z-index:9999;display:grid;place-items:center;padding:24px;border:1px solid #ff5470;border-radius:20px;background:#080d18;color:#fff;font:700 16px system-ui;text-align:center;white-space:pre-line';
+  notice.style.cssText = [
+    'position:fixed',
+    'inset:16px',
+    'z-index:9999',
+    'display:grid',
+    'place-items:center',
+    'padding:24px',
+    'border:1px solid #76534a',
+    'border-left:5px solid #b86358',
+    'border-radius:2px',
+    'background:#171914',
+    'color:#e8e5dc',
+    'font:700 13px/1.5 SFMono-Regular,Consolas,monospace',
+    'text-align:left',
+    'white-space:pre-line',
+    'box-shadow:12px 12px 0 rgba(0,0,0,.28)',
+  ].join(';');
   const message = error instanceof Error ? error.message : String(error);
-  notice.textContent = `NEXUS could not load.\n${message}\n\nTap reload once. Build ${BUILD}`;
+  notice.textContent = `FIELD LAB BOOT FAULT\n\n${message}\n\nReload once. Build ${BUILD}`;
   document.body.appendChild(notice);
 }
+
+applyFieldLabGrade();
+void refreshServiceWorker();
 
 try {
   const source = await decodeSimulation();
   const moduleUrl = URL.createObjectURL(new Blob([source], { type: 'text/javascript' }));
   try {
     await import(moduleUrl);
+    applyFieldLabGrade();
   } finally {
     URL.revokeObjectURL(moduleUrl);
   }
