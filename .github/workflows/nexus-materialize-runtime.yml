@@ -8,6 +8,7 @@ on:
       - '.github/workflows/nexus-materialize-runtime.yml'
       - '.nexus-payload/main.part.*'
       - 'nexus-glass-science-cube/patch-robot-art.py'
+      - 'nexus-glass-science-cube/patch-robot-grounding.py'
   pull_request:
     branches: [main]
     paths:
@@ -15,6 +16,7 @@ on:
       - '.github/workflows/nexus-materialize-runtime.yml'
       - '.nexus-payload/main.part.*'
       - 'nexus-glass-science-cube/patch-robot-art.py'
+      - 'nexus-glass-science-cube/patch-robot-grounding.py'
 
 permissions:
   contents: write
@@ -53,6 +55,9 @@ jobs:
       - name: Apply robot model and animation rebuild
         run: python nexus-glass-science-cube/patch-robot-art.py
 
+      - name: Ground suspension and articulated feet
+        run: python nexus-glass-science-cube/patch-robot-grounding.py
+
       - name: Validate JavaScript
         run: node --check nexus-glass-science-cube/runtime-source.js
 
@@ -62,6 +67,7 @@ jobs:
           grep -q 'createLegAssembly' nexus-glass-science-cube/runtime-source.js
           grep -q 'rig.motionPhase' nexus-glass-science-cube/runtime-source.js
           grep -q 'rebuildRobotVisual(robot)' nexus-glass-science-cube/runtime-source.js
+          grep -q 'baseY: 1.08' nexus-glass-science-cube/runtime-source.js
 
       - name: Commit source if changed
         run: |
