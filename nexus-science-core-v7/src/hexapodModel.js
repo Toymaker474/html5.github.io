@@ -43,7 +43,7 @@ export const HEXAPOD_MJCF = `
 <mujoco model="nexus_v7_hexapod">
   <compiler angle="radian" autolimits="true" balanceinertia="true" />
   <option timestep="0.0025" integrator="implicitfast" solver="Newton" cone="elliptic" iterations="60" tolerance="1e-10" gravity="0 0 -9.81" />
-  <size memory="64M" nconmax="256" njmax="1024" />
+  <size memory="64M" />
 
   <default>
     <joint damping="1.4" armature="0.015" frictionloss="0.04" />
