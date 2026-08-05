@@ -11,12 +11,15 @@ import {
   Quaternion,
   Scene,
   ShadowGenerator,
+  TransformNode,
   Vector3,
 } from '@babylonjs/core';
 
 async function createBestEngine(canvas) {
   if ('gpu' in navigator) {
     try {
+      const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
+      if (!adapter) throw new Error('No usable WebGPU adapter.');
       const { WebGPUEngine } = await import('@babylonjs/core/Engines/webgpuEngine.js');
       const engine = new WebGPUEngine(canvas, { antialias: true, adaptToDeviceRatio: true });
       await engine.initAsync();
@@ -92,18 +95,31 @@ function createMaterialLibrary(scene) {
       albedo: new Color3(0.055, 0.064, 0.054), metallic: 0.05, roughness: 0.93,
     }),
     structure: makePbr(scene, 'robot-graphite-ceramic', {
-      albedo: new Color3(0.16, 0.18, 0.16), metallic: 0.62, roughness: 0.38,
+      albedo: new Color3(0.135, 0.15, 0.135), metallic: 0.58, roughness: 0.42,
+    }),
+    armour: makePbr(scene, 'robot-armour-ceramic', {
+      albedo: new Color3(0.205, 0.215, 0.19), metallic: 0.34, roughness: 0.5,
     }),
     limb: makePbr(scene, 'robot-dark-titanium', {
-      albedo: new Color3(0.10, 0.12, 0.105), metallic: 0.78, roughness: 0.31,
+      albedo: new Color3(0.075, 0.087, 0.078), metallic: 0.82, roughness: 0.29,
+    }),
+    joint: makePbr(scene, 'robot-joint-bronze', {
+      albedo: new Color3(0.43, 0.29, 0.12), metallic: 0.88, roughness: 0.22,
     }),
     core: makePbr(scene, 'robot-machined-bronze', {
       albedo: new Color3(0.51, 0.36, 0.16), metallic: 0.84, roughness: 0.24,
       emissive: new Color3(0.055, 0.025, 0.006),
     }),
     foot: makePbr(scene, 'robot-contact-elastomer', {
-      albedo: new Color3(0.20, 0.18, 0.125), metallic: 0.08, roughness: 0.86,
+      albedo: new Color3(0.17, 0.145, 0.09), metallic: 0.05, roughness: 0.91,
       emissive: new Color3(0.015, 0.01, 0.002),
+    }),
+    sensor: makePbr(scene, 'robot-sensor-optic', {
+      albedo: new Color3(0.095, 0.12, 0.105), metallic: 0.18, roughness: 0.12,
+      emissive: new Color3(0.025, 0.04, 0.025), alpha: 0.88,
+    }),
+    cable: makePbr(scene, 'robot-cable-elastomer', {
+      albedo: new Color3(0.018, 0.021, 0.018), metallic: 0.04, roughness: 0.88,
     }),
     frame: makePbr(scene, 'chamber-frame', {
       albedo: new Color3(0.24, 0.25, 0.22), metallic: 0.82, roughness: 0.28,
@@ -115,7 +131,7 @@ function createMaterialLibrary(scene) {
 }
 
 function geometrySignature(geom) {
-  return `${geom.type}:${Array.from(geom.size).map((value) => Number(value).toFixed(5)).join(',')}:${geom.dataid}`;
+  return `${geom.type}:${Array.from(geom.size).map((value) => Number(value).toFixed(5)).join(',')}:${geom.dataid}:${Number(geom.rgba?.[3] ?? 1).toFixed(3)}`;
 }
 
 function createLaboratoryArchitecture(scene, materials) {
@@ -217,58 +233,214 @@ export class BabylonMujocoRenderer {
     window.addEventListener('resize', () => this.engine.resize());
   }
 
-  materialForGeom(type, size) {
-    const enumType = this.runtime.mujoco.mjtGeom;
-    if (type === enumType.mjGEOM_PLANE.value) return this.materials.ground;
-    if (type === enumType.mjGEOM_ELLIPSOID.value) return this.materials.core;
-    if (type === enumType.mjGEOM_BOX.value) return this.materials.structure;
-    if (type === enumType.mjGEOM_SPHERE.value && size[0] > 0.05) return this.materials.foot;
-    return this.materials.limb;
+  finishPart(mesh, material, parent, castsShadow = true) {
+    mesh.material = material;
+    mesh.parent = parent;
+    mesh.isPickable = false;
+    if (castsShadow) this.shadowGenerator.addShadowCaster(mesh, false);
+    return mesh;
   }
 
-  createMesh(index, geom) {
-    const size = geom.size;
-    const type = geom.type;
-    const enumType = this.runtime.mujoco.mjtGeom;
-    let mesh;
+  createHiddenAssembly(index) {
+    const root = new TransformNode(`mj-hidden-${index}`, this.scene);
+    root.setEnabled(false);
+    return root;
+  }
 
-    if (type === enumType.mjGEOM_PLANE.value) {
-      mesh = MeshBuilder.CreateGround(`mj-geom-${index}`, { width: 24, height: 24, subdivisions: 1 }, this.scene);
-      mesh.receiveShadows = true;
-    } else if (type === enumType.mjGEOM_SPHERE.value) {
-      mesh = MeshBuilder.CreateSphere(`mj-geom-${index}`, { diameter: size[0] * 2, segments: 28 }, this.scene);
-    } else if (type === enumType.mjGEOM_CAPSULE.value) {
-      mesh = MeshBuilder.CreateCapsule(`mj-geom-${index}`, {
-        radius: size[0],
-        height: size[2] * 2 + size[0] * 2,
-        tessellation: 24,
-        subdivisions: 3,
-      }, this.scene);
-    } else if (type === enumType.mjGEOM_BOX.value) {
-      mesh = MeshBuilder.CreateBox(`mj-geom-${index}`, {
-        width: size[0] * 2,
-        depth: size[1] * 2,
-        height: size[2] * 2,
-        faceColors: undefined,
-      }, this.scene);
-    } else if (type === enumType.mjGEOM_CYLINDER.value) {
-      mesh = MeshBuilder.CreateCylinder(`mj-geom-${index}`, {
-        diameter: size[0] * 2,
-        height: size[2] * 2,
-        tessellation: 28,
-      }, this.scene);
-    } else if (type === enumType.mjGEOM_ELLIPSOID.value) {
-      mesh = MeshBuilder.CreateSphere(`mj-geom-${index}`, { diameter: 2, segments: 32 }, this.scene);
-      mesh.scaling.set(size[0], size[2], size[1]);
-    } else {
-      mesh = MeshBuilder.CreateBox(`mj-unsupported-${index}`, { size: 0.03 }, this.scene);
-      mesh.isVisible = false;
+  createGroundAssembly(index) {
+    const ground = MeshBuilder.CreateGround(`mj-ground-${index}`, { width: 24, height: 24, subdivisions: 1 }, this.scene);
+    ground.material = this.materials.ground;
+    ground.receiveShadows = true;
+    ground.isPickable = false;
+    return ground;
+  }
+
+  createTorsoAssembly(index, size) {
+    const root = new TransformNode(`machine-torso-${index}`, this.scene);
+    const width = size[0] * 2;
+    const depth = size[1] * 2;
+    const height = size[2] * 2;
+
+    this.finishPart(MeshBuilder.CreateBox(`torso-hull-${index}`, {
+      width, depth, height,
+    }, this.scene), this.materials.structure, root);
+
+    const deck = this.finishPart(MeshBuilder.CreateBox(`torso-deck-${index}`, {
+      width: width * 0.78,
+      depth: depth * 0.82,
+      height: height * 0.30,
+    }, this.scene), this.materials.armour, root);
+    deck.position.y = height * 0.57;
+
+    const belly = this.finishPart(MeshBuilder.CreateBox(`torso-belly-${index}`, {
+      width: width * 0.72,
+      depth: depth * 0.72,
+      height: height * 0.24,
+    }, this.scene), this.materials.limb, root);
+    belly.position.y = -height * 0.57;
+
+    for (const side of [-1, 1]) {
+      const rail = this.finishPart(MeshBuilder.CreateBox(`torso-rail-${index}-${side}`, {
+        width: width * 0.72,
+        depth: depth * 0.07,
+        height: height * 0.33,
+      }, this.scene), this.materials.joint, root);
+      rail.position.z = side * depth * 0.535;
+      rail.position.y = -height * 0.05;
     }
 
-    mesh.material = this.materialForGeom(type, size);
-    mesh.isPickable = false;
-    if (type !== enumType.mjGEOM_PLANE.value) this.shadowGenerator.addShadowCaster(mesh, true);
-    return mesh;
+    const fastenerRadius = Math.max(0.012, height * 0.085);
+    for (const x of [-1, 1]) {
+      for (const z of [-1, 1]) {
+        const fastener = this.finishPart(MeshBuilder.CreateCylinder(`torso-fastener-${index}-${x}-${z}`, {
+          diameter: fastenerRadius * 2,
+          height: height * 0.08,
+          tessellation: 16,
+        }, this.scene), this.materials.joint, root);
+        fastener.position.set(x * width * 0.34, height * 0.69, z * depth * 0.31);
+      }
+    }
+
+    const optic = this.finishPart(MeshBuilder.CreateBox(`torso-optic-${index}`, {
+      width: width * 0.035,
+      depth: depth * 0.42,
+      height: height * 0.18,
+    }, this.scene), this.materials.sensor, root);
+    optic.position.x = width * 0.515;
+    optic.position.y = height * 0.08;
+
+    return root;
+  }
+
+  createCoreAssembly(index, size) {
+    const root = new TransformNode(`machine-core-${index}`, this.scene);
+    const shell = this.finishPart(MeshBuilder.CreateSphere(`core-shell-${index}`, {
+      diameter: 2,
+      segments: 40,
+    }, this.scene), this.materials.core, root);
+    shell.scaling.set(size[0], size[2], size[1]);
+
+    const ring = this.finishPart(MeshBuilder.CreateTorus(`core-ring-${index}`, {
+      diameter: Math.max(size[0], size[1]) * 1.78,
+      thickness: Math.max(0.012, size[2] * 0.12),
+      tessellation: 36,
+    }, this.scene), this.materials.joint, root);
+    ring.scaling.z = size[1] / Math.max(size[0], 1e-6);
+
+    const lens = this.finishPart(MeshBuilder.CreateSphere(`core-lens-${index}`, {
+      diameter: Math.min(size[0], size[1]) * 0.58,
+      segments: 24,
+    }, this.scene), this.materials.sensor, root);
+    lens.position.y = size[2] * 0.83;
+    lens.scaling.y = 0.32;
+
+    return root;
+  }
+
+  createLimbAssembly(index, size) {
+    const root = new TransformNode(`machine-limb-${index}`, this.scene);
+    const radius = size[0];
+    const height = size[2] * 2 + radius * 2;
+
+    this.finishPart(MeshBuilder.CreateCapsule(`limb-spine-${index}`, {
+      radius,
+      height,
+      tessellation: 28,
+      subdivisions: 4,
+    }, this.scene), this.materials.limb, root);
+
+    const armour = this.finishPart(MeshBuilder.CreateBox(`limb-armour-${index}`, {
+      width: radius * 1.34,
+      depth: radius * 1.55,
+      height: Math.max(radius * 1.4, height * 0.43),
+    }, this.scene), this.materials.armour, root);
+    armour.position.y = height * 0.08;
+    armour.position.x = radius * 0.42;
+
+    for (const sign of [-1, 1]) {
+      const collar = this.finishPart(MeshBuilder.CreateTorus(`limb-collar-${index}-${sign}`, {
+        diameter: radius * 2.22,
+        thickness: radius * 0.24,
+        tessellation: 24,
+      }, this.scene), this.materials.joint, root);
+      collar.position.y = sign * Math.max(radius * 0.7, height * 0.33);
+    }
+
+    const actuator = this.finishPart(MeshBuilder.CreateCylinder(`limb-actuator-${index}`, {
+      diameter: radius * 1.52,
+      height: Math.max(radius * 1.5, height * 0.24),
+      tessellation: 24,
+    }, this.scene), this.materials.joint, root);
+    actuator.position.y = height * 0.24;
+
+    const cable = this.finishPart(MeshBuilder.CreateCylinder(`limb-cable-${index}`, {
+      diameter: Math.max(0.007, radius * 0.18),
+      height: height * 0.72,
+      tessellation: 10,
+    }, this.scene), this.materials.cable, root);
+    cable.position.x = -radius * 1.04;
+    cable.position.z = radius * 0.58;
+
+    return root;
+  }
+
+  createFootAssembly(index, radius) {
+    const root = new TransformNode(`machine-foot-${index}`, this.scene);
+    const foot = this.finishPart(MeshBuilder.CreateSphere(`foot-shell-${index}`, {
+      diameter: radius * 2,
+      segments: 30,
+    }, this.scene), this.materials.foot, root);
+    foot.scaling.set(1.02, 0.82, 1.12);
+
+    const pad = this.finishPart(MeshBuilder.CreateCylinder(`foot-pad-${index}`, {
+      diameter: radius * 1.62,
+      height: radius * 0.28,
+      tessellation: 28,
+    }, this.scene), this.materials.foot, root);
+    pad.position.y = -radius * 0.72;
+
+    const sensorRing = this.finishPart(MeshBuilder.CreateTorus(`foot-sensor-ring-${index}`, {
+      diameter: radius * 1.70,
+      thickness: Math.max(0.006, radius * 0.12),
+      tessellation: 28,
+    }, this.scene), this.materials.sensor, root);
+    sensorRing.position.y = -radius * 0.10;
+
+    const ankle = this.finishPart(MeshBuilder.CreateCylinder(`foot-ankle-${index}`, {
+      diameter: radius * 0.76,
+      height: radius * 0.62,
+      tessellation: 22,
+    }, this.scene), this.materials.joint, root);
+    ankle.position.y = radius * 0.76;
+
+    return root;
+  }
+
+  createSensorAssembly(index, radius) {
+    const root = new TransformNode(`machine-sensor-${index}`, this.scene);
+    const optic = this.finishPart(MeshBuilder.CreateSphere(`sensor-optic-${index}`, {
+      diameter: radius * 2,
+      segments: 20,
+    }, this.scene), this.materials.sensor, root, false);
+    optic.scaling.y = 0.55;
+    return root;
+  }
+
+  createVisualAssembly(index, geom) {
+    const size = geom.size;
+    const type = geom.type;
+    const alpha = Number(geom.rgba?.[3] ?? 1);
+    const enumType = this.runtime.mujoco.mjtGeom;
+
+    if (alpha < 0.01) return this.createHiddenAssembly(index);
+    if (type === enumType.mjGEOM_PLANE.value) return this.createGroundAssembly(index);
+    if (type === enumType.mjGEOM_BOX.value) return this.createTorsoAssembly(index, size);
+    if (type === enumType.mjGEOM_ELLIPSOID.value) return this.createCoreAssembly(index, size);
+    if (type === enumType.mjGEOM_CAPSULE.value) return this.createLimbAssembly(index, size);
+    if (type === enumType.mjGEOM_SPHERE.value && size[0] >= 0.05) return this.createFootAssembly(index, size[0]);
+    if (type === enumType.mjGEOM_SPHERE.value) return this.createSensorAssembly(index, size[0]);
+
+    return this.createHiddenAssembly(index);
   }
 
   updateFollowCamera() {
@@ -293,6 +465,11 @@ export class BabylonMujocoRenderer {
       0.008 + contacts * 0.055,
       0.006 + contacts * 0.035,
       0.002,
+    );
+    this.materials.sensor.emissiveColor.set(
+      0.018 + contacts * 0.04,
+      0.032 + power * 0.028,
+      0.020 + battery * 0.018,
     );
     this.materials.core.albedoColor.set(0.36 + battery * 0.17, 0.24 + battery * 0.12, 0.10 + battery * 0.06);
   }
@@ -319,13 +496,13 @@ export class BabylonMujocoRenderer {
 
       if (!this.meshes[index] || this.signatures[index] !== signature) {
         this.meshes[index]?.dispose(false, false);
-        this.meshes[index] = this.createMesh(index, geom);
+        this.meshes[index] = this.createVisualAssembly(index, geom);
         this.signatures[index] = signature;
       }
 
-      const mesh = this.meshes[index];
-      mesh.position.set(geom.pos[0], geom.pos[2], -geom.pos[1]);
-      mesh.rotationQuaternion = mujocoRotationToBabylon(geom.mat);
+      const assembly = this.meshes[index];
+      assembly.position.set(geom.pos[0], geom.pos[2], -geom.pos[1]);
+      assembly.rotationQuaternion = mujocoRotationToBabylon(geom.mat);
       geom.delete();
     }
 
