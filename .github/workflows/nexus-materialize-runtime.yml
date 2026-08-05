@@ -53,7 +53,7 @@ jobs:
 
       - name: Commit source if changed
         run: |
-          if git diff --quiet -- nexus-glass-science-cube/runtime-source.js; then
+          if [ -z "$(git status --porcelain -- nexus-glass-science-cube/runtime-source.js)" ]; then
             echo 'Runtime source already current'
             exit 0
           fi
