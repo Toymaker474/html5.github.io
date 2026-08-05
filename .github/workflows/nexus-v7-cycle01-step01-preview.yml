@@ -150,7 +150,6 @@ jobs:
 
             return {
               schema: 'nexus.cycle-evidence.v1',
-              sourceCommit: document.documentElement.dataset.sourceCommit || null,
               cycle: nexus.realismCycle,
               runtimeSchema: nexus.schema,
               runtimeTime: Number(nexus.runtime.data.time || 0),
@@ -180,9 +179,9 @@ jobs:
                 height: document.querySelector('#world')?.height || 0,
               },
               status,
-              diagnostics,
             };
           });
+          report.diagnostics = [...diagnostics];
 
           const hardwareReady = Object.values(report.requiredHardware).every(Boolean);
           const invalid =
