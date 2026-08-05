@@ -45,12 +45,6 @@ function updateDashboard() {
   dashboard.updateRuntime({ runtime, renderer, fps, coordinator });
 }
 
-/**
- * Manual mode is visually real-time. Autonomous evolution uses deterministic
- * batched simulation so scientific episode duration does not depend on GPU or
- * display frame rate. Babylon still renders once per animation frame; MuJoCo
- * may advance several bounded batches between renders.
- */
 function advanceScience(rawFrameSeconds) {
   const simulationBudget = coordinator.enabled
     ? Math.min(rawFrameSeconds * EVOLUTION_TIME_SCALE, EVOLUTION_MAX_BUDGET_SECONDS)
@@ -161,9 +155,9 @@ async function boot() {
     dashboard.setBoot('Loading Google DeepMind MuJoCo WebAssembly…');
     runtime = await MujocoScienceRuntime.create();
 
-    dashboard.setBoot('Building authored specimen renderer…');
+    dashboard.setBoot('Verifying and loading pinned human-authored CAD…');
     renderer = await BabylonMujocoRenderer.create(canvas, runtime);
-    applyProductionArtDirection(renderer);
+    await applyProductionArtDirection(renderer);
     installControls();
 
     window.__NEXUS_V7__ = Object.freeze({
