@@ -1,0 +1,129 @@
+name: Validate NEXUS V7 Science Core
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/nexus-v7-science-core.yml'
+      - 'nexus-science-core-v7/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nexus-v7-science-core-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: nexus-science-core-v7
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: nexus-science-core-v7/package-lock.json
+
+      - name: Install exact dependencies
+        run: npm install --ignore-scripts=false
+
+      - name: Build MuJoCo WASM and Babylon application
+        run: npm run build
+
+      - name: Verify scientific architecture markers
+        run: |
+          test -f dist/index.html
+          grep -q 'MjModel.from_xml_string' src/mujocoRuntime.js
+          grep -q 'mj_step' src/mujocoRuntime.js
+          grep -q 'actuator_force' src/mujocoRuntime.js
+          grep -q 'touch_' src/hexapodModel.js
+          grep -q 'WebGPUEngine' src/babylonRenderer.js
+          ! grep -R "position\.x +=\|rotation\.y +=\|Math\.sin.*mesh" src --include='*.js'
+
+      - name: Install browser smoke-test runtime
+        working-directory: .
+        run: |
+          mkdir -p nexus-v7-smoke artifacts
+          cd nexus-v7-smoke
+          npm init -y >/dev/null
+          npm install playwright@1.55.0 >/dev/null
+          npx playwright install --with-deps chromium
+
+      - name: Boot and step MuJoCo in mobile-sized browser
+        working-directory: .
+        run: |
+          cd nexus-science-core-v7
+          npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/nexus-v7-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          cd ..
+          trap 'kill $PREVIEW_PID || true' EXIT
+          cat > nexus-v7-smoke/smoke.mjs <<'EOF'
+          import { chromium } from 'playwright';
+
+          const browser = await chromium.launch({
+            headless: true,
+            args: ['--use-gl=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist'],
+          });
+          const context = await browser.newContext({
+            viewport: { width: 430, height: 932 },
+            deviceScaleFactor: 1,
+            isMobile: true,
+            hasTouch: true,
+          });
+          const page = await context.newPage();
+          const failures = [];
+          page.on('pageerror', error => failures.push(`pageerror: ${error.message}`));
+          page.on('console', message => {
+            if (message.type() === 'error') failures.push(`console: ${message.text()}`);
+          });
+
+          await page.goto('http://127.0.0.1:4173', {
+            waitUntil: 'domcontentloaded',
+            timeout: 120000,
+          });
+          await page.waitForFunction(() => {
+            const text = document.querySelector('#status')?.textContent || '';
+            return text.includes('MUJOCO AUTHORITY') && /SIM\s+\d+\.\d+\s+s/.test(text);
+          }, { timeout: 120000 });
+          await page.waitForTimeout(4500);
+
+          const report = await page.evaluate(() => {
+            const status = document.querySelector('#status')?.textContent || '';
+            const simMatch = status.match(/SIM\s+(\d+\.\d+)\s+s/);
+            const powerMatch = status.match(/POWER\s+(\d+\.\d+)\s+W/);
+            return {
+              status,
+              simTime: Number(simMatch?.[1] || 0),
+              power: Number(powerMatch?.[1] || 0),
+              canvasWidth: document.querySelector('#world')?.width || 0,
+              bootFailure: status.includes('BOOT FAILURE'),
+              failClosed: status.includes('FAIL-CLOSED'),
+            };
+          });
+
+          await page.screenshot({ path: 'artifacts/nexus-v7-science-core.png', fullPage: true });
+          await browser.close();
+
+          if (report.bootFailure || report.failClosed || report.simTime <= 1 || report.canvasWidth <= 0) {
+            failures.push(`invalid scientific runtime report: ${JSON.stringify(report)}`);
+          }
+          if (failures.length) throw new Error(failures.join('\n'));
+          console.log(JSON.stringify(report));
+          EOF
+          node nexus-v7-smoke/smoke.mjs
+
+      - name: Upload V7 scientific evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-v7-science-core-evidence
+          path: artifacts/nexus-v7-science-core.png
+          if-no-files-found: warn
