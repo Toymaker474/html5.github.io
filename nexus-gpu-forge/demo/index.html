@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#020611">
+<title>NEXUS GPU FORGE — Shardstorm</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<canvas id="gpu"></canvas>
+<div id="loading" class="loading">IGNITING NEXUS GPU FORGE<small>DIRECT WEBGPU · WGSL COMPUTE · NO 3D ENGINE</small></div>
+<div id="fatal" class="fatal"></div>
+<div class="hud">
+  <div class="brand"><small>ORIGINAL GPU ENGINE SMOKE TEST</small><b>NEXUS<span>//FORGE</span></b></div>
+  <div class="stats"><strong id="fps">0</strong> FPS<small id="count">0 SHARDS</small><small id="gpuName">WEBGPU</small></div>
+</div>
+<div class="controls">
+  <div class="hint">DRAG THE STORM CORE<br>TAP PULSE<br>HOLD ORBIT TO ROTATE CAMERA</div>
+  <div class="buttons"><button id="burst">✦<small>PULSE</small></button><button id="orbit">↻<small>ORBIT</small></button></div>
+</div>
+<script type="module" src="./main.js"></script>
+</body>
+</html>
