@@ -1,0 +1,174 @@
+name: Build NEXUS Machine Organism V5
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/nexus-machine-organism-v5.yml'
+      - 'nexus-glass-science-cube/patch-machine-organism-v5.py'
+      - 'nexus-glass-science-cube/patch-machine-organism-v5.py.gz.b64'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nexus-machine-organism-v5-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref || github.ref_name }}
+
+      - name: Materialize original runtime
+        shell: python
+        run: |
+          from pathlib import Path
+          import base64, gzip
+          parts = sorted(Path('.nexus-payload').glob('main.part.*'))
+          if not parts:
+              raise SystemExit('No NEXUS payload parts found')
+          encoded = ''.join(p.read_text(encoding='utf-8') for p in parts)
+          source = gzip.decompress(base64.b64decode(''.join(encoded.split()))).decode('utf-8')
+          Path('nexus-glass-science-cube/runtime-source.js').write_text(source, encoding='utf-8')
+          print(f'Materialized {len(source):,} characters')
+
+      - name: Apply proven V4 foundation
+        run: |
+          python nexus-glass-science-cube/patch-robot-art.py
+          python nexus-glass-science-cube/patch-robot-grounding.py
+
+      - name: Apply machine-organism V5 overhaul
+        run: python nexus-glass-science-cube/patch-machine-organism-v5.py
+
+      - name: Update V5 identity and cache versions
+        shell: python
+        run: |
+          from pathlib import Path
+
+          main = Path('nexus-glass-science-cube/main.js')
+          text = main.read_text(encoding='utf-8')
+          text = text.replace("robot-rig-v4-20260805", "machine-organism-v5-20260805")
+          text = text.replace("sw.js?v=4", "sw.js?v=5")
+          main.write_text(text, encoding='utf-8')
+
+          sw = Path('nexus-glass-science-cube/sw.js')
+          text = sw.read_text(encoding='utf-8')
+          text = text.replace("nexus-field-lab-v4", "nexus-machine-organism-v5")
+          text = text.replace("?v=4", "?v=5")
+          sw.write_text(text, encoding='utf-8')
+
+          index = Path('nexus-glass-science-cube/index.html')
+          text = index.read_text(encoding='utf-8')
+          text = text.replace("?v=4", "?v=5")
+          text = text.replace("NEXUS — Autonomous Systems Field Lab", "NEXUS — Machine Organism Research Habitat")
+          text = text.replace("NEXUS CONTAINMENT LAB", "NEXUS MACHINE ECOLOGY LAB")
+          text = text.replace("ROBOT ASSEMBLY", "MORPHOLOGY FORGE")
+          text = text.replace("FABRICATION BAY", "MACHINE ORGANISM LAB")
+          text = text.replace("<span>Robot</span>", "<span>Organism</span>")
+          text = text.replace("Maintain an autonomous machine colony inside a controlled research chamber.", "Cultivate an autonomous machine ecology inside a reactive research habitat.")
+          index.write_text(text, encoding='utf-8')
+
+      - name: Validate generated source
+        run: |
+          python -m py_compile nexus-glass-science-cube/patch-machine-organism-v5.py
+          node --check nexus-glass-science-cube/runtime-source.js
+          node --check nexus-glass-science-cube/main.js
+          node --check nexus-glass-science-cube/sw.js
+          grep -q 'function organismRoleProfile' nexus-glass-science-cube/runtime-source.js
+          grep -q 'createOrganismLeg' nexus-glass-science-cube/runtime-source.js
+          grep -q 'rig?.version === 5' nexus-glass-science-cube/runtime-source.js
+          grep -q 'const habitatGroup' nexus-glass-science-cube/runtime-source.js
+          grep -q 'MANTIS-CONSTRUCTOR' nexus-glass-science-cube/runtime-source.js
+          grep -q 'machine-organism-v5-20260805' nexus-glass-science-cube/main.js
+          grep -q 'main.js?v=5' nexus-glass-science-cube/index.html
+
+      - name: Install Chromium renderer
+        run: |
+          mkdir -p v5-smoke artifacts
+          cd v5-smoke
+          npm init -y >/dev/null
+          npm install playwright@1.55.0 >/dev/null
+          npx playwright install --with-deps chromium
+
+      - name: Render iPhone V5 gameplay
+        run: |
+          python3 -m http.server 4173 --directory nexus-glass-science-cube >/tmp/nexus-v5-server.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          cat > v5-smoke/render.mjs <<'EOF'
+          import { chromium } from 'playwright';
+
+          const browser = await chromium.launch({
+            headless: true,
+            args: ['--use-gl=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist']
+          });
+          const context = await browser.newContext({
+            viewport: { width: 430, height: 932 },
+            deviceScaleFactor: 1,
+            isMobile: true,
+            hasTouch: true
+          });
+          const page = await context.newPage();
+          const failures = [];
+          page.on('pageerror', error => failures.push(`pageerror: ${error.message}`));
+          page.on('console', message => {
+            if (message.type() === 'error') failures.push(`console: ${message.text()}`);
+          });
+
+          await page.goto('http://127.0.0.1:4173/?machine-organism=v5', {
+            waitUntil: 'domcontentloaded',
+            timeout: 120000
+          });
+          await page.waitForFunction(() => {
+            const units = Number(document.querySelector('#robotCount')?.textContent || 0);
+            const fps = Number(document.querySelector('#fps')?.textContent || 0);
+            return units >= 3 && fps > 0;
+          }, { timeout: 120000 });
+          await page.locator('#startBtn').click({ timeout: 30000 });
+          await page.waitForFunction(() => document.querySelector('#tutorial')?.classList.contains('hidden'), { timeout: 30000 });
+          await page.waitForTimeout(6500);
+
+          const report = await page.evaluate(() => ({
+            units: Number(document.querySelector('#robotCount')?.textContent || 0),
+            fps: Number(document.querySelector('#fps')?.textContent || 0),
+            canvasWidth: document.querySelector('#world')?.width || 0,
+            canvasHeight: document.querySelector('#world')?.height || 0,
+            bootFault: document.body.textContent.includes('FIELD LAB BOOT FAULT'),
+            title: document.title
+          }));
+          console.log(JSON.stringify(report));
+          await page.screenshot({ path: 'artifacts/nexus-machine-organism-v5.png', fullPage: true });
+          await browser.close();
+
+          if (report.bootFault || report.units < 3 || report.fps <= 0 || report.canvasWidth <= 0) {
+            failures.push(`invalid report: ${JSON.stringify(report)}`);
+          }
+          if (failures.length) throw new Error(failures.join('\n'));
+          EOF
+          node v5-smoke/render.mjs
+
+      - name: Upload V5 iPhone render
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-machine-organism-v5
+          path: artifacts/nexus-machine-organism-v5.png
+          if-no-files-found: warn
+
+      - name: Commit generated V5 files
+        run: |
+          if [ -z "$(git status --porcelain -- nexus-glass-science-cube/runtime-source.js nexus-glass-science-cube/main.js nexus-glass-science-cube/sw.js nexus-glass-science-cube/index.html)" ]; then
+            echo 'Generated V5 files already current'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add nexus-glass-science-cube/runtime-source.js nexus-glass-science-cube/main.js nexus-glass-science-cube/sw.js nexus-glass-science-cube/index.html
+          git commit -m 'Build NEXUS machine-organism V5 habitat'
+          git push origin HEAD:${{ github.head_ref || github.ref_name }}
