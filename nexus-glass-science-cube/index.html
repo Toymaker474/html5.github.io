@@ -3,16 +3,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-  <meta name="theme-color" content="#020712" />
+  <meta name="theme-color" content="#11130f" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="NEXUS Cube" />
+  <meta name="apple-mobile-web-app-title" content="NEXUS Field Lab" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>NEXUS Glass Science Cube</title>
-  <link rel="manifest" href="./manifest.webmanifest?v=2" />
-  <link rel="stylesheet" href="./style.css?v=2" />
+  <title>NEXUS — Autonomous Systems Field Lab</title>
+  <link rel="manifest" href="./manifest.webmanifest?v=3" />
+  <link rel="stylesheet" href="./style.css?v=3" />
   <script type="importmap">
   {
     "imports": {
@@ -23,100 +23,145 @@
   </script>
 </head>
 <body>
-  <canvas id="world" aria-label="NEXUS robot simulation"></canvas>
+  <canvas id="world" aria-label="NEXUS autonomous robot field simulation"></canvas>
 
-  <header id="topbar" class="glass">
-    <div>
-      <div class="eyebrow">NEXUS // LIVE COLONY</div>
-      <strong>GLASS SCIENCE CUBE</strong>
+  <div class="viewport-mark viewport-mark--tl" aria-hidden="true"></div>
+  <div class="viewport-mark viewport-mark--tr" aria-hidden="true"></div>
+  <div class="viewport-mark viewport-mark--bl" aria-hidden="true"></div>
+  <div class="viewport-mark viewport-mark--br" aria-hidden="true"></div>
+
+  <header id="topbar" class="glass instrument-bar">
+    <div class="identity-block">
+      <span class="status-lamp" aria-hidden="true"></span>
+      <div>
+        <div class="eyebrow">AUTONOMOUS SYSTEMS / FIELD UNIT 01</div>
+        <strong>NEXUS CONTAINMENT LAB</strong>
+      </div>
     </div>
-    <div id="hud" class="hud-grid">
-      <span>MATTER <b id="matter">0</b></span>
-      <span>ROBOTS <b id="robotCount">0</b></span>
-      <span>BEACON <b id="beaconState">NO</b></span>
+    <div id="hud" class="hud-grid" aria-label="Colony telemetry">
+      <span><small>MATTER</small><b id="matter">0</b></span>
+      <span><small>UNITS</small><b id="robotCount">0</b></span>
+      <span><small>BEACON</small><b id="beaconState">NO</b></span>
     </div>
   </header>
 
   <section id="objective" class="glass objective">
-    <b>MISSION</b>
+    <span class="objective-index">TASK 01</span>
     <span id="objectiveText">Keep the colony alive. Reach 10 robots and construct a Research Beacon.</span>
   </section>
 
   <aside id="inspector" class="panel glass hidden" aria-live="polite">
-    <div class="panel-head"><b>ROBOT INSPECTOR</b><button data-close="inspector">×</button></div>
+    <div class="panel-head">
+      <div><span class="panel-kicker">LIVE TELEMETRY</span><b>UNIT INSPECTOR</b></div>
+      <button data-close="inspector" aria-label="Close inspector">CLOSE</button>
+    </div>
     <div id="inspectBody"></div>
   </aside>
 
   <aside id="builder" class="panel glass hidden">
-    <div class="panel-head"><b>ROBOT BUILDER</b><button data-close="builder">×</button></div>
-    <p class="small">Parts change real mass, speed, sensing, energy, cargo and behavior.</p>
+    <div class="panel-head">
+      <div><span class="panel-kicker">FABRICATION BAY</span><b>ROBOT ASSEMBLY</b></div>
+      <button data-close="builder" aria-label="Close robot builder">CLOSE</button>
+    </div>
+    <p class="small">Every fitted module changes mass, power draw, mobility, sensing, cargo capacity, durability, or behavior.</p>
     <div id="partRows" class="part-rows"></div>
     <div id="buildStats" class="stats-card"></div>
-    <div class="row">
-      <button id="saveBlueprint">SAVE BLUEPRINT</button>
-      <button id="deployRobot" class="primary">DEPLOY</button>
+    <div class="row action-row">
+      <button id="saveBlueprint">STORE DESIGN</button>
+      <button id="deployRobot" class="primary">FABRICATE UNIT</button>
     </div>
   </aside>
 
   <aside id="science" class="panel glass hidden">
-    <div class="panel-head"><b>ENVIRONMENT</b><button data-close="science">×</button></div>
-    <label>Gravity <output id="gravityOut">-9.8</output><input id="gravity" type="range" min="-18" max="3" step="0.5" value="-9.8" /></label>
-    <label>Ambient temperature <output id="tempOut">22°C</output><input id="ambientTemp" type="range" min="-80" max="260" step="5" value="22" /></label>
-    <label>Simulation speed <output id="speedOut">1×</output><input id="simSpeed" type="range" min="0.25" max="4" step="0.25" value="1" /></label>
-    <label>Graphics quality<select id="quality"><option value="low">LOW</option><option value="medium" selected>MEDIUM</option><option value="high">HIGH</option></select></label>
-    <button id="magPulse">MAGNETIC PULSE</button>
+    <div class="panel-head">
+      <div><span class="panel-kicker">CHAMBER CONTROL</span><b>ENVIRONMENT</b></div>
+      <button data-close="science" aria-label="Close environment controls">CLOSE</button>
+    </div>
+    <label><span>Gravity vector</span><output id="gravityOut">-9.8</output><input id="gravity" type="range" min="-18" max="3" step="0.5" value="-9.8" /></label>
+    <label><span>Ambient temperature</span><output id="tempOut">22°C</output><input id="ambientTemp" type="range" min="-80" max="260" step="5" value="22" /></label>
+    <label><span>Simulation rate</span><output id="speedOut">1×</output><input id="simSpeed" type="range" min="0.25" max="4" step="0.25" value="1" /></label>
+    <label><span>Render profile</span><select id="quality"><option value="low">ECONOMY</option><option value="medium" selected>BALANCED</option><option value="high">DETAIL</option></select></label>
+    <button id="magPulse" class="wide-control">DISCHARGE MAGNETIC COIL</button>
   </aside>
 
   <aside id="construction" class="panel glass hidden">
-    <div class="panel-head"><b>CONSTRUCTION</b><button data-close="construction">×</button></div>
-    <p class="small">Choose a structure, then tap the floor. Builder robots must carry out the work.</p>
+    <div class="panel-head">
+      <div><span class="panel-kicker">COLONY WORKS</span><b>STRUCTURE QUEUE</b></div>
+      <button data-close="construction" aria-label="Close construction controls">CLOSE</button>
+    </div>
+    <p class="small">Select a structure and mark a floor location. Construction advances only when an equipped builder physically reaches the site.</p>
     <div id="structureButtons" class="structure-grid"></div>
   </aside>
 
-  <aside id="debug" class="debug glass">
-    <span>FPS <b id="fps">0</b></span>
-    <span>TICK <b id="tick">0</b></span>
-    <span>BODIES <b id="bodies">0</b></span>
-    <span>SEED <b id="seed">0</b></span>
+  <aside id="debug" class="debug glass" aria-label="Engine telemetry">
+    <span><small>FPS</small><b id="fps">0</b></span>
+    <span><small>TICK</small><b id="tick">0</b></span>
+    <span><small>BODIES</small><b id="bodies">0</b></span>
+    <span><small>SEED</small><b id="seed">0</b></span>
   </aside>
 
   <div id="toast" class="toast hidden"></div>
 
-  <nav id="toolbelt" class="glass" aria-label="Simulation tools">
-    <button data-action="pause" id="pauseBtn">Ⅱ</button>
-    <button data-panel="builder">BUILD ROBOT</button>
-    <button data-panel="construction">STRUCTURES</button>
-    <button data-action="inspect" class="active">INSPECT</button>
-    <button data-action="command">COMMAND</button>
-    <button data-action="grab">GRAB</button>
-    <button data-action="heat">HEAT</button>
-    <button data-action="freeze">FREEZE</button>
-    <button data-action="zap">ZAP</button>
-    <button data-action="cut">CUT</button>
-    <button data-action="repair">REPAIR</button>
-    <button data-action="hazard">GAS</button>
-    <button data-panel="science">SCIENCE</button>
-    <button data-action="rewind">REWIND</button>
-    <button data-action="save">SAVE</button>
-    <button data-action="load">LOAD</button>
-    <button data-action="reset" class="danger">RESET</button>
+  <nav id="toolbelt" class="glass" aria-label="Field controls">
+    <div class="tool-group" aria-label="Time controls">
+      <span class="tool-group-label">TIME</span>
+      <button data-action="pause" id="pauseBtn" title="Pause simulation"><span class="tool-code">II</span><span>Pause</span></button>
+      <button data-action="rewind" title="Restore previous checkpoint"><span class="tool-code">RW</span><span>Rewind</span></button>
+    </div>
+
+    <div class="tool-group" aria-label="Colony controls">
+      <span class="tool-group-label">COLONY</span>
+      <button data-panel="builder"><span class="tool-code">RB</span><span>Robot</span></button>
+      <button data-panel="construction"><span class="tool-code">ST</span><span>Build</span></button>
+      <button data-action="command"><span class="tool-code">CM</span><span>Order</span></button>
+      <button data-action="repair"><span class="tool-code">RP</span><span>Repair</span></button>
+    </div>
+
+    <div class="tool-group" aria-label="Manipulator controls">
+      <span class="tool-group-label">MANIPULATOR</span>
+      <button data-action="inspect" class="active"><span class="tool-code">IN</span><span>Inspect</span></button>
+      <button data-action="grab"><span class="tool-code">GR</span><span>Grab</span></button>
+      <button data-action="cut"><span class="tool-code">CT</span><span>Cut</span></button>
+    </div>
+
+    <div class="tool-group" aria-label="Chamber tools">
+      <span class="tool-group-label">CHAMBER</span>
+      <button data-action="heat"><span class="tool-code">HT</span><span>Heat</span></button>
+      <button data-action="freeze"><span class="tool-code">FZ</span><span>Freeze</span></button>
+      <button data-action="zap"><span class="tool-code">EL</span><span>Arc</span></button>
+      <button data-action="hazard"><span class="tool-code">GS</span><span>Gas</span></button>
+      <button data-panel="science"><span class="tool-code">EN</span><span>Env</span></button>
+    </div>
+
+    <div class="tool-group" aria-label="System controls">
+      <span class="tool-group-label">SYSTEM</span>
+      <button data-action="save"><span class="tool-code">SV</span><span>Save</span></button>
+      <button data-action="load"><span class="tool-code">LD</span><span>Load</span></button>
+      <button data-action="reset" class="danger"><span class="tool-code">RST</span><span>Reset</span></button>
+    </div>
   </nav>
 
   <div id="tutorial" class="modal glass">
-    <div>
-      <div class="eyebrow">REAL SIMULATION VERTICAL SLICE</div>
-      <h1>NEXUS Glass Science Cube</h1>
-      <p>Robots sense minerals, consume energy, gather matter, build structures, repair damage, fight hazards and reproduce with mutated traits. Nothing in the colony advances unless an actual robot performs the work.</p>
-      <ol>
-        <li>Orbit with one finger. Pinch to zoom.</li>
-        <li>Open <b>BUILD ROBOT</b> to change functional modules.</li>
-        <li>Place structures, then watch builder robots travel and construct them.</li>
-        <li>Tap a robot with <b>INSPECT</b> to see its live decision state.</li>
-      </ol>
-      <button id="startBtn" class="primary big">ENTER THE CUBE</button>
+    <div class="manual-card">
+      <div class="manual-header">
+        <span class="manual-number">01</span>
+        <div>
+          <div class="eyebrow">FIELD MANUAL / INITIAL COMMISSIONING</div>
+          <h1>NEXUS CONTAINMENT LAB</h1>
+        </div>
+      </div>
+      <p class="manual-lead">Maintain an autonomous machine colony inside a controlled research chamber. Units consume power, carry matter, take damage, fabricate structures, repair one another, and pass mutated control traits to new generations.</p>
+      <div class="manual-steps">
+        <div><b>01</b><span>Drag to orbit the chamber. Pinch to change observation distance.</span></div>
+        <div><b>02</b><span>Assemble a robot from functional modules in the fabrication bay.</span></div>
+        <div><b>03</b><span>Mark a construction site and observe whether a builder can complete it.</span></div>
+        <div><b>04</b><span>Inspect individual units to read their current decision, energy, damage, and inherited traits.</span></div>
+      </div>
+      <button id="startBtn" class="primary big">BEGIN FIELD TEST</button>
+      <small class="manual-foot">LOCAL SIMULATION · NO ACCOUNT · STATE STORED ON DEVICE</small>
     </div>
   </div>
 
-  <script type="module" src="./main.js?v=2"></script>
+  <script type="module" src="./main.js?v=3"></script>
 </body>
 </html>
