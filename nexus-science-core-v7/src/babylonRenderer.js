@@ -92,7 +92,8 @@ export class BabylonMujocoRenderer {
     this.scene.clearColor = new Color4(0.035, 0.045, 0.034, 1);
     this.scene.useRightHandedSystem = true;
 
-    this.camera = new ArcRotateCamera('camera', -Math.PI / 2, 1.12, 3.6, new Vector3(0, 0.36, 0), this.scene);
+    this.followTarget = new Vector3(0, 0.46, 0);
+    this.camera = new ArcRotateCamera('camera', -Math.PI / 2, 1.12, 3.35, this.followTarget.clone(), this.scene);
     this.camera.lowerRadiusLimit = 1.3;
     this.camera.upperRadiusLimit = 9;
     this.camera.wheelPrecision = 45;
@@ -162,6 +163,13 @@ export class BabylonMujocoRenderer {
     return mesh;
   }
 
+  updateFollowCamera() {
+    const position = this.runtime.rootPosition;
+    const authoritativeTarget = new Vector3(position.x, position.z + 0.08, -position.y);
+    this.followTarget = Vector3.Lerp(this.followTarget, authoritativeTarget, 0.12);
+    this.camera.setTarget(this.followTarget);
+  }
+
   sync() {
     const module = this.runtime.mujoco;
     module.mjv_updateScene(
@@ -204,6 +212,7 @@ export class BabylonMujocoRenderer {
       this.signatures.pop();
     }
     geoms.delete();
+    this.updateFollowCamera();
   }
 
   render() {
