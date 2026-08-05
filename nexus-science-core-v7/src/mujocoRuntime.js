@@ -35,9 +35,11 @@ export class MujocoScienceRuntime {
 
     this.controller = new OscillatorController(createGenome());
     this.paused = false;
-    this.batteryJoules = 650;
-    this.maxBatteryJoules = 650;
+    this.batteryJoules = 6500;
+    this.maxBatteryJoules = 6500;
     this.lastPowerWatts = 0;
+    this.maxPowerWattsSeen = 0;
+    this.maxFootContactsSeen = 0;
     this.accumulator = 0;
     this.fixedStep = Number(this.model.opt?.timestep || 0.0025);
     this.maxSubsteps = 32;
@@ -46,6 +48,7 @@ export class MujocoScienceRuntime {
 
     this.cacheSensorAddresses();
     this.mujoco.mj_forward(this.model, this.data);
+    this.resetOdometry();
     this.captureStableSnapshot();
   }
 
@@ -73,6 +76,26 @@ export class MujocoScienceRuntime {
     };
   }
 
+  get rootPosition() {
+    return {
+      x: Number(this.data.qpos[0] || 0),
+      y: Number(this.data.qpos[1] || 0),
+      z: Number(this.data.qpos[2] || 0),
+    };
+  }
+
+  get planarDisplacement() {
+    const position = this.rootPosition;
+    return Math.hypot(position.x - this.odometryOrigin.x, position.y - this.odometryOrigin.y);
+  }
+
+  resetOdometry() {
+    const position = this.rootPosition;
+    this.odometryOrigin = { x: position.x, y: position.y };
+    this.maxFootContactsSeen = 0;
+    this.maxPowerWattsSeen = 0;
+  }
+
   applyController() {
     if (this.batteryJoules <= 0) {
       this.data.ctrl.fill(0);
@@ -95,6 +118,12 @@ export class MujocoScienceRuntime {
     return watts;
   }
 
+  updateScientificEvidence() {
+    const contacts = this.buildObservation().footContacts.filter((force) => force > 0.001).length;
+    this.maxFootContactsSeen = Math.max(this.maxFootContactsSeen, contacts);
+    this.maxPowerWattsSeen = Math.max(this.maxPowerWattsSeen, this.lastPowerWatts);
+  }
+
   step(frameSeconds) {
     if (this.paused) return 0;
     this.accumulator += Math.min(frameSeconds, 0.05);
@@ -105,6 +134,7 @@ export class MujocoScienceRuntime {
       this.mujoco.mj_step(this.model, this.data);
 
       this.lastPowerWatts = this.measureActuatorPower();
+      this.updateScientificEvidence();
       const baselineElectronicsWatts = 2.5;
       const joulesUsed = (this.lastPowerWatts + baselineElectronicsWatts) * this.fixedStep;
       this.batteryJoules = Math.max(0, this.batteryJoules - joulesUsed);
@@ -130,6 +160,9 @@ export class MujocoScienceRuntime {
       time: Number(this.data.time),
       batteryJoules: this.batteryJoules,
       genome: structuredClone(this.controller.genome),
+      odometryOrigin: structuredClone(this.odometryOrigin),
+      maxFootContactsSeen: this.maxFootContactsSeen,
+      maxPowerWattsSeen: this.maxPowerWattsSeen,
     };
   }
 
@@ -141,6 +174,9 @@ export class MujocoScienceRuntime {
     copyInto(this.data.ctrl, this.snapshot.ctrl);
     this.data.time = this.snapshot.time;
     this.batteryJoules = this.snapshot.batteryJoules;
+    this.odometryOrigin = structuredClone(this.snapshot.odometryOrigin);
+    this.maxFootContactsSeen = this.snapshot.maxFootContactsSeen;
+    this.maxPowerWattsSeen = this.snapshot.maxPowerWattsSeen;
     this.controller.setGenome(structuredClone(this.snapshot.genome));
     this.mujoco.mj_forward(this.model, this.data);
   }
@@ -150,6 +186,7 @@ export class MujocoScienceRuntime {
     this.batteryJoules = this.maxBatteryJoules;
     this.accumulator = 0;
     this.mujoco.mj_forward(this.model, this.data);
+    this.resetOdometry();
     this.captureStableSnapshot();
   }
 
