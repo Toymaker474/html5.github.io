@@ -81,8 +81,8 @@ jobs:
 
       - name: Install Chromium smoke-test runtime
         run: |
-          mkdir -p .smoke artifacts
-          cd .smoke
+          mkdir -p smoke-test artifacts
+          cd smoke-test
           npm init -y >/dev/null
           npm install playwright@1.55.0 >/dev/null
           npx playwright install --with-deps chromium
@@ -92,7 +92,7 @@ jobs:
           python3 -m http.server 4173 --directory nexus-glass-science-cube >/tmp/nexus-server.log 2>&1 &
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
-          cat > .smoke/smoke.mjs <<'EOF'
+          cat > smoke-test/smoke.mjs <<'EOF'
           import { chromium } from 'playwright';
 
           const browser = await chromium.launch({
@@ -140,7 +140,7 @@ jobs:
           }
           if (failures.length) throw new Error(failures.join('\n'));
           EOF
-          node .smoke/smoke.mjs
+          node smoke-test/smoke.mjs
 
       - name: Upload rendered robot screenshot
         if: always()
