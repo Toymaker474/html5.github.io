@@ -1,0 +1,64 @@
+name: Publish NEXUS GPU Forge
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.nexus-gpu-forge-publish'
+      - '.github/workflows/publish-nexus-gpu-forge.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-nexus-gpu-forge
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch the self-contained direct-WebGPU build
+        run: |
+          set -euo pipefail
+          mkdir -p nexus-gpu-forge
+          curl --fail --location --retry 5 --retry-delay 2 \
+            'https://9d65cd66b71b75ab25.v2.appdeploy.ai/' \
+            --output nexus-gpu-forge/index.html
+          test -s nexus-gpu-forge/index.html
+          grep -q 'navigator.gpu' nexus-gpu-forge/index.html
+          grep -q 'WGSL' nexus-gpu-forge/index.html
+          ! grep -Eqi 'babylon|three\.js|three@|unpkg|jsdelivr|cdnjs' nexus-gpu-forge/index.html
+
+      - name: Add ownership and hosting documentation
+        run: |
+          cat > nexus-gpu-forge/README.md <<'EOF'
+          # NEXUS//GPU FORGE
+
+          Direct WebGPU and WGSL compute experiment hosted as plain static files.
+
+          - No AppDeploy runtime
+          - No Babylon.js or Three.js
+          - No paid plugin
+          - No CDN dependency
+          - No build framework required
+          - Source-owned and versioned in GitHub
+
+          Open `index.html` through GitHub Pages over HTTPS. WebGPU support is required.
+          EOF
+          touch nexus-gpu-forge/.nojekyll
+
+      - name: Commit the permanent GitHub-hosted copy
+        run: |
+          if [ -z "$(git status --porcelain -- nexus-gpu-forge)" ]; then
+            echo 'NEXUS GPU Forge is already current.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add nexus-gpu-forge
+          git commit -m 'Publish NEXUS GPU Forge without AppDeploy runtime'
+          git push origin main
