@@ -3,36 +3,222 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0b0e0b" />
-  <title>NEXUS Science Core V7</title>
+  <meta name="theme-color" content="#090b09" />
+  <title>NEXUS // Experimental Robotics Laboratory</title>
   <style>
-    :root { color-scheme: dark; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    :root {
+      color-scheme: dark;
+      font-family: "IBM Plex Mono", "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, monospace;
+      --ink: #ece8df;
+      --muted: #9c9f97;
+      --line: #4d544c;
+      --line-strong: #727a70;
+      --bronze: #c6a76a;
+      --bronze-dim: #806b43;
+      --panel: rgba(10, 12, 10, .91);
+      --panel-solid: #0d100d;
+      --graphite: #1a1e1a;
+      --danger: #c97862;
+      --ok: #9fb58f;
+    }
+
     * { box-sizing: border-box; }
-    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #0b0e0b; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #090b09; }
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image: linear-gradient(rgba(255,255,255,.012) 1px, transparent 1px);
+      background-size: 100% 3px;
+      mix-blend-mode: soft-light;
+      opacity: .38;
+    }
+
     #world { width: 100%; height: 100%; touch-action: none; display: block; }
+
+    .instrument {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 10px 28px rgba(0,0,0,.28), inset 0 1px rgba(255,255,255,.025);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    #identity {
+      position: fixed;
+      top: max(10px, env(safe-area-inset-top));
+      left: max(10px, env(safe-area-inset-left));
+      width: min(252px, calc(100vw - 190px));
+      min-width: 205px;
+      pointer-events: none;
+    }
+
+    #identity header {
+      display: grid;
+      grid-template-columns: 7px 1fr;
+      border-bottom: 1px solid var(--line);
+    }
+
+    #identity header::before { content: ""; background: var(--bronze); }
+    #identity-title { padding: 9px 11px 8px; }
+    #identity-title b { display: block; color: var(--ink); font-size: 12px; letter-spacing: .12em; }
+    #identity-title span { color: var(--muted); font-size: 8px; letter-spacing: .16em; }
+
     #status {
-      position: fixed; top: max(10px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left));
-      max-width: calc(100vw - 20px); padding: 9px 11px; border: 1px solid #556052;
-      border-left: 4px solid #b69252; background: rgba(11, 14, 11, .88); color: #e6e0d3;
-      font-size: 11px; line-height: 1.45; letter-spacing: .03em; pointer-events: none;
+      min-height: 70px;
+      padding: 9px 11px 10px;
+      color: var(--ink);
+      font-size: 9.5px;
+      line-height: 1.55;
+      letter-spacing: .025em;
+      font-variant-numeric: tabular-nums;
     }
-    #status strong { color: #d9bb78; }
+    #status strong { color: var(--bronze); letter-spacing: .08em; }
+
+    #research-panel {
+      position: fixed;
+      top: max(10px, env(safe-area-inset-top));
+      right: max(10px, env(safe-area-inset-right));
+      width: 162px;
+      padding: 9px;
+      pointer-events: none;
+    }
+
+    .panel-label {
+      color: var(--bronze);
+      font-size: 8px;
+      letter-spacing: .13em;
+      margin-bottom: 7px;
+    }
+
+    #mode-value {
+      color: var(--ink);
+      font-size: 9px;
+      line-height: 1.35;
+      min-height: 25px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 7px;
+      margin-bottom: 8px;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+      margin-bottom: 8px;
+    }
+
+    .metric {
+      min-height: 43px;
+      padding: 6px;
+      background: var(--panel-solid);
+    }
+    .metric span { display: block; color: var(--muted); font-size: 7px; letter-spacing: .09em; }
+    .metric b { display: block; margin-top: 5px; color: var(--ink); font-size: 10px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+    #controller-value {
+      color: var(--ink);
+      font-size: 8.5px;
+      margin: 3px 0 8px;
+      white-space: nowrap;
+    }
+
+    #archive-map { width: 100%; height: 84px; display: block; image-rendering: pixelated; }
+    .axis-row { display: flex; justify-content: space-between; margin-top: 4px; color: var(--muted); font-size: 6.5px; }
+
     #controls {
-      position: fixed; left: 50%; bottom: max(12px, env(safe-area-inset-bottom)); transform: translateX(-50%);
-      display: flex; gap: 8px; padding: 8px; border: 1px solid #41483f; background: rgba(10, 12, 10, .88);
+      position: fixed;
+      left: 50%;
+      bottom: max(12px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      display: grid;
+      grid-template-columns: repeat(4, minmax(68px, 84px));
+      gap: 5px;
+      padding: 6px;
     }
-    button { min-width: 78px; min-height: 42px; border: 1px solid #697261; background: #20251f; color: #eee8dc; font: 700 11px ui-monospace, monospace; }
-    button:active { transform: translateY(1px); background: #31382f; }
+
+    button {
+      min-height: 44px;
+      border: 1px solid var(--line-strong);
+      background: #1b201b;
+      color: var(--ink);
+      font: 650 9px/1 "IBM Plex Mono", "SFMono-Regular", monospace;
+      letter-spacing: .08em;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button::before { content: attr(data-code); display: block; color: var(--bronze); font-size: 7px; margin-bottom: 5px; }
+    button:active { transform: translateY(1px); background: #2a3029; }
+    button[aria-pressed="true"] { border-color: var(--bronze); background: #2b271d; }
+
+    #safety-mark {
+      position: fixed;
+      left: max(10px, env(safe-area-inset-left));
+      bottom: max(75px, calc(env(safe-area-inset-bottom) + 63px));
+      color: rgba(220,220,210,.42);
+      font-size: 7px;
+      letter-spacing: .12em;
+      pointer-events: none;
+    }
+
+    @media (max-width: 390px) {
+      #identity { min-width: 0; width: calc(100vw - 142px); }
+      #research-panel { width: 124px; }
+      .metric-grid { grid-template-columns: 1fr; }
+      .metric { min-height: 32px; }
+      #archive-map { height: 58px; }
+      #controls { grid-template-columns: repeat(4, 66px); }
+      button { min-height: 42px; font-size: 8px; }
+    }
+
+    @media (min-width: 900px) {
+      #identity { width: 310px; }
+      #research-panel { width: 210px; }
+      #status { font-size: 10px; }
+      #archive-map { height: 112px; }
+    }
   </style>
 </head>
 <body>
-  <canvas id="world"></canvas>
-  <div id="status"><strong>V7 BOOT</strong><br />Loading MuJoCo WASM…</div>
-  <div id="controls">
-    <button id="pause">PAUSE</button>
-    <button id="reset">RESET</button>
-    <button id="mutate">MUTATE</button>
-  </div>
+  <canvas id="world" aria-label="MuJoCo artificial-life robotics laboratory"></canvas>
+
+  <section id="identity" class="instrument" aria-live="polite">
+    <header>
+      <div id="identity-title">
+        <b>NEXUS // V7</b>
+        <span>EXPERIMENTAL ROBOTICS LABORATORY</span>
+      </div>
+    </header>
+    <div id="status"><strong>V7 BOOT</strong><br />Loading MuJoCo WebAssembly…</div>
+  </section>
+
+  <aside id="research-panel" class="instrument" aria-label="Evolution experiment telemetry">
+    <div class="panel-label">QUALITY–DIVERSITY ARCHIVE</div>
+    <div id="mode-value">MANUAL EXPERIMENT</div>
+    <div class="metric-grid">
+      <div class="metric"><span>GENERATION</span><b id="generation-value">0</b></div>
+      <div class="metric"><span>COVERAGE</span><b id="coverage-value">0.0%</b></div>
+      <div class="metric"><span>BEST FITNESS</span><b id="fitness-value">—</b></div>
+      <div class="metric"><span>EFFICIENCY</span><b id="efficiency-value">—</b></div>
+    </div>
+    <div class="panel-label">NEURAL CPG</div>
+    <div id="controller-value">—</div>
+    <canvas id="archive-map" width="156" height="84"></canvas>
+    <div class="axis-row"><span>CONTACT DUTY →</span><span>STABILITY ↑</span></div>
+  </aside>
+
+  <div id="safety-mark">AUTHORITATIVE STATE: MUJOCO · DISPLAY: BABYLON</div>
+
+  <nav id="controls" class="instrument" aria-label="Laboratory controls">
+    <button id="pause" data-code="01">PAUSE</button>
+    <button id="reset" data-code="02">RESET</button>
+    <button id="mutate" data-code="03">MUTATE</button>
+    <button id="evolve" data-code="04" aria-pressed="false">EVOLVE</button>
+  </nav>
+
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>
