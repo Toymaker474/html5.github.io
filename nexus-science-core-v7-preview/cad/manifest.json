@@ -1,0 +1,120 @@
+{
+  "schema": "nexus.cad-asset-manifest.v1",
+  "sourceRepository": "MakeYourPet/hexapod",
+  "sourceCommit": "7d8fc8034d715d1c9373f48281ecfa500c994d8b",
+  "license": "MIT",
+  "attribution": "Original hexapod CAD by MakeYourPet.com; adapted as a visual shell for NEXUS V7.",
+  "generatedAt": "2026-08-05T17:43:52.458Z",
+  "assets": [
+    {
+      "id": "frame",
+      "file": "frame.stl",
+      "bytes": 1709684,
+      "triangles": 34192,
+      "encoding": "binary-stl",
+      "sha256": "9d8403660d5d72287ee35a69515d31ba4bf062050bb871500ea10dd2f65d9db6",
+      "gitBlobSha1": "4e58ca0dfcd994fa1be921ecc6cfbca6b30e8367",
+      "sourcePath": "STL/frame.stl",
+      "sourceUrl": "https://raw.githubusercontent.com/MakeYourPet/hexapod/7d8fc8034d715d1c9373f48281ecfa500c994d8b/STL/frame.stl"
+    },
+    {
+      "id": "top-cover",
+      "file": "top-cover.stl",
+      "bytes": 409184,
+      "triangles": 8182,
+      "encoding": "binary-stl",
+      "sha256": "6c1c47fff27d9a98d20f0d5b98603f4ed6b4b2e1b53ffe6b937e97c392c8e5f5",
+      "gitBlobSha1": "5f170ece05418719d9128e62bc4c056d9f549f6f",
+      "sourcePath": "STL/top-cover4.stl",
+      "sourceUrl": "https://raw.githubusercontent.com/MakeYourPet/hexapod/7d8fc8034d715d1c9373f48281ecfa500c994d8b/STL/top-cover4.stl"
+    },
+    {
+      "id": "bottom-cover",
+      "file": "bottom-cover.stl",
+      "bytes": 1355784,
+      "triangles": 27114,
+      "encoding": "binary-stl",
+      "sha256": "a6a39b1c19300be4fd990217acf50e43e2cb58a5fa1e6fbe329e367efccfa7ff",
+      "gitBlobSha1": "4a4e70f87efe0ba7be631cdbe3871bfd38b225d6",
+      "sourcePath": "STL/bottom-cover-flat.stl",
+      "sourceUrl": "https://raw.githubusercontent.com/MakeYourPet/hexapod/7d8fc8034d715d1c9373f48281ecfa500c994d8b/STL/bottom-cover-flat.stl"
+    },
+    {
+      "id": "coxa-left",
+      "file": "coxa-left.stl",
+      "bytes": 337084,
+      "triangles": 6740,
+      "encoding": "binary-stl",
+      "sha256": "d24346b179c9ae96588c70fbc5145b93a54c73240eaf981ebd2212db03d45d40",
+      "gitBlobSha1": "20e33556ab63c0d5c173310b5a758f2e3efc67f1",
+      "sourcePath": "STL/left-coxa2.stl",
+      "sourceUrl": "https://raw.githubusercontent.com/MakeYourPet/hexapod/7d8fc8034d715d1c9373f48281ecfa500c994d8b/STL/left-coxa2.stl"
+    },
+    {
+      "id": "coxa-right",
+      "file": "coxa-right.stl",
+      "bytes": 334084,
+      "triangles": 6680,
+      "encoding": "binary-stl",
+      "sha256": "1bca6e6654ff2e46a4dbd779a66d20e918a4ac04f6165ff19899b7ca2505723a",
+      "gitBlobSha1": "35b28741b8b385df14bb2492c34a7e31d884c074",
+      "sourcePath": "STL/right-coxa2.stl",
+      "sourceUrl": "https://raw.githubusercontent.com/MakeYourPet/hexapod/7d8fc8034d715d1c9373f48281ecfa500c994d8b/STL/right-coxa2.stl"
+    },
+    {
+      "id": "femur-left",
+      "file": "femur-left.stl",
+      "bytes": 371184,
+      "triangles": 7422,
+      "encoding": "binary-stl",
+      "sha256": "e59b57b1346bc2cd47a7ca98dcac8e473df638024592952f5f1187e729e825ee",
+      "gitBlobSha1": "454845e4885af660399a6a18759639980c08bf40",
+      "sourcePath": "STL/left-femur.stl",
+      "sourceUrl": "https://raw.githubusercontent.com/MakeYourPet/hexapod/7d8fc8034d715d1c9373f48281ecfa500c994d8b/STL/left-femur.stl"
+    },
+    {
+      "id": "femur-right",
+      "file": "femur-right.stl",
+      "bytes": 371184,
+      "triangles": 7422,
+      "encoding": "binary-stl",
+      "sha256": "9c653a38094987de3d8391f6a539232b456b396d25db257790bbe23bb152400d",
+      "gitBlobSha1": "025b073972e951309b182e789e90369a6a1a6b5e",
+      "sourcePath": "STL/right-femur.stl",
+      "sourceUrl": "https://raw.githubusercontent.com/MakeYourPet/hexapod/7d8fc8034d715d1c9373f48281ecfa500c994d8b/STL/right-femur.stl"
+    },
+    {
+      "id": "tibia-left",
+      "file": "tibia-left.stl",
+      "bytes": 309784,
+      "triangles": 6194,
+      "encoding": "binary-stl",
+      "sha256": "c5b3ae105bf0a0beb58a5e620ef73cf42893126a9eb392e66b0819c090759292",
+      "gitBlobSha1": "49d0af08bc2edaef7d274f31b6d5accab72642d7",
+      "sourcePath": "STL/left-tibia.stl",
+      "sourceUrl": "https://raw.githubusercontent.com/MakeYourPet/hexapod/7d8fc8034d715d1c9373f48281ecfa500c994d8b/STL/left-tibia.stl"
+    },
+    {
+      "id": "tibia-right",
+      "file": "tibia-right.stl",
+      "bytes": 309784,
+      "triangles": 6194,
+      "encoding": "binary-stl",
+      "sha256": "069981327da4b78000224876bae95cb5b88c59ad39aee6a83c3a9b568960b748",
+      "gitBlobSha1": "9e00eb4a63dff7205275956d8422b52be3ce3f48",
+      "sourcePath": "STL/right-tibia.stl",
+      "sourceUrl": "https://raw.githubusercontent.com/MakeYourPet/hexapod/7d8fc8034d715d1c9373f48281ecfa500c994d8b/STL/right-tibia.stl"
+    },
+    {
+      "id": "foot-tip",
+      "file": "foot-tip.stl",
+      "bytes": 62684,
+      "triangles": 1252,
+      "encoding": "binary-stl",
+      "sha256": "c8750cc8fa656656cba713572c38d134dc63ff3ca933c87090d3d0af23041b7a",
+      "gitBlobSha1": "4db64dc583b15c263c386af1543c64692e324e1a",
+      "sourcePath": "STL/tip.stl",
+      "sourceUrl": "https://raw.githubusercontent.com/MakeYourPet/hexapod/7d8fc8034d715d1c9373f48281ecfa500c994d8b/STL/tip.stl"
+    }
+  ]
+}

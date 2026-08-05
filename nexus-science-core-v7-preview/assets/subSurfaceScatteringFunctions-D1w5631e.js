@@ -1,0 +1,3 @@
+import{t as e}from"./shaderStore-D-XQlhUT.js";var t=`subSurfaceScatteringFunctions`,n=`bool testLightingForSSS(float diffusionProfile)
+{return diffusionProfile<1.;}`;e.IncludesShadersStore[t]||(e.IncludesShadersStore[t]=n);var r={name:t,shader:n};export{r as t};
+//# sourceMappingURL=subSurfaceScatteringFunctions-D1w5631e.js.map

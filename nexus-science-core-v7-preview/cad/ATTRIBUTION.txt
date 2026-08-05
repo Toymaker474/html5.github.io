@@ -1,0 +1,9 @@
+NEXUS V7 CAD VISUAL SOURCE
+
+Original CAD: MakeYourPet Hexapod
+Repository: https://github.com/MakeYourPet/hexapod
+Pinned source commit: 7d8fc8034d715d1c9373f48281ecfa500c994d8b
+License: MIT
+Copyright (c) 2022 MakeYourPet.com
+
+The NEXUS physics model, controller, experiments, renderer integration, materials, optimization and interface are separate project work.
