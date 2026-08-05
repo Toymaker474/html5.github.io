@@ -25,6 +25,12 @@ const coordinator = new EvolutionCoordinator({
 });
 const dashboard = new ScienceDashboard({ archive });
 
+const MANUAL_MAX_FRAME_SECONDS = 0.05;
+const EVOLUTION_TIME_SCALE = 4;
+const EVOLUTION_MAX_BUDGET_SECONDS = 0.5;
+const SCIENCE_BATCH_SECONDS = 0.05;
+const MAX_BATCHES_PER_RENDER = 10;
+
 let runtime;
 let renderer;
 let disposed = false;
@@ -38,19 +44,49 @@ function updateDashboard() {
   dashboard.updateRuntime({ runtime, renderer, fps, coordinator });
 }
 
+/**
+ * Manual mode is visually real-time. Autonomous evolution uses deterministic
+ * batched simulation so scientific episode duration does not depend on GPU or
+ * display frame rate. Babylon still renders once per animation frame; MuJoCo
+ * may advance several bounded batches between renders.
+ */
+function advanceScience(rawFrameSeconds) {
+  const simulationBudget = coordinator.enabled
+    ? Math.min(rawFrameSeconds * EVOLUTION_TIME_SCALE, EVOLUTION_MAX_BUDGET_SECONDS)
+    : Math.min(rawFrameSeconds, MANUAL_MAX_FRAME_SECONDS);
+
+  let remaining = Math.max(0, simulationBudget);
+  let batches = 0;
+  let latestEvolutionEvent = null;
+
+  while (remaining > 1e-6 && batches < MAX_BATCHES_PER_RENDER) {
+    const batchSeconds = Math.min(remaining, SCIENCE_BATCH_SECONDS);
+    runtime.step(batchSeconds);
+    const event = coordinator.update(runtime, batchSeconds);
+    if (event) latestEvolutionEvent = event;
+    remaining -= batchSeconds;
+    batches += 1;
+  }
+
+  return {
+    evolutionEvent: latestEvolutionEvent,
+    simulatedSeconds: simulationBudget - Math.max(0, remaining),
+    batches,
+  };
+}
+
 function animate(now) {
   if (disposed) return;
-  const frameSeconds = Math.min((now - lastFrame) / 1000, 0.05);
+  const rawFrameSeconds = Math.max(0, (now - lastFrame) / 1000);
   lastFrame = now;
 
   try {
-    runtime.step(frameSeconds);
-    const evolutionEvent = coordinator.update(runtime, frameSeconds);
+    const advancement = advanceScience(rawFrameSeconds);
     renderer.sync();
     renderer.render();
 
-    if (evolutionEvent) {
-      navigator.vibrate?.(evolutionEvent.insertion.accepted ? [18, 28, 18] : 18);
+    if (advancement.evolutionEvent) {
+      navigator.vibrate?.(advancement.evolutionEvent.insertion.accepted ? [18, 28, 18] : 18);
     }
 
     fpsFrames += 1;
@@ -61,10 +97,14 @@ function animate(now) {
       updateDashboard();
     }
 
-    stableTimer += frameSeconds;
-    const height = runtime.rootPosition.z;
-    if (!coordinator.enabled && stableTimer >= 2 && height > 0.28 && Number.isFinite(height)) {
-      runtime.captureStableSnapshot();
+    if (!coordinator.enabled) {
+      stableTimer += advancement.simulatedSeconds;
+      const height = runtime.rootPosition.z;
+      if (stableTimer >= 2 && height > 0.28 && Number.isFinite(height)) {
+        runtime.captureStableSnapshot();
+        stableTimer = 0;
+      }
+    } else {
       stableTimer = 0;
     }
   } catch (error) {
@@ -130,6 +170,11 @@ async function boot() {
       archive,
       experiment,
       coordinator,
+      evaluation: Object.freeze({
+        timeScale: EVOLUTION_TIME_SCALE,
+        maximumBudgetSeconds: EVOLUTION_MAX_BUDGET_SECONDS,
+        batchSeconds: SCIENCE_BATCH_SECONDS,
+      }),
       schema: 'nexus.science-runtime.v1',
     });
 
