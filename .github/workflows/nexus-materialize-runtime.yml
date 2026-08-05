@@ -9,6 +9,7 @@ on:
       - '.nexus-payload/main.part.*'
       - 'nexus-glass-science-cube/patch-robot-art.py'
       - 'nexus-glass-science-cube/patch-robot-grounding.py'
+      - 'nexus-glass-science-cube/patch-index-v4.py'
   pull_request:
     branches: [main]
     paths:
@@ -17,6 +18,7 @@ on:
       - '.nexus-payload/main.part.*'
       - 'nexus-glass-science-cube/patch-robot-art.py'
       - 'nexus-glass-science-cube/patch-robot-grounding.py'
+      - 'nexus-glass-science-cube/patch-index-v4.py'
 
 permissions:
   contents: write
@@ -58,8 +60,14 @@ jobs:
       - name: Ground suspension and articulated feet
         run: python nexus-glass-science-cube/patch-robot-grounding.py
 
+      - name: Update V4 page asset references
+        run: python nexus-glass-science-cube/patch-index-v4.py
+
       - name: Validate JavaScript
-        run: node --check nexus-glass-science-cube/runtime-source.js
+        run: |
+          node --check nexus-glass-science-cube/runtime-source.js
+          node --check nexus-glass-science-cube/main.js
+          node --check nexus-glass-science-cube/sw.js
 
       - name: Verify robot rig markers
         run: |
@@ -68,15 +76,17 @@ jobs:
           grep -q 'rig.motionPhase' nexus-glass-science-cube/runtime-source.js
           grep -q 'rebuildRobotVisual(robot)' nexus-glass-science-cube/runtime-source.js
           grep -q 'baseY: 1.08' nexus-glass-science-cube/runtime-source.js
+          grep -q 'runtime-source.js' nexus-glass-science-cube/main.js
+          grep -q 'main.js?v=4' nexus-glass-science-cube/index.html
 
-      - name: Commit source if changed
+      - name: Commit generated files if changed
         run: |
-          if [ -z "$(git status --porcelain -- nexus-glass-science-cube/runtime-source.js)" ]; then
-            echo 'Runtime source already current'
+          if [ -z "$(git status --porcelain -- nexus-glass-science-cube/runtime-source.js nexus-glass-science-cube/index.html)" ]; then
+            echo 'Generated files already current'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add nexus-glass-science-cube/runtime-source.js
-          git commit -m 'Rebuild NEXUS robot models and locomotion'
+          git add nexus-glass-science-cube/runtime-source.js nexus-glass-science-cube/index.html
+          git commit -m 'Finalize NEXUS articulated robot V4 build'
           git push origin HEAD:${{ github.head_ref || github.ref_name }}
