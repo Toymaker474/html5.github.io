@@ -7,12 +7,18 @@ on:
     paths:
       - '.github/workflows/nexus-materialize-runtime.yml'
       - '.nexus-payload/main.part.*'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.nexus-materialize-trigger'
+      - '.github/workflows/nexus-materialize-runtime.yml'
+      - '.nexus-payload/main.part.*'
 
 permissions:
   contents: write
 
 concurrency:
-  group: nexus-materialize-runtime
+  group: nexus-materialize-runtime-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -22,6 +28,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Decode runtime
         shell: python
@@ -54,4 +61,4 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add nexus-glass-science-cube/runtime-source.js
           git commit -m 'Materialize editable NEXUS runtime source'
-          git push
+          git push origin HEAD:${{ github.head_ref || github.ref_name }}
