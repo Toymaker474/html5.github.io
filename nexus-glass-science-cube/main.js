@@ -1,4 +1,4 @@
-const BUILD = 'authored-robots-v6-20260805';
+const BUILD = 'authored-robots-v6-final-20260805';
 
 function applyFieldLabGrade() {
   const canvas = document.getElementById('world');

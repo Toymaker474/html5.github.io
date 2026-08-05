@@ -1,4 +1,4 @@
-const CACHE='nexus-authored-robots-v6';
+const CACHE='nexus-authored-robots-v6-final';
 const CORE=[
   './style.css?v=6',
   './main.js?v=6',
