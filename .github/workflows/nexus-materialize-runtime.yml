@@ -116,26 +116,30 @@ jobs:
             waitUntil: 'domcontentloaded',
             timeout: 120000
           });
-          await page.locator('#startBtn').click({ timeout: 120000 });
           await page.waitForFunction(() => {
             const robots = Number(document.querySelector('#robotCount')?.textContent || 0);
             const fps = Number(document.querySelector('#fps')?.textContent || 0);
             return robots >= 3 && fps > 0;
           }, { timeout: 120000 });
-          await page.waitForTimeout(4000);
+          await page.locator('#startBtn').click({ timeout: 30000 });
+          await page.waitForFunction(() => document.querySelector('#tutorial')?.classList.contains('hidden'), {
+            timeout: 30000
+          });
+          await page.waitForTimeout(5000);
 
           const report = await page.evaluate(() => ({
             robots: Number(document.querySelector('#robotCount')?.textContent || 0),
             fps: Number(document.querySelector('#fps')?.textContent || 0),
             canvasWidth: document.querySelector('#world')?.width || 0,
             canvasHeight: document.querySelector('#world')?.height || 0,
+            tutorialHidden: document.querySelector('#tutorial')?.classList.contains('hidden') || false,
             bootFault: document.body.textContent.includes('FIELD LAB BOOT FAULT')
           }));
           console.log(JSON.stringify(report));
           await page.screenshot({ path: 'artifacts/nexus-robot-rig-v4.png', fullPage: true });
           await browser.close();
 
-          if (report.bootFault || report.robots < 3 || report.fps <= 0 || report.canvasWidth <= 0) {
+          if (report.bootFault || !report.tutorialHidden || report.robots < 3 || report.fps <= 0 || report.canvasWidth <= 0) {
             failures.push(`invalid report: ${JSON.stringify(report)}`);
           }
           if (failures.length) throw new Error(failures.join('\n'));
