@@ -42,6 +42,7 @@ jobs:
           test -f nexus.project.json
           test -f docs/AI_EXTENSION_PROTOCOL.md
           test -f docs/VISUAL_STANDARD.md
+          test -f src/productionArtDirection.js
           node -e "JSON.parse(require('fs').readFileSync('nexus.project.json','utf8'))"
           grep -q 'MjModel.from_xml_string' src/mujocoRuntime.js
           grep -q 'mj_step' src/mujocoRuntime.js
@@ -61,7 +62,10 @@ jobs:
           grep -q 'createTorsoAssembly' src/babylonRenderer.js
           grep -q 'createLimbAssembly' src/babylonRenderer.js
           grep -q 'updateFollowCamera' src/babylonRenderer.js
-          grep -q 'QUALITY–DIVERSITY ARCHIVE' index.html
+          grep -q 'createTaperedPrism' src/productionArtDirection.js
+          grep -q "nexus.specimen-industrial.v1" src/productionArtDirection.js
+          grep -q 'colliderVisibility: false' src/productionArtDirection.js
+          grep -q 'QUALITY-DIVERSITY RUN' index.html
           ! grep -R "position\.x +=\|rotation\.y +=\|Math\.sin.*mesh" src --include='*.js'
 
       - name: Validate morphology mutations outside the renderer
@@ -140,8 +144,6 @@ jobs:
               text.includes('FAIL-CLOSED');
           }, null, { timeout: 120000 });
 
-          // Wait for authoritative simulation time, not an arbitrary wall-clock
-          // delay. Detailed PBR rendering can be slow under CI's software GPU.
           await page.waitForFunction(() => {
             const nexus = window.__NEXUS_V7__;
             const text = document.querySelector('#status')?.textContent || '';
@@ -192,6 +194,7 @@ jobs:
               id: button.id,
               height: button.getBoundingClientRect().height,
             }));
+            const meshNames = nexus.renderer.scene.meshes.map((mesh) => mesh.name);
 
             return {
               runtimeSchema: nexus.schema,
@@ -204,6 +207,12 @@ jobs:
               lastDisplacement: nexus.coordinator.lastResult?.metrics.displacementMetres || 0,
               evolving: nexus.coordinator.enabled,
               evaluation: nexus.evaluation,
+              artDirection: nexus.renderer.artDirection?.id,
+              authoredShells: nexus.renderer.artDirection?.authoredShells,
+              hasSpecimenPlinth: meshNames.includes('specimen-plinth'),
+              hasPrototypeChamber: meshNames.includes('containment-chamber'),
+              authoredVisualCount: meshNames.filter((name) => /authored-|torso-carapace|limb-upper-shell|foot-toe/.test(name)).length,
+              prototypeVisualCount: meshNames.filter((name) => /torso-hull|core-shell|foot-shell/.test(name)).length,
               visualAssemblies: nexus.renderer.meshes.filter((node) => node?.isEnabled?.()).length,
               sceneMeshCount: nexus.renderer.scene.meshes.length,
               archiveCanvas: rect('#archive-map'),
@@ -235,6 +244,12 @@ jobs:
             postEvolution.bestFitness <= 0 ||
             postEvolution.lastEnergy <= 0 ||
             postEvolution.evaluation?.timeScale !== 4 ||
+            postEvolution.artDirection !== 'nexus.specimen-industrial.v1' ||
+            postEvolution.authoredShells !== true ||
+            !postEvolution.hasSpecimenPlinth ||
+            postEvolution.hasPrototypeChamber ||
+            postEvolution.authoredVisualCount < 10 ||
+            postEvolution.prototypeVisualCount !== 0 ||
             postEvolution.visualAssemblies < 10 ||
             postEvolution.sceneMeshCount < 30 ||
             postEvolution.archiveCanvas.width <= 0 ||
