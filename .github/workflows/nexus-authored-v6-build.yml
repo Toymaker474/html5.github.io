@@ -9,6 +9,7 @@ on:
       - '.nexus-authored-v6-trigger'
       - 'nexus-glass-science-cube/patch-authored-robots-v6.py'
       - 'nexus-glass-science-cube/patch-authored-scene-v6.py'
+      - 'nexus-glass-science-cube/patch-authored-presentation-v6.py'
 
 permissions:
   contents: write
@@ -25,6 +26,23 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.head_ref || github.ref_name }}
+
+      - name: Restore deterministic V4 foundation
+        shell: bash
+        run: |
+          git show origin/main:nexus-glass-science-cube/main.js > nexus-glass-science-cube/main.js
+          git show origin/main:nexus-glass-science-cube/sw.js > nexus-glass-science-cube/sw.js
+          git show origin/main:nexus-glass-science-cube/index.html > nexus-glass-science-cube/index.html
+          python - <<'PY'
+          from pathlib import Path
+          import base64, gzip
+          parts = sorted(Path('.nexus-payload').glob('main.part.*'))
+          encoded = ''.join(path.read_text(encoding='utf-8') for path in parts)
+          source = gzip.decompress(base64.b64decode(''.join(encoded.split()))).decode('utf-8')
+          Path('nexus-glass-science-cube/runtime-source.js').write_text(source, encoding='utf-8')
+          PY
+          python nexus-glass-science-cube/patch-robot-art.py
+          python nexus-glass-science-cube/patch-robot-grounding.py
 
       - name: Download official CC0 Quaternius archives
         run: |
@@ -100,7 +118,6 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           from PIL import Image
-
           root = Path('nexus-glass-science-cube/assets/quaternius-scifi')
           for path in root.rglob('*.png'):
               with Image.open(path) as image:
@@ -115,6 +132,7 @@ jobs:
         run: |
           python nexus-glass-science-cube/patch-authored-robots-v6.py
           python nexus-glass-science-cube/patch-authored-scene-v6.py
+          python nexus-glass-science-cube/patch-authored-presentation-v6.py
 
       - name: Update V6 identity and caches
         shell: python
@@ -123,13 +141,13 @@ jobs:
 
           main = Path('nexus-glass-science-cube/main.js')
           text = main.read_text(encoding='utf-8')
-          text = text.replace("robot-rig-v4-20260805", "authored-robots-v6-20260805")
+          text = text.replace("robot-rig-v4-20260805", "authored-robots-v6-20260805b")
           text = text.replace("sw.js?v=4", "sw.js?v=6")
           main.write_text(text, encoding='utf-8')
 
           sw = Path('nexus-glass-science-cube/sw.js')
           text = sw.read_text(encoding='utf-8')
-          text = text.replace("nexus-field-lab-v4", "nexus-authored-robots-v6")
+          text = text.replace("nexus-field-lab-v4", "nexus-authored-robots-v6b")
           text = text.replace("?v=4", "?v=6")
           sw.write_text(text, encoding='utf-8')
 
@@ -146,6 +164,7 @@ jobs:
         run: |
           python -m py_compile nexus-glass-science-cube/patch-authored-robots-v6.py
           python -m py_compile nexus-glass-science-cube/patch-authored-scene-v6.py
+          python -m py_compile nexus-glass-science-cube/patch-authored-presentation-v6.py
           node --check nexus-glass-science-cube/runtime-source.js
           node --check nexus-glass-science-cube/main.js
           node --check nexus-glass-science-cube/sw.js
@@ -156,7 +175,9 @@ jobs:
           grep -q 'SkeletonUtils.clone' nexus-glass-science-cube/runtime-source.js
           grep -q 'version: 6' nexus-glass-science-cube/runtime-source.js
           grep -q 'authoredClipForRobot' nexus-glass-science-cube/runtime-source.js
-          grep -q 'authored-robots-v6-20260805' nexus-glass-science-cube/main.js
+          grep -q 'camera.position.set(7.4, 4.8, 11.8)' nexus-glass-science-cube/runtime-source.js
+          grep -q "founderD.name = 'EYE-SCOUT'" nexus-glass-science-cube/runtime-source.js
+          grep -q 'authored-robots-v6-20260805b' nexus-glass-science-cube/main.js
           grep -q 'main.js?v=6' nexus-glass-science-cube/index.html
 
       - name: Install iPhone WebGL smoke-test runtime
@@ -174,14 +195,13 @@ jobs:
           trap 'kill $SERVER_PID || true' EXIT
           cat > v6-smoke/smoke.mjs <<'EOF'
           import { chromium } from 'playwright';
-
           const browser=await chromium.launch({headless:true,args:['--use-gl=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
           const context=await browser.newContext({viewport:{width:430,height:932},deviceScaleFactor:1,isMobile:true,hasTouch:true});
           const page=await context.newPage();const failures=[];
           page.on('pageerror',error=>failures.push(`pageerror: ${error.message}`));
           page.on('console',message=>{if(message.type()==='error')failures.push(`console: ${message.text()}`)});
-          await page.goto('http://127.0.0.1:4173/?authored-robots=v6',{waitUntil:'domcontentloaded',timeout:120000});
-          await page.waitForFunction(()=>Number(document.querySelector('#robotCount')?.textContent||0)>=3&&Number(document.querySelector('#fps')?.textContent||0)>0,{timeout:120000});
+          await page.goto('http://127.0.0.1:4173/?authored-robots=v6b',{waitUntil:'domcontentloaded',timeout:120000});
+          await page.waitForFunction(()=>Number(document.querySelector('#robotCount')?.textContent||0)>=4&&Number(document.querySelector('#fps')?.textContent||0)>0,{timeout:120000});
           await page.locator('#startBtn').click({timeout:30000});
           await page.waitForFunction(()=>document.querySelector('#tutorial')?.classList.contains('hidden'),{timeout:30000});
           await page.waitForTimeout(7000);
@@ -189,7 +209,7 @@ jobs:
           console.log(JSON.stringify(report));
           await page.screenshot({path:'artifacts/nexus-authored-robots-v6-iphone.png',fullPage:true});
           await browser.close();
-          if(report.bootFault||report.units<3||report.fps<=0||report.canvasWidth<=0)failures.push(`invalid report: ${JSON.stringify(report)}`);
+          if(report.bootFault||report.units<4||report.fps<=0||report.canvasWidth<=0)failures.push(`invalid report: ${JSON.stringify(report)}`);
           if(failures.length)throw new Error(failures.join('\n'));
           EOF
           node v6-smoke/smoke.mjs
@@ -211,5 +231,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add nexus-glass-science-cube/assets/quaternius-scifi nexus-glass-science-cube/runtime-source.js nexus-glass-science-cube/main.js nexus-glass-science-cube/sw.js nexus-glass-science-cube/index.html
-          git commit -m 'Integrate authored animated robot species V6'
+          git commit -m 'Stage authored robot species and colony core V6'
           git push origin HEAD:${{ github.head_ref || github.ref_name }}
