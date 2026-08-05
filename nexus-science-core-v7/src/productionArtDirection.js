@@ -353,7 +353,8 @@ export async function applyProductionArtDirection(renderer) {
   renderer.cad = await loadCadLibrary(renderer);
   installCadAssemblies(renderer);
   renderer.artDirection = Object.freeze({
-    id: 'nexus.cad-authored-hexapod.v2',
+    id: 'nexus.cad-authored-hexapod.v1',
+    presentationRevision: 2,
     authoredCad: true,
     proceduralRobotShells: false,
     colliderVisibility: false,
