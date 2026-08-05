@@ -3,121 +3,97 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#070909" />
-  <title>NEXUS V7 — Locomotion Specimen 07</title>
+  <meta name="theme-color" content="#090b0b" />
+  <title>NEXUS V7 — MuJoCo Locomotion Research</title>
   <style>
     :root {
       color-scheme: dark;
       font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      --paper: #e5e5df;
-      --muted: #8b8e89;
-      --hairline: #343836;
-      --solid: #0b0e0e;
-      --solid-raised: #111515;
-      --signal: #d84b2f;
-      --signal-soft: #8f3928;
-      --measure: #aaa88f;
+      --text: #e8e9e5;
+      --muted: #989c98;
+      --line: #343837;
+      --surface: #0d1010;
+      --surface-raised: #141818;
+      --accent: #df5538;
     }
 
     * { box-sizing: border-box; }
+
     html, body {
       margin: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #070909;
-    }
-
-    body::after {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background: radial-gradient(circle at 50% 42%, transparent 35%, rgba(0,0,0,.43) 100%);
+      background: #090b0b;
     }
 
     #world {
+      display: block;
       width: 100%;
       height: 100%;
-      display: block;
       touch-action: none;
     }
 
     #identity {
       position: fixed;
-      top: max(18px, env(safe-area-inset-top));
-      left: max(18px, env(safe-area-inset-left));
-      width: min(270px, calc(100vw - 112px));
+      top: max(16px, env(safe-area-inset-top));
+      left: max(16px, env(safe-area-inset-left));
+      width: min(310px, calc(100vw - 96px));
       pointer-events: none;
-      text-shadow: 0 1px 10px rgba(0,0,0,.85);
+      text-shadow: 0 1px 12px rgba(0, 0, 0, .9);
     }
 
     #identity-title {
       display: flex;
       align-items: baseline;
-      gap: 10px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid rgba(229,229,223,.28);
+      gap: 9px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid rgba(232, 233, 229, .24);
     }
 
     #identity-title b {
-      color: var(--paper);
-      font-size: 13px;
-      font-weight: 720;
-      letter-spacing: .12em;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
     }
 
     #identity-title span {
       color: var(--muted);
-      font: 600 8px/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      letter-spacing: .14em;
+      font-size: 10px;
+      font-weight: 500;
     }
 
     #status {
-      padding-top: 9px;
-      color: rgba(229,229,223,.84);
-      font: 540 9px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      letter-spacing: .035em;
+      padding-top: 8px;
+      color: rgba(232, 233, 229, .82);
+      font: 500 9px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-variant-numeric: tabular-nums;
     }
 
     #status strong {
-      color: var(--signal);
-      font-weight: 760;
-      letter-spacing: .1em;
-    }
-
-    #specimen-index {
-      position: fixed;
-      left: max(18px, env(safe-area-inset-left));
-      top: 44%;
-      transform: translateY(-50%);
-      color: rgba(229,229,223,.08);
-      font: 800 clamp(74px, 22vw, 150px)/.78 ui-monospace, SFMono-Regular, monospace;
-      letter-spacing: -.08em;
-      pointer-events: none;
-      user-select: none;
+      color: var(--accent);
+      font-weight: 720;
     }
 
     #telemetry-toggle {
       position: fixed;
-      top: max(16px, env(safe-area-inset-top));
-      right: max(16px, env(safe-area-inset-right));
-      width: 52px;
+      top: max(14px, env(safe-area-inset-top));
+      right: max(14px, env(safe-area-inset-right));
+      min-width: 56px;
       min-height: 44px;
-      padding: 0;
-      border: 1px solid rgba(229,229,223,.34);
-      background: rgba(7,9,9,.82);
-      color: var(--paper);
-      font: 700 8px/1 ui-monospace, SFMono-Regular, monospace;
-      letter-spacing: .13em;
+      padding: 0 12px;
+      border: 1px solid rgba(232, 233, 229, .32);
+      border-radius: 6px;
+      background: rgba(13, 16, 16, .92);
+      color: var(--text);
+      font: 650 9px/1 Inter, ui-sans-serif, sans-serif;
       touch-action: manipulation;
       z-index: 5;
     }
 
     #telemetry-toggle[aria-expanded="true"] {
-      border-color: var(--signal);
-      color: var(--signal);
+      border-color: var(--accent);
+      color: var(--accent);
     }
 
     #research-panel {
@@ -125,69 +101,68 @@
       top: 0;
       right: 0;
       bottom: 0;
-      width: min(274px, 76vw);
-      padding: max(78px, calc(env(safe-area-inset-top) + 66px)) 18px max(22px, env(safe-area-inset-bottom));
-      border-left: 1px solid var(--hairline);
-      background: var(--solid);
-      box-shadow: -18px 0 48px rgba(0,0,0,.48);
+      width: min(292px, 78vw);
+      padding: max(76px, calc(env(safe-area-inset-top) + 62px)) 20px max(22px, env(safe-area-inset-bottom));
+      border-left: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: -18px 0 44px rgba(0, 0, 0, .46);
       transform: translateX(100%);
-      transition: transform 180ms cubic-bezier(.2,.8,.2,1);
-      z-index: 4;
+      transition: transform 180ms cubic-bezier(.2, .8, .2, 1);
       overflow: auto;
+      z-index: 4;
     }
 
     #research-panel[data-open="true"] { transform: translateX(0); }
 
     .panel-label {
-      color: var(--muted);
-      font: 700 8px/1.2 ui-monospace, SFMono-Regular, monospace;
-      letter-spacing: .16em;
       margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 650;
     }
 
     #mode-value {
-      color: var(--paper);
-      font: 680 11px/1.3 ui-monospace, SFMono-Regular, monospace;
-      letter-spacing: .05em;
-      padding-bottom: 18px;
-      margin-bottom: 18px;
-      border-bottom: 1px solid var(--hairline);
+      margin-bottom: 20px;
+      padding-bottom: 17px;
+      border-bottom: 1px solid var(--line);
+      color: var(--text);
+      font: 600 12px/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
 
     .metric-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 18px 12px;
-      margin-bottom: 26px;
+      gap: 18px 14px;
+      margin-bottom: 28px;
     }
 
     .metric span {
       display: block;
       color: var(--muted);
-      font: 650 7px/1.2 ui-monospace, SFMono-Regular, monospace;
-      letter-spacing: .12em;
+      font-size: 9px;
+      font-weight: 600;
     }
 
     .metric b {
       display: block;
       margin-top: 5px;
-      color: var(--paper);
-      font: 620 17px/1 ui-monospace, SFMono-Regular, monospace;
+      color: var(--text);
+      font: 620 17px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-variant-numeric: tabular-nums;
     }
 
     #controller-value {
-      color: var(--paper);
-      font: 600 11px/1.4 ui-monospace, SFMono-Regular, monospace;
       margin: 0 0 12px;
+      color: var(--text);
+      font: 560 11px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
 
     #archive-map {
-      width: 100%;
-      height: 128px;
       display: block;
+      width: 100%;
+      height: 132px;
+      border: 1px solid var(--line);
       image-rendering: pixelated;
-      border: 1px solid var(--hairline);
     }
 
     .axis-row {
@@ -195,8 +170,8 @@
       justify-content: space-between;
       margin-top: 7px;
       color: var(--muted);
-      font: 600 7px/1 ui-monospace, SFMono-Regular, monospace;
-      letter-spacing: .05em;
+      font-size: 8px;
+      font-weight: 550;
     }
 
     #controls {
@@ -205,58 +180,51 @@
       bottom: max(14px, env(safe-area-inset-bottom));
       transform: translateX(-50%);
       display: grid;
-      grid-template-columns: repeat(4, minmax(62px, 78px));
+      grid-template-columns: repeat(4, minmax(66px, 82px));
       gap: 6px;
+      padding: 5px;
+      border: 1px solid rgba(232, 233, 229, .18);
+      border-radius: 9px;
+      background: rgba(13, 16, 16, .90);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, .28);
       z-index: 3;
     }
 
     #controls button {
       min-height: 44px;
       padding: 0 8px;
-      border: 1px solid rgba(229,229,223,.34);
-      background: rgba(7,9,9,.84);
-      color: var(--paper);
-      font: 720 8px/1 ui-monospace, SFMono-Regular, monospace;
-      letter-spacing: .09em;
+      border: 0;
+      border-radius: 5px;
+      background: var(--surface-raised);
+      color: var(--text);
+      font: 650 9px/1 Inter, ui-sans-serif, sans-serif;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
     }
 
     #controls button:active {
       transform: translateY(1px);
-      background: #171b1a;
+      background: #202525;
     }
 
     #controls button[aria-pressed="true"] {
-      border-color: var(--signal);
-      color: var(--signal);
-    }
-
-    #safety-mark {
-      position: fixed;
-      left: max(18px, env(safe-area-inset-left));
-      bottom: max(72px, calc(env(safe-area-inset-bottom) + 58px));
-      color: rgba(229,229,223,.30);
-      font: 600 6.5px/1 ui-monospace, SFMono-Regular, monospace;
-      letter-spacing: .12em;
-      pointer-events: none;
+      box-shadow: inset 0 0 0 1px var(--accent);
+      color: var(--accent);
     }
 
     @media (max-width: 390px) {
-      #identity { width: calc(100vw - 94px); }
+      #identity { width: calc(100vw - 90px); }
       #identity-title span { display: none; }
       #status { font-size: 8px; }
-      #controls { grid-template-columns: repeat(4, 64px); }
-      #controls button { padding: 0 4px; font-size: 7.5px; }
-      #specimen-index { opacity: .7; }
+      #controls { grid-template-columns: repeat(4, 63px); }
+      #controls button { padding: 0 4px; font-size: 8px; }
     }
 
     @media (min-width: 900px) {
-      #identity { width: 330px; }
-      #research-panel { width: 320px; }
-      #archive-map { height: 168px; }
+      #research-panel { width: 330px; }
+      #archive-map { height: 170px; }
       #controls { gap: 8px; }
-      #controls button { min-width: 86px; }
+      #controls button { min-width: 88px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -265,42 +233,40 @@
   </style>
 </head>
 <body>
-  <canvas id="world" aria-label="MuJoCo locomotion specimen on an instrumented test plinth"></canvas>
-
-  <div id="specimen-index" aria-hidden="true">07</div>
+  <canvas id="world" aria-label="MuJoCo hexapod locomotion experiment"></canvas>
 
   <section id="identity" aria-live="polite">
     <div id="identity-title">
-      <b>NEXUS V7 / S-07</b>
-      <span>LOCOMOTION SPECIMEN</span>
+      <b>NEXUS V7</b>
+      <span>MuJoCo locomotion research</span>
     </div>
-    <div id="status"><strong>V7 BOOT</strong><br />Loading MuJoCo WebAssembly…</div>
+    <div id="status"><strong>Starting</strong><br />Loading MuJoCo WebAssembly…</div>
   </section>
 
-  <button id="telemetry-toggle" type="button" aria-controls="research-panel" aria-expanded="false">DATA</button>
+  <button id="telemetry-toggle" type="button" aria-controls="research-panel" aria-expanded="false">Data</button>
 
   <aside id="research-panel" data-open="false" aria-label="Experiment diagnostics">
-    <div class="panel-label">QUALITY-DIVERSITY RUN</div>
-    <div id="mode-value">MANUAL EXPERIMENT</div>
+    <div class="panel-label">Quality-diversity run</div>
+    <div id="mode-value">Manual experiment</div>
+
     <div class="metric-grid">
-      <div class="metric"><span>GENERATION</span><b id="generation-value">0</b></div>
-      <div class="metric"><span>COVERAGE</span><b id="coverage-value">0.0%</b></div>
-      <div class="metric"><span>BEST FITNESS</span><b id="fitness-value">—</b></div>
-      <div class="metric"><span>M / J</span><b id="efficiency-value">—</b></div>
+      <div class="metric"><span>Generation</span><b id="generation-value">0</b></div>
+      <div class="metric"><span>Coverage</span><b id="coverage-value">0.0%</b></div>
+      <div class="metric"><span>Best fitness</span><b id="fitness-value">—</b></div>
+      <div class="metric"><span>Metres / joule</span><b id="efficiency-value">—</b></div>
     </div>
-    <div class="panel-label">CONTROLLER STATE</div>
+
+    <div class="panel-label">Controller state</div>
     <div id="controller-value">—</div>
-    <canvas id="archive-map" width="238" height="128"></canvas>
-    <div class="axis-row"><span>CONTACT DUTY →</span><span>STABILITY ↑</span></div>
+    <canvas id="archive-map" width="250" height="132"></canvas>
+    <div class="axis-row"><span>Contact duty →</span><span>Stability ↑</span></div>
   </aside>
 
-  <div id="safety-mark">PHYSICS / MUJOCO · VISUAL SHELL / BABYLON · SPECIMEN S-07</div>
-
   <nav id="controls" aria-label="Experiment controls">
-    <button id="pause" type="button">PAUSE</button>
-    <button id="reset" type="button">RESET</button>
-    <button id="mutate" type="button">MUTATE</button>
-    <button id="evolve" type="button" aria-pressed="false">EVOLVE</button>
+    <button id="pause" type="button">Pause</button>
+    <button id="reset" type="button">Reset</button>
+    <button id="mutate" type="button">Mutate</button>
+    <button id="evolve" type="button" aria-pressed="false">Evolve</button>
   </nav>
 
   <script>
@@ -310,7 +276,7 @@
       const open = researchPanel?.dataset.open !== 'true';
       if (researchPanel) researchPanel.dataset.open = String(open);
       telemetryToggle.setAttribute('aria-expanded', String(open));
-      telemetryToggle.textContent = open ? 'CLOSE' : 'DATA';
+      telemetryToggle.textContent = open ? 'Close' : 'Data';
     });
   </script>
   <script type="module" src="/src/main.js"></script>
