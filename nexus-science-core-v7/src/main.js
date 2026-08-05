@@ -1,6 +1,7 @@
 import { BabylonMujocoRenderer } from './babylonRenderer.js';
 import { mutateGenome } from './controller.js';
 import { MujocoScienceRuntime } from './mujocoRuntime.js';
+import { applyProductionArtDirection } from './productionArtDirection.js';
 import { EvolutionCoordinator, LocomotionExperiment } from './research/experimentProtocol.js';
 import { QualityDiversityArchive } from './research/qualityDiversity.js';
 import { ScienceDashboard } from './ui/scienceDashboard.js';
@@ -160,8 +161,9 @@ async function boot() {
     dashboard.setBoot('Loading Google DeepMind MuJoCo WebAssembly…');
     runtime = await MujocoScienceRuntime.create();
 
-    dashboard.setBoot('Starting Babylon scientific renderer…');
+    dashboard.setBoot('Building authored specimen renderer…');
     renderer = await BabylonMujocoRenderer.create(canvas, runtime);
+    applyProductionArtDirection(renderer);
     installControls();
 
     window.__NEXUS_V7__ = Object.freeze({
