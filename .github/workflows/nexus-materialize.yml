@@ -1,0 +1,65 @@
+name: Materialize NEXUS Glass Science Cube
+
+on:
+  push:
+    paths:
+      - '.github/workflows/nexus-materialize.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write verified simulation files
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import base64
+          import gzip
+          import pathlib
+
+          root = pathlib.Path('nexus-glass-science-cube')
+          root.mkdir(parents=True, exist_ok=True)
+          payload = pathlib.Path('.nexus-payload')
+
+          mapping = {
+              'index.html': (payload / 'index.b64').read_text(),
+              'style.css': (payload / 'style.b64').read_text(),
+              'manifest.webmanifest': (payload / 'manifest.b64').read_text(),
+              'sw.js': (payload / 'sw.b64').read_text(),
+              'main.js': ''.join(
+                  part.read_text()
+                  for part in sorted(payload.glob('main.part.*'))
+              ),
+          }
+
+          for name, encoded in mapping.items():
+              decoded = gzip.decompress(base64.b64decode(encoded))
+              (root / name).write_bytes(decoded)
+
+          print(f'wrote {len(mapping)} NEXUS simulation files')
+          PY
+
+      - name: Validate generated simulation
+        shell: bash
+        run: |
+          node --check nexus-glass-science-cube/main.js
+          grep -q 'ROBOT BUILDER' nexus-glass-science-cube/index.html
+          grep -q 'updateRobot' nexus-glass-science-cube/main.js
+          grep -q 'queueConstruction' nexus-glass-science-cube/main.js
+          grep -q 'reproduce' nexus-glass-science-cube/main.js
+          grep -q 'saveSnapshot' nexus-glass-science-cube/main.js
+
+      - name: Commit the playable simulation
+        shell: bash
+        run: |
+          git config user.name 'NEXUS Build Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add nexus-glass-science-cube
+          git diff --cached --quiet && exit 0
+          git commit -m 'Build real NEXUS robot colony simulation'
+          git push
