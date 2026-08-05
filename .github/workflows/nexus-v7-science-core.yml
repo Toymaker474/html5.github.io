@@ -29,8 +29,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
-          cache-dependency-path: nexus-science-core-v7/package-lock.json
 
       - name: Install exact dependencies
         run: npm install --ignore-scripts=false
