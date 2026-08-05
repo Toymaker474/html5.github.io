@@ -33,17 +33,35 @@ jobs:
       - name: Install exact dependencies
         run: npm install --ignore-scripts=false
 
-      - name: Build MuJoCo WASM and Babylon application
+      - name: Build MuJoCo WASM, pinned CAD and Babylon application
         run: npm run build
 
-      - name: Verify scientific architecture and AI contract
+      - name: Verify scientific architecture, CAD provenance and AI contract
         run: |
           test -f dist/index.html
           test -f nexus.project.json
           test -f docs/AI_EXTENSION_PROTOCOL.md
           test -f docs/VISUAL_STANDARD.md
           test -f src/productionArtDirection.js
+          test -f tools/fetchCadAssets.mjs
+          test -f public/cad/manifest.json
+          test -f public/cad/ATTRIBUTION.txt
+          test "$(find public/cad -maxdepth 1 -name '*.stl' | wc -l)" -eq 10
           node -e "JSON.parse(require('fs').readFileSync('nexus.project.json','utf8'))"
+          node --input-type=module <<'EOF'
+          import { readFile } from 'node:fs/promises';
+          const manifest = JSON.parse(await readFile('public/cad/manifest.json', 'utf8'));
+          if (manifest.schema !== 'nexus.cad-asset-manifest.v1') throw new Error('Wrong CAD manifest schema.');
+          if (manifest.sourceRepository !== 'MakeYourPet/hexapod') throw new Error('Unexpected CAD source repository.');
+          if (manifest.sourceCommit !== '7d8fc8034d715d1c9373f48281ecfa500c994d8b') throw new Error('CAD source is not immutable.');
+          if (manifest.license !== 'MIT' || manifest.assets.length !== 10) throw new Error('CAD license or completeness failed.');
+          for (const asset of manifest.assets) {
+            if (asset.bytes < 512 || !/^[a-f0-9]{64}$/.test(asset.sha256) || !/^[a-f0-9]{40}$/.test(asset.gitBlobSha1)) {
+              throw new Error(`Invalid CAD receipt for ${asset.id}.`);
+            }
+          }
+          console.log(JSON.stringify(manifest, null, 2));
+          EOF
           grep -q 'MjModel.from_xml_string' src/mujocoRuntime.js
           grep -q 'mj_step' src/mujocoRuntime.js
           grep -q 'actuator_force' src/mujocoRuntime.js
@@ -58,14 +76,14 @@ jobs:
           grep -q 'LocomotionExperiment' src/research/experimentProtocol.js
           grep -q 'PBRMaterial' src/babylonRenderer.js
           grep -q 'ShadowGenerator' src/babylonRenderer.js
-          grep -q 'TransformNode' src/babylonRenderer.js
-          grep -q 'createTorsoAssembly' src/babylonRenderer.js
-          grep -q 'createLimbAssembly' src/babylonRenderer.js
-          grep -q 'updateFollowCamera' src/babylonRenderer.js
-          grep -q 'createTaperedPrism' src/productionArtDirection.js
-          grep -q "nexus.specimen-industrial.v1" src/productionArtDirection.js
-          grep -q 'colliderVisibility: false' src/productionArtDirection.js
+          grep -q 'SceneLoader.ImportMeshAsync' src/productionArtDirection.js
+          grep -q '@babylonjs/loaders/STL/stlFileLoader.js' src/productionArtDirection.js
+          grep -q "nexus.cad-authored-hexapod.v1" src/productionArtDirection.js
+          grep -q 'proceduralRobotShells: false' src/productionArtDirection.js
+          grep -q 'offlineAssetBundle: true' src/productionArtDirection.js
+          grep -q 'EXPECTED_CAD_COMMIT' src/productionArtDirection.js
           grep -q 'QUALITY-DIVERSITY RUN' index.html
+          ! grep -q 'createTaperedPrism' src/productionArtDirection.js
           ! grep -R "position\.x +=\|rotation\.y +=\|Math\.sin.*mesh" src --include='*.js'
 
       - name: Validate morphology mutations outside the renderer
@@ -99,7 +117,7 @@ jobs:
           npm install playwright@1.55.0 >/dev/null
           npx playwright install --with-deps chromium
 
-      - name: Prove MuJoCo motion and autonomous MAP-Elites evolution
+      - name: Prove MuJoCo motion, CAD rendering and autonomous MAP-Elites evolution
         working-directory: .
         run: |
           cd nexus-science-core-v7
@@ -124,32 +142,20 @@ jobs:
           const diagnostics = [];
           page.on('pageerror', error => diagnostics.push(`pageerror: ${error.message}`));
           page.on('console', message => {
-            if (message.type() === 'error' || message.type() === 'warning') {
-              diagnostics.push(`${message.type()}: ${message.text()}`);
-            }
+            if (message.type() === 'error' || message.type() === 'warning') diagnostics.push(`${message.type()}: ${message.text()}`);
           });
-          page.on('requestfailed', request => {
-            diagnostics.push(`requestfailed: ${request.url()} :: ${request.failure()?.errorText || 'unknown'}`);
-          });
+          page.on('requestfailed', request => diagnostics.push(`requestfailed: ${request.url()} :: ${request.failure()?.errorText || 'unknown'}`));
 
-          await page.goto('http://127.0.0.1:4173', {
-            waitUntil: 'domcontentloaded',
-            timeout: 120000,
-          });
-
+          await page.goto('http://127.0.0.1:4173', { waitUntil: 'domcontentloaded', timeout: 120000 });
           await page.waitForFunction(() => {
             const text = document.querySelector('#status')?.textContent || '';
-            return text.includes('MUJOCO AUTHORITY') ||
-              text.includes('BOOT FAILURE') ||
-              text.includes('FAIL-CLOSED');
+            return text.includes('MUJOCO AUTHORITY') || text.includes('BOOT FAILURE') || text.includes('FAIL-CLOSED');
           }, null, { timeout: 120000 });
 
           await page.waitForFunction(() => {
             const nexus = window.__NEXUS_V7__;
             const text = document.querySelector('#status')?.textContent || '';
-            return text.includes('BOOT FAILURE') ||
-              text.includes('FAIL-CLOSED') ||
-              Number(nexus?.runtime?.data?.time || 0) >= 1.25;
+            return text.includes('BOOT FAILURE') || text.includes('FAIL-CLOSED') || Number(nexus?.runtime?.data?.time || 0) >= 1.25;
           }, null, { timeout: 35000 });
 
           const preEvolution = await page.evaluate(() => {
@@ -173,10 +179,7 @@ jobs:
           await page.click('#evolve');
           await page.waitForFunction(() => {
             const nexus = window.__NEXUS_V7__;
-            return nexus &&
-              nexus.experiment.generation >= 1 &&
-              nexus.archive.cells.size >= 1 &&
-              nexus.archive.best?.fitness > 0;
+            return nexus && nexus.experiment.generation >= 1 && nexus.archive.cells.size >= 1 && nexus.archive.best?.fitness > 0;
           }, null, { timeout: 45000 });
           await page.waitForTimeout(1200);
 
@@ -190,10 +193,7 @@ jobs:
             const identity = rect('#identity');
             const research = rect('#research-panel');
             const controls = rect('#controls');
-            const buttons = [...document.querySelectorAll('button')].map((button) => ({
-              id: button.id,
-              height: button.getBoundingClientRect().height,
-            }));
+            const buttons = [...document.querySelectorAll('button')].map((button) => ({ id: button.id, height: button.getBoundingClientRect().height }));
             const meshNames = nexus.renderer.scene.meshes.map((mesh) => mesh.name);
 
             return {
@@ -208,11 +208,16 @@ jobs:
               evolving: nexus.coordinator.enabled,
               evaluation: nexus.evaluation,
               artDirection: nexus.renderer.artDirection?.id,
-              authoredShells: nexus.renderer.artDirection?.authoredShells,
-              hasSpecimenPlinth: meshNames.includes('specimen-plinth'),
+              authoredCad: nexus.renderer.artDirection?.authoredCad,
+              proceduralRobotShells: nexus.renderer.artDirection?.proceduralRobotShells,
+              offlineAssetBundle: nexus.renderer.artDirection?.offlineAssetBundle,
+              cadSourceCommit: nexus.renderer.artDirection?.sourceCommit,
+              cadAssetCount: nexus.renderer.artDirection?.assetCount,
+              cadTemplateCount: meshNames.filter((name) => name.startsWith('cad-template-')).length,
+              cadInstanceCount: meshNames.filter((name) => /^cad-.*-instance-/.test(name)).length,
+              hasCadPlinth: meshNames.includes('cad-specimen-plinth'),
               hasPrototypeChamber: meshNames.includes('containment-chamber'),
-              authoredVisualCount: meshNames.filter((name) => /authored-|torso-carapace|limb-upper-shell|foot-toe/.test(name)).length,
-              prototypeVisualCount: meshNames.filter((name) => /torso-hull|core-shell|foot-shell/.test(name)).length,
+              prototypeVisualCount: meshNames.filter((name) => /torso-hull|core-shell|foot-shell|torso-carapace|limb-upper-shell|foot-toe/.test(name)).length,
               visualAssemblies: nexus.renderer.meshes.filter((node) => node?.isEnabled?.()).length,
               sceneMeshCount: nexus.renderer.scene.meshes.length,
               archiveCanvas: rect('#archive-map'),
@@ -229,36 +234,25 @@ jobs:
           const evidence = { preEvolution, postEvolution, diagnostics };
           console.log(JSON.stringify(evidence, null, 2));
           const invalid =
-            !preEvolution.authority ||
-            preEvolution.bootFailure ||
-            preEvolution.failClosed ||
-            preEvolution.authoritativeTime < 1.25 ||
-            preEvolution.maxContacts < 1 ||
-            preEvolution.displacement <= 0.03 ||
-            preEvolution.peakPower <= 0.1 ||
-            preEvolution.battery <= 0 ||
+            !preEvolution.authority || preEvolution.bootFailure || preEvolution.failClosed ||
+            preEvolution.authoritativeTime < 1.25 || preEvolution.maxContacts < 1 ||
+            preEvolution.displacement <= 0.03 || preEvolution.peakPower <= 0.1 || preEvolution.battery <= 0 ||
             postEvolution.runtimeSchema !== 'nexus.science-runtime.v1' ||
             postEvolution.genomeSchema !== 'nexus.neural-cpg-genome.v1' ||
-            postEvolution.generation < 1 ||
-            postEvolution.archiveCells < 1 ||
-            postEvolution.bestFitness <= 0 ||
-            postEvolution.lastEnergy <= 0 ||
+            postEvolution.generation < 1 || postEvolution.archiveCells < 1 ||
+            postEvolution.bestFitness <= 0 || postEvolution.lastEnergy <= 0 ||
             postEvolution.evaluation?.timeScale !== 4 ||
-            postEvolution.artDirection !== 'nexus.specimen-industrial.v1' ||
-            postEvolution.authoredShells !== true ||
-            !postEvolution.hasSpecimenPlinth ||
-            postEvolution.hasPrototypeChamber ||
-            postEvolution.authoredVisualCount < 10 ||
-            postEvolution.prototypeVisualCount !== 0 ||
-            postEvolution.visualAssemblies < 10 ||
-            postEvolution.sceneMeshCount < 30 ||
-            postEvolution.archiveCanvas.width <= 0 ||
-            postEvolution.layoutOverlap ||
-            postEvolution.buttonHeights.some(button => button.height < 42) ||
-            postEvolution.canvasWidth <= 0;
-          if (invalid) {
-            throw new Error(`V7 scientific runtime failed closed: ${JSON.stringify(evidence)}`);
-          }
+            postEvolution.artDirection !== 'nexus.cad-authored-hexapod.v1' ||
+            postEvolution.authoredCad !== true || postEvolution.proceduralRobotShells !== false ||
+            postEvolution.offlineAssetBundle !== true ||
+            postEvolution.cadSourceCommit !== '7d8fc8034d715d1c9373f48281ecfa500c994d8b' ||
+            postEvolution.cadAssetCount !== 10 || postEvolution.cadTemplateCount !== 10 ||
+            postEvolution.cadInstanceCount < 20 || !postEvolution.hasCadPlinth ||
+            postEvolution.hasPrototypeChamber || postEvolution.prototypeVisualCount !== 0 ||
+            postEvolution.visualAssemblies < 10 || postEvolution.sceneMeshCount < 40 ||
+            postEvolution.archiveCanvas.width <= 0 || postEvolution.layoutOverlap ||
+            postEvolution.buttonHeights.some(button => button.height < 42) || postEvolution.canvasWidth <= 0;
+          if (invalid) throw new Error(`V7 scientific runtime failed closed: ${JSON.stringify(evidence)}`);
           EOF
           node nexus-v7-smoke/smoke.mjs
 
