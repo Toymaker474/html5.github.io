@@ -1,0 +1,57 @@
+name: Materialize NEXUS runtime
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/nexus-materialize-runtime.yml'
+      - '.nexus-payload/main.part.*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nexus-materialize-runtime
+  cancel-in-progress: true
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Decode runtime
+        shell: python
+        run: |
+          from pathlib import Path
+          import base64, gzip
+
+          parts = sorted(Path('.nexus-payload').glob('main.part.*'))
+          if not parts:
+              raise SystemExit('No NEXUS payload parts found')
+
+          encoded = ''.join(p.read_text(encoding='utf-8') for p in parts)
+          packed = base64.b64decode(''.join(encoded.split()))
+          source = gzip.decompress(packed).decode('utf-8')
+
+          target = Path('nexus-glass-science-cube/runtime-source.js')
+          target.write_text(source, encoding='utf-8')
+          print(f'Materialized {len(source):,} bytes from {len(parts)} payload parts')
+
+      - name: Validate JavaScript
+        run: node --check nexus-glass-science-cube/runtime-source.js
+
+      - name: Commit source if changed
+        run: |
+          if git diff --quiet -- nexus-glass-science-cube/runtime-source.js; then
+            echo 'Runtime source already current'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add nexus-glass-science-cube/runtime-source.js
+          git commit -m 'Materialize editable NEXUS runtime source'
+          git push
