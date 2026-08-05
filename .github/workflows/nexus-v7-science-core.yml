@@ -18,7 +18,7 @@ concurrency:
 jobs:
   build-and-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 24
     defaults:
       run:
         working-directory: nexus-science-core-v7
@@ -36,19 +36,52 @@ jobs:
       - name: Build MuJoCo WASM and Babylon application
         run: npm run build
 
-      - name: Verify scientific architecture markers
+      - name: Verify scientific architecture and AI contract
         run: |
           test -f dist/index.html
+          test -f nexus.project.json
+          test -f docs/AI_EXTENSION_PROTOCOL.md
+          test -f docs/VISUAL_STANDARD.md
+          node -e "JSON.parse(require('fs').readFileSync('nexus.project.json','utf8'))"
           grep -q 'MjModel.from_xml_string' src/mujocoRuntime.js
           grep -q 'mj_step' src/mujocoRuntime.js
           grep -q 'actuator_force' src/mujocoRuntime.js
           grep -q 'actuator_velocity' src/mujocoRuntime.js
           grep -q 'maxFootContactsSeen' src/mujocoRuntime.js
           grep -q 'planarDisplacement' src/mujocoRuntime.js
-          grep -q 'touch_' src/hexapodModel.js
-          grep -q 'WebGPUEngine' src/babylonRenderer.js
+          grep -q 'compileMorphologyToMjcf' src/research/morphologyGenome.js
+          grep -q 'validateMorphology' src/research/morphologyGenome.js
+          grep -q 'touch_' src/research/morphologyGenome.js
+          grep -q 'Hybrid neural central-pattern generator' src/controller.js
+          grep -q 'QualityDiversityArchive' src/research/qualityDiversity.js
+          grep -q 'LocomotionExperiment' src/research/experimentProtocol.js
+          grep -q 'PBRMaterial' src/babylonRenderer.js
+          grep -q 'ShadowGenerator' src/babylonRenderer.js
           grep -q 'updateFollowCamera' src/babylonRenderer.js
+          grep -q 'QUALITY–DIVERSITY ARCHIVE' index.html
           ! grep -R "position\.x +=\|rotation\.y +=\|Math\.sin.*mesh" src --include='*.js'
+
+      - name: Validate morphology mutations outside the renderer
+        run: |
+          node --input-type=module <<'EOF'
+          import {
+            compileMorphologyToMjcf,
+            DEFAULT_MORPHOLOGY,
+            mutateMorphology,
+            validateMorphology,
+          } from './src/research/morphologyGenome.js';
+
+          const baseline = validateMorphology(DEFAULT_MORPHOLOGY);
+          if (!baseline.valid) throw new Error(baseline.errors.join('\n'));
+          const child = mutateMorphology(DEFAULT_MORPHOLOGY, 0x12345678, 1);
+          const childValidation = validateMorphology(child);
+          if (!childValidation.valid) throw new Error(childValidation.errors.join('\n'));
+          const xml = compileMorphologyToMjcf(child);
+          if (!xml.includes('<mujoco') || !xml.includes('touch_fl') || child.seed === DEFAULT_MORPHOLOGY.seed) {
+            throw new Error('Morphology compiler did not produce an independently mutated MJCF model.');
+          }
+          console.log(JSON.stringify({ baseline, childValidation, childSeed: child.seed }));
+          EOF
 
       - name: Install browser smoke-test runtime
         working-directory: .
@@ -59,7 +92,7 @@ jobs:
           npm install playwright@1.55.0 >/dev/null
           npx playwright install --with-deps chromium
 
-      - name: Prove MuJoCo motion in mobile-sized browser
+      - name: Prove MuJoCo motion and autonomous MAP-Elites evolution
         working-directory: .
         run: |
           cd nexus-science-core-v7
@@ -105,41 +138,89 @@ jobs:
           }, null, { timeout: 120000 });
 
           await page.waitForTimeout(7000);
-          const report = await page.evaluate(() => {
+          const preEvolution = await page.evaluate(() => {
             const status = document.querySelector('#status')?.textContent || '';
             const number = (pattern) => Number(status.match(pattern)?.[1] || 0);
             return {
               status,
               simTime: number(/SIM\s+(\d+\.\d+)\s+s/),
-              currentContacts: number(/·\s+(\d+)\/6\s+FEET/),
               maxContacts: number(/MAX\s+(\d+)\/6/),
               displacement: number(/DIST\s+(\d+\.\d+)\s+m/),
-              power: number(/POWER\s+(\d+\.\d+)\s+W/),
               peakPower: number(/PEAK\s+(\d+\.\d+)\s+W/),
               battery: number(/BATTERY\s+(\d+\.\d+)%/),
-              canvasWidth: document.querySelector('#world')?.width || 0,
-              canvasHeight: document.querySelector('#world')?.height || 0,
+              authority: status.includes('MUJOCO AUTHORITY'),
               bootFailure: status.includes('BOOT FAILURE'),
               failClosed: status.includes('FAIL-CLOSED'),
-              authority: status.includes('MUJOCO AUTHORITY'),
+            };
+          });
+
+          await page.click('#evolve');
+          await page.waitForFunction(() => {
+            const nexus = window.__NEXUS_V7__;
+            return nexus &&
+              nexus.experiment.generation >= 1 &&
+              nexus.archive.cells.size >= 1 &&
+              nexus.archive.best?.fitness > 0;
+          }, null, { timeout: 45000 });
+          await page.waitForTimeout(1200);
+
+          const postEvolution = await page.evaluate(() => {
+            const nexus = window.__NEXUS_V7__;
+            const rect = (selector) => {
+              const value = document.querySelector(selector).getBoundingClientRect();
+              return { left: value.left, right: value.right, top: value.top, bottom: value.bottom, width: value.width, height: value.height };
+            };
+            const overlaps = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+            const identity = rect('#identity');
+            const research = rect('#research-panel');
+            const controls = rect('#controls');
+            const buttons = [...document.querySelectorAll('button')].map((button) => ({
+              id: button.id,
+              height: button.getBoundingClientRect().height,
+            }));
+
+            return {
+              runtimeSchema: nexus.schema,
+              genomeSchema: nexus.runtime.controller.genome.schema,
+              generation: nexus.experiment.generation,
+              archiveCells: nexus.archive.cells.size,
+              archiveCoverage: nexus.archive.coverage,
+              bestFitness: nexus.archive.best?.fitness || 0,
+              lastEnergy: nexus.coordinator.lastResult?.metrics.energyJoules || 0,
+              lastDisplacement: nexus.coordinator.lastResult?.metrics.displacementMetres || 0,
+              evolving: nexus.coordinator.enabled,
+              archiveCanvas: rect('#archive-map'),
+              buttonHeights: buttons,
+              layoutOverlap: overlaps(identity, research) || overlaps(identity, controls) || overlaps(research, controls),
+              canvasWidth: document.querySelector('#world')?.width || 0,
+              canvasHeight: document.querySelector('#world')?.height || 0,
             };
           });
 
           await page.screenshot({ path: 'artifacts/nexus-v7-science-core.png', fullPage: true });
           await browser.close();
 
-          const evidence = { report, diagnostics };
+          const evidence = { preEvolution, postEvolution, diagnostics };
           console.log(JSON.stringify(evidence, null, 2));
           const invalid =
-            !report.authority ||
-            report.bootFailure ||
-            report.failClosed ||
-            report.simTime <= 2 ||
-            report.maxContacts < 1 ||
-            report.displacement <= 0.03 ||
-            report.peakPower <= 0.1 ||
-            report.battery <= 0 ||
-            report.canvasWidth <= 0;
+            !preEvolution.authority ||
+            preEvolution.bootFailure ||
+            preEvolution.failClosed ||
+            preEvolution.simTime <= 2 ||
+            preEvolution.maxContacts < 1 ||
+            preEvolution.displacement <= 0.03 ||
+            preEvolution.peakPower <= 0.1 ||
+            preEvolution.battery <= 0 ||
+            postEvolution.runtimeSchema !== 'nexus.science-runtime.v1' ||
+            postEvolution.genomeSchema !== 'nexus.neural-cpg-genome.v1' ||
+            postEvolution.generation < 1 ||
+            postEvolution.archiveCells < 1 ||
+            postEvolution.bestFitness <= 0 ||
+            postEvolution.lastEnergy <= 0 ||
+            postEvolution.archiveCanvas.width <= 0 ||
+            postEvolution.layoutOverlap ||
+            postEvolution.buttonHeights.some(button => button.height < 42) ||
+            postEvolution.canvasWidth <= 0;
           if (invalid) {
             throw new Error(`V7 scientific runtime failed closed: ${JSON.stringify(evidence)}`);
           }
