@@ -2,6 +2,7 @@ import { BabylonMujocoRenderer } from './babylonRenderer.js';
 import { mutateGenome } from './controller.js';
 import { MujocoScienceRuntime } from './mujocoRuntime.js';
 import { applyProductionArtDirection } from './productionArtDirection.js';
+import { installReferenceLegConnectivity } from './referenceLegConnectivity.js';
 import { EvolutionCoordinator, LocomotionExperiment } from './research/experimentProtocol.js';
 import { QualityDiversityArchive } from './research/qualityDiversity.js';
 import { ScienceDashboard } from './ui/scienceDashboard.js';
@@ -158,6 +159,7 @@ async function boot() {
     dashboard.setBoot('Verifying and loading pinned human-authored CAD…');
     renderer = await BabylonMujocoRenderer.create(canvas, runtime);
     await applyProductionArtDirection(renderer);
+    installReferenceLegConnectivity(renderer);
     installControls();
 
     window.__NEXUS_V7__ = Object.freeze({
@@ -170,6 +172,11 @@ async function boot() {
         timeScale: EVOLUTION_TIME_SCALE,
         maximumBudgetSeconds: EVOLUTION_MAX_BUDGET_SECONDS,
         batchSeconds: SCIENCE_BATCH_SECONDS,
+      }),
+      realismCycle: Object.freeze({
+        cycle: 1,
+        increment: 1,
+        target: 'front-left reference-leg connectivity',
       }),
       schema: 'nexus.science-runtime.v1',
     });
