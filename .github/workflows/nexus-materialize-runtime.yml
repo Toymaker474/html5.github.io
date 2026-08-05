@@ -7,12 +7,14 @@ on:
     paths:
       - '.github/workflows/nexus-materialize-runtime.yml'
       - '.nexus-payload/main.part.*'
+      - 'nexus-glass-science-cube/patch-robot-art.py'
   pull_request:
     branches: [main]
     paths:
       - '.nexus-materialize-trigger'
       - '.github/workflows/nexus-materialize-runtime.yml'
       - '.nexus-payload/main.part.*'
+      - 'nexus-glass-science-cube/patch-robot-art.py'
 
 permissions:
   contents: write
@@ -48,8 +50,18 @@ jobs:
           target.write_text(source, encoding='utf-8')
           print(f'Materialized {len(source):,} bytes from {len(parts)} payload parts')
 
+      - name: Apply robot model and animation rebuild
+        run: python nexus-glass-science-cube/patch-robot-art.py
+
       - name: Validate JavaScript
         run: node --check nexus-glass-science-cube/runtime-source.js
+
+      - name: Verify robot rig markers
+        run: |
+          grep -q 'function robotRole' nexus-glass-science-cube/runtime-source.js
+          grep -q 'createLegAssembly' nexus-glass-science-cube/runtime-source.js
+          grep -q 'rig.motionPhase' nexus-glass-science-cube/runtime-source.js
+          grep -q 'rebuildRobotVisual(robot)' nexus-glass-science-cube/runtime-source.js
 
       - name: Commit source if changed
         run: |
@@ -60,5 +72,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add nexus-glass-science-cube/runtime-source.js
-          git commit -m 'Materialize editable NEXUS runtime source'
+          git commit -m 'Rebuild NEXUS robot models and locomotion'
           git push origin HEAD:${{ github.head_ref || github.ref_name }}
