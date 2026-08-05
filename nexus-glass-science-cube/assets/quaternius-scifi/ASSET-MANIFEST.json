@@ -1,0 +1,67 @@
+[
+  {
+    "name": "Enemy_Trilobite",
+    "source": "Quaternius Sci-Fi Essentials Kit Standard",
+    "license": "CC0-1.0",
+    "animations": [
+      "Attack",
+      "AttackAuto",
+      "Hanging",
+      "Hit",
+      "Idle",
+      "Look",
+      "Run",
+      "TurnOff",
+      "Walk"
+    ],
+    "files": [
+      "Enemy_Trilobite.bin",
+      "Enemy_Trilobite.gltf",
+      "T_Enemies_Large_BaseColor.png",
+      "T_Enemies_Large_Normal.png",
+      "T_Enemies_Large_ORM.png"
+    ]
+  },
+  {
+    "name": "Enemy_QuadShell",
+    "source": "Quaternius Sci-Fi Essentials Kit Standard",
+    "license": "CC0-1.0",
+    "animations": [
+      "Attack",
+      "Charge",
+      "Hit",
+      "Idle",
+      "Look",
+      "Run",
+      "TurnOff",
+      "Walk"
+    ],
+    "files": [
+      "Enemy_QuadShell.bin",
+      "Enemy_QuadShell.gltf",
+      "T_Enemies_BaseColor_png.png",
+      "T_Enemies_Normal.png",
+      "T_Enemies_ORM.png"
+    ]
+  },
+  {
+    "name": "Enemy_EyeDrone",
+    "source": "Quaternius Sci-Fi Essentials Kit Standard",
+    "license": "CC0-1.0",
+    "animations": [
+      "Attack",
+      "BackFlip",
+      "Charging",
+      "Hit",
+      "Idle",
+      "Look"
+    ],
+    "files": [
+      "Enemy_EyeDrone.bin",
+      "Enemy_EyeDrone.gltf",
+      "T_Enemies_BaseColor_png.png",
+      "T_Enemies_Normal.png",
+      "T_Enemies_ORM.png"
+    ]
+  }
+]

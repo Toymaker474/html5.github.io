@@ -1,0 +1,166 @@
+name: Preview NEXUS Authored Robot Candidates
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/nexus-authored-asset-preview.yml'
+      - '.nexus-authored-preview-trigger'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nexus-authored-asset-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+
+      - name: Download official CC0 model and texture archives
+        run: |
+          mkdir -p /tmp/quaternius/models /tmp/quaternius/textures preview-site artifacts
+          curl --fail --location --retry 5 --retry-delay 3 \
+            --user-agent 'NEXUS-Asset-Preview/1.0' \
+            'https://opengameart.org/sites/default/files/sci-fi_essentials_kit_models.zip' \
+            --output /tmp/quaternius/models.zip
+          curl --fail --location --retry 5 --retry-delay 3 \
+            --user-agent 'NEXUS-Asset-Preview/1.0' \
+            'https://opengameart.org/sites/default/files/sci-fi_essentials_kit_textures.zip' \
+            --output /tmp/quaternius/textures.zip
+          unzip -q /tmp/quaternius/models.zip -d /tmp/quaternius/models
+          unzip -q /tmp/quaternius/textures.zip -d /tmp/quaternius/textures
+
+      - name: Assemble self-contained preview assets
+        shell: python
+        run: |
+          from pathlib import Path
+          import json, shutil
+
+          model_root = Path('/tmp/quaternius/models')
+          texture_root = Path('/tmp/quaternius/textures')
+          output = Path('preview-site/assets')
+          output.mkdir(parents=True, exist_ok=True)
+
+          candidates = ['Enemy_Trilobite', 'Enemy_QuadShell', 'Enemy_EyeDrone']
+          files = list(model_root.rglob('*')) + list(texture_root.rglob('*'))
+          by_name = {}
+          for file in files:
+              if file.is_file():
+                  by_name.setdefault(file.name, file)
+
+          report = []
+          for candidate in candidates:
+              gltf_matches = list(model_root.rglob(f'{candidate}.gltf'))
+              if not gltf_matches:
+                  raise SystemExit(f'Missing {candidate}.gltf')
+              source_gltf = gltf_matches[0]
+              document = json.loads(source_gltf.read_text(encoding='utf-8'))
+              needed = [source_gltf.name]
+              needed += [buffer['uri'] for buffer in document.get('buffers', []) if buffer.get('uri')]
+              needed += [image['uri'] for image in document.get('images', []) if image.get('uri')]
+
+              candidate_dir = output / candidate
+              candidate_dir.mkdir(parents=True, exist_ok=True)
+              for name in needed:
+                  source = source_gltf.parent / name
+                  if not source.exists():
+                      source = by_name.get(Path(name).name)
+                  if source is None or not source.exists():
+                      raise SystemExit(f'Missing dependency {name} for {candidate}')
+                  shutil.copy2(source, candidate_dir / Path(name).name)
+
+              report.append({
+                  'name': candidate,
+                  'url': f'./assets/{candidate}/{candidate}.gltf',
+                  'animations': [clip.get('name') for clip in document.get('animations', [])],
+              })
+
+          Path('preview-site/candidates.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
+          print(json.dumps(report, indent=2))
+
+      - name: Create authored-model comparison viewer
+        run: |
+          cat > preview-site/index.html <<'EOF'
+          <!doctype html>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width,initial-scale=1">
+          <title>NEXUS Authored Robot Candidates</title>
+          <style>
+            *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#090b09;color:#e7e0d1;font-family:system-ui,sans-serif}canvas{display:block;width:100%;height:100%}.labels{position:fixed;inset:0;pointer-events:none;display:grid;grid-template-columns:repeat(3,1fr);padding:24px 30px;align-items:end}.label{padding:13px 16px;border-top:1px solid #9b7a48;background:linear-gradient(90deg,rgba(12,14,11,.9),rgba(12,14,11,.42));font-weight:800;letter-spacing:.08em}.label small{display:block;margin-top:4px;color:#a99c84;font:500 11px/1.4 ui-monospace,monospace;letter-spacing:.02em}.mode{position:fixed;left:30px;top:24px;padding:10px 14px;background:#121510;border-left:4px solid #b28a4e;font:700 12px ui-monospace,monospace;letter-spacing:.12em}</style>
+          <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+          <canvas id="view"></canvas><div class="mode" id="mode">IDLE STUDY</div><div class="labels" id="labels"></div>
+          <script type="module">
+            import * as THREE from 'three';
+            import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+
+            const data=await fetch('./candidates.json').then(r=>r.json());
+            const canvas=document.querySelector('#view');
+            const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
+            renderer.setPixelRatio(1);renderer.setSize(innerWidth,innerHeight,false);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;renderer.shadowMap.enabled=true;
+            const scene=new THREE.Scene();scene.background=new THREE.Color(0x090b09);scene.fog=new THREE.Fog(0x090b09,11,24);
+            const camera=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,.1,80);camera.position.set(0,4.2,13.5);camera.lookAt(0,1.1,0);
+            scene.add(new THREE.HemisphereLight(0xdfe7dc,0x171b16,2.2));
+            const key=new THREE.DirectionalLight(0xffead0,4);key.position.set(-4,8,6);key.castShadow=true;key.shadow.mapSize.set(2048,2048);scene.add(key);
+            const rim=new THREE.DirectionalLight(0x7e9f91,2.4);rim.position.set(5,4,-5);scene.add(rim);
+            const floor=new THREE.Mesh(new THREE.PlaneGeometry(24,11),new THREE.MeshStandardMaterial({color:0x171a15,roughness:.92,metalness:.04}));floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
+            const grid=new THREE.GridHelper(24,24,0x4f554a,0x252a23);grid.position.y=.006;grid.material.opacity=.27;grid.material.transparent=true;scene.add(grid);
+            const loader=new GLTFLoader();const mixers=[];const entries=[];const xs=[-4.15,0,4.15];
+            for(let i=0;i<data.length;i++){
+              const item=data[i];const gltf=await loader.loadAsync(item.url);const root=gltf.scene;root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+              const box=new THREE.Box3().setFromObject(root);const size=box.getSize(new THREE.Vector3());const center=box.getCenter(new THREE.Vector3());const scale=2.65/Math.max(size.y,.001);root.scale.setScalar(scale);root.updateMatrixWorld(true);
+              const scaledBox=new THREE.Box3().setFromObject(root);const scaledCenter=scaledBox.getCenter(new THREE.Vector3());root.position.set(xs[i]-scaledCenter.x,-scaledBox.min.y,-scaledCenter.z);scene.add(root);
+              const mixer=new THREE.AnimationMixer(root);mixers.push(mixer);entries.push({item,gltf,root,mixer,action:null});
+            }
+            document.querySelector('#labels').innerHTML=data.map(item=>`<div class="label">${item.name.replace('Enemy_','').toUpperCase()}<small>${item.animations.join(' · ')}</small></div>`).join('');
+            function play(mode){
+              document.querySelector('#mode').textContent=mode==='action'?'ACTION STUDY':'IDLE STUDY';
+              for(const entry of entries){
+                entry.action?.fadeOut(.12);const wanted=mode==='action'?['Attack','Charge','AttackAuto','Run','BackFlip']:['Idle','Look','Walk'];
+                const clip=wanted.map(name=>THREE.AnimationClip.findByName(entry.gltf.animations,name)).find(Boolean)||entry.gltf.animations[0];
+                entry.action=entry.mixer.clipAction(clip);entry.action.reset().fadeIn(.12).play();
+              }
+            }
+            window.setStudyMode=play;play('idle');
+            const clock=new THREE.Clock();function frame(){requestAnimationFrame(frame);const dt=Math.min(clock.getDelta(),.05);mixers.forEach(m=>m.update(dt));renderer.render(scene,camera)}frame();
+            addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight,false)});
+            document.body.dataset.ready='true';
+          </script>
+          EOF
+
+      - name: Render idle and action contact sheets
+        run: |
+          mkdir -p preview-runner
+          cd preview-runner
+          npm init -y >/dev/null
+          npm install playwright@1.55.0 >/dev/null
+          npx playwright install --with-deps chromium
+          cd ..
+          python3 -m http.server 4173 --directory preview-site >/tmp/nexus-authored-preview.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          cat > preview-runner/render.mjs <<'EOF'
+          import {chromium} from 'playwright';
+          const browser=await chromium.launch({headless:true,args:['--use-gl=swiftshader','--enable-webgl','--ignore-gpu-blocklist']});
+          const page=await browser.newPage({viewport:{width:1200,height:760},deviceScaleFactor:1});
+          const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
+          await page.goto('http://127.0.0.1:4173',{waitUntil:'domcontentloaded',timeout:120000});
+          await page.waitForFunction(()=>document.body.dataset.ready==='true',{timeout:120000});
+          await page.waitForTimeout(1800);await page.screenshot({path:'artifacts/authored-robots-idle.png'});
+          await page.evaluate(()=>window.setStudyMode('action'));await page.waitForTimeout(950);await page.screenshot({path:'artifacts/authored-robots-action.png'});
+          await browser.close();if(errors.length)throw new Error(errors.join('\n'));
+          EOF
+          node preview-runner/render.mjs
+
+      - name: Upload authored robot comparisons
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-authored-robot-candidates
+          path: artifacts/*.png
+          if-no-files-found: error

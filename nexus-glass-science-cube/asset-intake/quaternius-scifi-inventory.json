@@ -1,0 +1,2302 @@
+{
+  "source": "https://opengameart.org/content/sci-fi-essentials-kit",
+  "archive": "sci-fi_essentials_kit_models.zip",
+  "license": "CC0",
+  "file_count": 256,
+  "gltf_count": 37,
+  "animated_gltf_count": 4,
+  "rigged_gltf_count": 4,
+  "records": [
+    {
+      "path": "glTF/Enemy_EyeDrone.gltf",
+      "bytes": 53939,
+      "animations": [
+        "Attack",
+        "BackFlip",
+        "Charging",
+        "Hit",
+        "Idle",
+        "Look"
+      ],
+      "animation_count": 6,
+      "skins": 1,
+      "nodes": 10,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Enemies_Normal.png",
+        "T_Enemies_BaseColor_png.png",
+        "T_Enemies_ORM.png"
+      ],
+      "buffers": [
+        "Enemy_EyeDrone.bin"
+      ],
+      "interesting_name": true
+    },
+    {
+      "path": "glTF/Enemy_QuadShell.gltf",
+      "bytes": 235254,
+      "animations": [
+        "Attack",
+        "Charge",
+        "Hit",
+        "Idle",
+        "Look",
+        "Run",
+        "TurnOff",
+        "Walk"
+      ],
+      "animation_count": 8,
+      "skins": 1,
+      "nodes": 31,
+      "meshes": 2,
+      "materials": 1,
+      "images": [
+        "T_Enemies_Normal.png",
+        "T_Enemies_BaseColor_png.png",
+        "T_Enemies_ORM.png"
+      ],
+      "buffers": [
+        "Enemy_QuadShell.bin"
+      ],
+      "interesting_name": true
+    },
+    {
+      "path": "glTF/Enemy_Trilobite.gltf",
+      "bytes": 189636,
+      "animations": [
+        "Attack",
+        "AttackAuto",
+        "Hanging",
+        "Hit",
+        "Idle",
+        "Look",
+        "Run",
+        "TurnOff",
+        "Walk"
+      ],
+      "animation_count": 9,
+      "skins": 1,
+      "nodes": 23,
+      "meshes": 2,
+      "materials": 1,
+      "images": [
+        "T_Enemies_Large_Normal.png",
+        "T_Enemies_Large_BaseColor.png",
+        "T_Enemies_Large_ORM.png"
+      ],
+      "buffers": [
+        "Enemy_Trilobite.bin"
+      ],
+      "interesting_name": true
+    },
+    {
+      "path": "glTF/Gun_Pistol.gltf",
+      "bytes": 2211,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Guns_Batch1_Normal.png",
+        "T_Guns_Batch1_BaseColor.png",
+        "T_Guns_Batch1_ORM.png"
+      ],
+      "buffers": [
+        "Gun_Pistol.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Gun_Revolver.gltf",
+      "bytes": 3440,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 2,
+      "meshes": 2,
+      "materials": 1,
+      "images": [
+        "T_Guns_Batch2_Normal.png",
+        "T_Guns_Batch2_BaseColor.png",
+        "T_Guns_Batch2_ORM.png"
+      ],
+      "buffers": [
+        "Gun_Revolver.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Gun_Rifle.gltf",
+      "bytes": 2210,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Guns_Batch1_Normal.png",
+        "T_Guns_Batch1_BaseColor.png",
+        "T_Guns_Batch1_ORM.png"
+      ],
+      "buffers": [
+        "Gun_Rifle.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Gun_SMG_Ammo.gltf",
+      "bytes": 2208,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Guns_Batch1_Normal.png",
+        "T_Guns_Batch1_BaseColor.png",
+        "T_Guns_Batch1_ORM.png"
+      ],
+      "buffers": [
+        "Gun_SMG_Ammo.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Gun_Sniper.gltf",
+      "bytes": 2215,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Guns_Batch2_Normal.png",
+        "T_Guns_Batch2_BaseColor.png",
+        "T_Guns_Batch2_ORM.png"
+      ],
+      "buffers": [
+        "Gun_Sniper.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Gun_Sniper_Ammo.gltf",
+      "bytes": 2213,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Guns_Batch2_Normal.png",
+        "T_Guns_Batch2_BaseColor.png",
+        "T_Guns_Batch2_ORM.png"
+      ],
+      "buffers": [
+        "Gun_Sniper_Ammo.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Ammo.gltf",
+      "bytes": 2216,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Props_Batch2_Normal.png",
+        "T_Props_Batch2_BaseColor.png",
+        "T_Props_Batch2_ORM.png"
+      ],
+      "buffers": [
+        "Prop_Ammo.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Ammo_Closed.gltf",
+      "bytes": 2226,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Props_Batch2_Normal.png",
+        "T_Props_Batch2_BaseColor.png",
+        "T_Props_Batch2_ORM.png"
+      ],
+      "buffers": [
+        "Prop_Ammo_Closed.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Ammo_Small.gltf",
+      "bytes": 2227,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Props_Batch2_Normal.png",
+        "T_Props_Batch2_BaseColor.png",
+        "T_Props_Batch2_ORM.png"
+      ],
+      "buffers": [
+        "Prop_Ammo_Small.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Barrel1.gltf",
+      "bytes": 2226,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Props_Batch1_Normal.png",
+        "T_Props_Batch1_BaseColor.png",
+        "T_Props_Batch1_ORM.png"
+      ],
+      "buffers": [
+        "Prop_Barrel1.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Barrel2_Closed.gltf",
+      "bytes": 2239,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Props_Batch1_Normal.png",
+        "T_Props_Batch1_BaseColor.png",
+        "T_Props_Batch1_ORM.png"
+      ],
+      "buffers": [
+        "Prop_Barrel2_Closed.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Barrel2_Open.gltf",
+      "bytes": 2236,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Props_Batch1_Normal.png",
+        "T_Props_Batch1_BaseColor.png",
+        "T_Props_Batch1_ORM.png"
+      ],
+      "buffers": [
+        "Prop_Barrel2_Open.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Chair.gltf",
+      "bytes": 3629,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 2,
+      "images": [
+        "T_Trim_03_Normal.png",
+        "T_Trim_03_Cables.png",
+        "T_Trim_03_ORM.png",
+        "T_Trim_03_BaseColor.png"
+      ],
+      "buffers": [
+        "Prop_Chair.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Chest.gltf",
+      "bytes": 17853,
+      "animations": [
+        "Close",
+        "Idle_Closed",
+        "Idle_Open",
+        "Open"
+      ],
+      "animation_count": 4,
+      "skins": 1,
+      "nodes": 6,
+      "meshes": 2,
+      "materials": 1,
+      "images": [
+        "T_Props_Batch2_Normal.png",
+        "T_Props_Batch2_BaseColor.png",
+        "T_Props_Batch2_ORM.png"
+      ],
+      "buffers": [
+        "Prop_Chest.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Crate.gltf",
+      "bytes": 2186,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Props_Crates_Normal.png",
+        "T_Props_Crates_BaseColor.png",
+        "T_Props_Crates_ORM.png"
+      ],
+      "buffers": [
+        "Prop_Crate.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Crate_Large.gltf",
+      "bytes": 2226,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Props_Crates_Normal.png",
+        "T_Props_Crates_BaseColor.png",
+        "T_Props_Crates_ORM.png"
+      ],
+      "buffers": [
+        "Prop_Crate_Large.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Crate_Tarp.gltf",
+      "bytes": 2223,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Props_Crates_Normal.png",
+        "T_Props_Crates_BaseColor.png",
+        "T_Props_Crates_ORM.png"
+      ],
+      "buffers": [
+        "Prop_Crate_Tarp.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Crate_Tarp_Large.gltf",
+      "bytes": 2238,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Props_Crates_Normal.png",
+        "T_Props_Crates_BaseColor.png",
+        "T_Props_Crates_ORM.png"
+      ],
+      "buffers": [
+        "Prop_Crate_Tarp_Large.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Desk_L.gltf",
+      "bytes": 5495,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 3,
+      "images": [
+        "T_Trim_03_Normal.png",
+        "T_Trim_03_Cables.png",
+        "T_Trim_03_ORM.png",
+        "T_Trim_03_BaseColor.png",
+        "T_Trim_01_Normal.png",
+        "T_Trim_01_BaseColor_Red.png",
+        "T_Trim_01_ORM.png"
+      ],
+      "buffers": [
+        "Prop_Desk_L.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Desk_Medium.gltf",
+      "bytes": 5521,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 3,
+      "images": [
+        "T_Trim_03_Normal.png",
+        "T_Trim_03_Cables.png",
+        "T_Trim_03_ORM.png",
+        "T_Trim_03_BaseColor.png",
+        "T_Trim_01_Normal.png",
+        "T_Trim_01_BaseColor_Red.png",
+        "T_Trim_01_ORM.png"
+      ],
+      "buffers": [
+        "Prop_Desk_Medium.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Desk_Small.gltf",
+      "bytes": 5415,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 3,
+      "images": [
+        "T_Trim_03_Normal.png",
+        "T_Trim_03_Cables.png",
+        "T_Trim_03_ORM.png",
+        "T_Trim_03_BaseColor.png",
+        "T_Trim_01_Normal.png",
+        "T_Trim_01_BaseColor_Red.png",
+        "T_Trim_01_ORM.png"
+      ],
+      "buffers": [
+        "Prop_Desk_Small.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Grenade.gltf",
+      "bytes": 2225,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Props_Batch2_Normal.png",
+        "T_Props_Batch2_BaseColor.png",
+        "T_Props_Batch2_ORM.png"
+      ],
+      "buffers": [
+        "Prop_Grenade.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_HealthPack.gltf",
+      "bytes": 2230,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Props_Batch2_Normal.png",
+        "T_Props_Batch2_BaseColor.png",
+        "T_Props_Batch2_ORM.png"
+      ],
+      "buffers": [
+        "Prop_HealthPack.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_HealthPack_Tube.gltf",
+      "bytes": 2231,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Props_Batch2_Normal.png",
+        "T_Props_Batch2_BaseColor.png",
+        "T_Props_Batch2_ORM.png"
+      ],
+      "buffers": [
+        "Prop_HealthPack_Tube.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_KeyCard.gltf",
+      "bytes": 2216,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Props_Batch1_Normal.png",
+        "T_Props_Batch1_BaseColor.png",
+        "T_Props_Batch1_ORM.png"
+      ],
+      "buffers": [
+        "Prop_KeyCard.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Locker.gltf",
+      "bytes": 2153,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Trim_02_Normal.png",
+        "T_Trim_02_BaseColor.png",
+        "T_Trim_02_ORM.png"
+      ],
+      "buffers": [
+        "Prop_Locker.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Mine.gltf",
+      "bytes": 2211,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Props_Batch2_Normal.png",
+        "T_Props_Batch2_BaseColor.png",
+        "T_Props_Batch2_ORM.png"
+      ],
+      "buffers": [
+        "Prop_Mine.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Mug.gltf",
+      "bytes": 2172,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Trim_03_Normal.png",
+        "T_Trim_03_BaseColor.png",
+        "T_Trim_03_ORM.png"
+      ],
+      "buffers": [
+        "Prop_Mug.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_SatelliteDish.gltf",
+      "bytes": 5732,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 3,
+      "images": [
+        "T_Trim_01_Normal.png",
+        "T_Trim_01_BaseColor_Red.png",
+        "T_Trim_01_ORM.png",
+        "T_Trim_02_Normal.png",
+        "T_Trim_02_BaseColor_Red.png",
+        "T_Trim_02_ORM.png",
+        "T_Trim_03_Normal.png",
+        "T_Trim_03_Cables.png",
+        "T_Trim_03_ORM.png"
+      ],
+      "buffers": [
+        "Prop_SatelliteDish.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Shelves_ThinShort.gltf",
+      "bytes": 2429,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Trim_01_Normal.png",
+        "T_Trim_01_BaseColor_Red.png",
+        "T_Trim_01_ORM.png"
+      ],
+      "buffers": [
+        "Prop_Shelves_ThinShort.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Shelves_ThinTall.gltf",
+      "bytes": 2429,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Trim_01_Normal.png",
+        "T_Trim_01_BaseColor_Red.png",
+        "T_Trim_01_ORM.png"
+      ],
+      "buffers": [
+        "Prop_Shelves_ThinTall.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Shelves_WideShort.gltf",
+      "bytes": 2429,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Trim_01_Normal.png",
+        "T_Trim_01_BaseColor_Red.png",
+        "T_Trim_01_ORM.png"
+      ],
+      "buffers": [
+        "Prop_Shelves_WideShort.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Shelves_WideTall.gltf",
+      "bytes": 2429,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Trim_01_Normal.png",
+        "T_Trim_01_BaseColor_Red.png",
+        "T_Trim_01_ORM.png"
+      ],
+      "buffers": [
+        "Prop_Shelves_WideTall.bin"
+      ],
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Syringe.gltf",
+      "bytes": 2223,
+      "animations": [],
+      "animation_count": 0,
+      "skins": 0,
+      "nodes": 1,
+      "meshes": 1,
+      "materials": 1,
+      "images": [
+        "T_Props_Batch1_Normal.png",
+        "T_Props_Batch1_BaseColor.png",
+        "T_Props_Batch1_ORM.png"
+      ],
+      "buffers": [
+        "Prop_Syringe.bin"
+      ],
+      "interesting_name": false
+    }
+  ],
+  "all_files": [
+    {
+      "path": "FBX/Enemy_EyeDrone.fbx",
+      "bytes": 425676,
+      "format": "fbx",
+      "interesting_name": true
+    },
+    {
+      "path": "FBX/Enemy_QuadShell.fbx",
+      "bytes": 1535388,
+      "format": "fbx",
+      "interesting_name": true
+    },
+    {
+      "path": "FBX/Enemy_Trilobite.fbx",
+      "bytes": 1277900,
+      "format": "fbx",
+      "interesting_name": true
+    },
+    {
+      "path": "FBX/Gun_Pistol.fbx",
+      "bytes": 113628,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Gun_Revolver.fbx",
+      "bytes": 152972,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Gun_Rifle.fbx",
+      "bytes": 182844,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Gun_SMG_Ammo.fbx",
+      "bytes": 34556,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Gun_Sniper.fbx",
+      "bytes": 256012,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Gun_Sniper_Ammo.fbx",
+      "bytes": 35692,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Ammo.fbx",
+      "bytes": 179868,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Ammo_Closed.fbx",
+      "bytes": 83388,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Ammo_Small.fbx",
+      "bytes": 107308,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Barrel1.fbx",
+      "bytes": 85036,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Barrel2_Closed.fbx",
+      "bytes": 129756,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Barrel2_Open.fbx",
+      "bytes": 129804,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Chair.fbx",
+      "bytes": 56396,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Chest.fbx",
+      "bytes": 215484,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Crate.fbx",
+      "bytes": 125772,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Crate_Large.fbx",
+      "bytes": 125788,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Crate_Tarp.fbx",
+      "bytes": 97740,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Crate_Tarp_Large.fbx",
+      "bytes": 134220,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Desk_L.fbx",
+      "bytes": 46124,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Desk_Medium.fbx",
+      "bytes": 40764,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Desk_Small.fbx",
+      "bytes": 40444,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Grenade.fbx",
+      "bytes": 67820,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_HealthPack.fbx",
+      "bytes": 86588,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_HealthPack_Tube.fbx",
+      "bytes": 29036,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_KeyCard.fbx",
+      "bytes": 40460,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Locker.fbx",
+      "bytes": 28812,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Mine.fbx",
+      "bytes": 70732,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Mug.fbx",
+      "bytes": 35132,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_SatelliteDish.fbx",
+      "bytes": 107788,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Shelves_ThinShort.fbx",
+      "bytes": 51484,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Shelves_ThinTall.fbx",
+      "bytes": 79500,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Shelves_WideShort.fbx",
+      "bytes": 51564,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Shelves_WideTall.fbx",
+      "bytes": 79596,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX/Prop_Syringe.fbx",
+      "bytes": 53708,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Enemy_EyeDrone.fbx",
+      "bytes": 430092,
+      "format": "fbx",
+      "interesting_name": true
+    },
+    {
+      "path": "FBX (Unity)/Enemy_QuadShell.fbx",
+      "bytes": 1535388,
+      "format": "fbx",
+      "interesting_name": true
+    },
+    {
+      "path": "FBX (Unity)/Enemy_Trilobite.fbx",
+      "bytes": 1277900,
+      "format": "fbx",
+      "interesting_name": true
+    },
+    {
+      "path": "FBX (Unity)/Gun_Pistol.fbx",
+      "bytes": 113004,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Gun_Revolver.fbx",
+      "bytes": 153420,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Gun_Rifle.fbx",
+      "bytes": 182268,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Gun_SMG_Ammo.fbx",
+      "bytes": 34044,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Gun_Sniper.fbx",
+      "bytes": 257676,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Gun_Sniper_Ammo.fbx",
+      "bytes": 35132,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Ammo.fbx",
+      "bytes": 179324,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Ammo_Closed.fbx",
+      "bytes": 83484,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Ammo_Small.fbx",
+      "bytes": 107388,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Barrel1.fbx",
+      "bytes": 84844,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Barrel2_Closed.fbx",
+      "bytes": 129692,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Barrel2_Open.fbx",
+      "bytes": 129868,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Chair.fbx",
+      "bytes": 56668,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Chest.fbx",
+      "bytes": 215484,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Crate.fbx",
+      "bytes": 125196,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Crate_Large.fbx",
+      "bytes": 125100,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Crate_Tarp.fbx",
+      "bytes": 98268,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Crate_Tarp_Large.fbx",
+      "bytes": 134924,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Desk_L.fbx",
+      "bytes": 46380,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Desk_Medium.fbx",
+      "bytes": 40268,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Desk_Small.fbx",
+      "bytes": 39996,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Grenade.fbx",
+      "bytes": 67516,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_HealthPack.fbx",
+      "bytes": 86492,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_HealthPack_Tube.fbx",
+      "bytes": 28636,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_KeyCard.fbx",
+      "bytes": 40284,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Locker.fbx",
+      "bytes": 28300,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Mine.fbx",
+      "bytes": 70684,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Mug.fbx",
+      "bytes": 34524,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_SatelliteDish.fbx",
+      "bytes": 108380,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Shelves_ThinShort.fbx",
+      "bytes": 50780,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Shelves_ThinTall.fbx",
+      "bytes": 78396,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Shelves_WideShort.fbx",
+      "bytes": 50684,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Shelves_WideTall.fbx",
+      "bytes": 78412,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "FBX (Unity)/Prop_Syringe.fbx",
+      "bytes": 53628,
+      "format": "fbx",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Enemy_EyeDrone.bin",
+      "bytes": 221780,
+      "format": "bin",
+      "interesting_name": true
+    },
+    {
+      "path": "glTF/Enemy_EyeDrone.gltf",
+      "bytes": 53939,
+      "format": "gltf",
+      "interesting_name": true
+    },
+    {
+      "path": "glTF/Enemy_QuadShell.bin",
+      "bytes": 551404,
+      "format": "bin",
+      "interesting_name": true
+    },
+    {
+      "path": "glTF/Enemy_QuadShell.gltf",
+      "bytes": 235254,
+      "format": "gltf",
+      "interesting_name": true
+    },
+    {
+      "path": "glTF/Enemy_Trilobite.bin",
+      "bytes": 667940,
+      "format": "bin",
+      "interesting_name": true
+    },
+    {
+      "path": "glTF/Enemy_Trilobite.gltf",
+      "bytes": 189636,
+      "format": "gltf",
+      "interesting_name": true
+    },
+    {
+      "path": "glTF/Gun_Pistol.bin",
+      "bytes": 123132,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Gun_Pistol.gltf",
+      "bytes": 2211,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Gun_Revolver.bin",
+      "bytes": 180468,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Gun_Revolver.gltf",
+      "bytes": 3440,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Gun_Rifle.bin",
+      "bytes": 214892,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Gun_Rifle.gltf",
+      "bytes": 2210,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Gun_SMG_Ammo.bin",
+      "bytes": 18668,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Gun_SMG_Ammo.gltf",
+      "bytes": 2208,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Gun_Sniper.bin",
+      "bytes": 316336,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Gun_Sniper.gltf",
+      "bytes": 2215,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Gun_Sniper_Ammo.bin",
+      "bytes": 19796,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Gun_Sniper_Ammo.gltf",
+      "bytes": 2213,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Ammo.bin",
+      "bytes": 242532,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Ammo.gltf",
+      "bytes": 2216,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Ammo_Closed.bin",
+      "bytes": 101032,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Ammo_Closed.gltf",
+      "bytes": 2226,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Ammo_Small.bin",
+      "bytes": 125928,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Ammo_Small.gltf",
+      "bytes": 2227,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Barrel1.bin",
+      "bytes": 97472,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Barrel1.gltf",
+      "bytes": 2226,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Barrel2_Closed.bin",
+      "bytes": 157176,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Barrel2_Closed.gltf",
+      "bytes": 2239,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Barrel2_Open.bin",
+      "bytes": 157176,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Barrel2_Open.gltf",
+      "bytes": 2236,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Chair.bin",
+      "bytes": 35924,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Chair.gltf",
+      "bytes": 3629,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Chest.bin",
+      "bytes": 223204,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Chest.gltf",
+      "bytes": 17853,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Crate.bin",
+      "bytes": 211872,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Crate.gltf",
+      "bytes": 2186,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Crate_Large.bin",
+      "bytes": 218528,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Crate_Large.gltf",
+      "bytes": 2226,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Crate_Tarp.bin",
+      "bytes": 127736,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Crate_Tarp.gltf",
+      "bytes": 2223,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Crate_Tarp_Large.bin",
+      "bytes": 189648,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Crate_Tarp_Large.gltf",
+      "bytes": 2238,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Desk_L.bin",
+      "bytes": 28020,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Desk_L.gltf",
+      "bytes": 5495,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Desk_Medium.bin",
+      "bytes": 20688,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Desk_Medium.gltf",
+      "bytes": 5521,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Desk_Small.bin",
+      "bytes": 20128,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Desk_Small.gltf",
+      "bytes": 5415,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Grenade.bin",
+      "bytes": 66112,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Grenade.gltf",
+      "bytes": 2225,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_HealthPack.bin",
+      "bytes": 97160,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_HealthPack.gltf",
+      "bytes": 2230,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_HealthPack_Tube.bin",
+      "bytes": 13816,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_HealthPack_Tube.gltf",
+      "bytes": 2231,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_KeyCard.bin",
+      "bytes": 32428,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_KeyCard.gltf",
+      "bytes": 2216,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Locker.bin",
+      "bytes": 17712,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Locker.gltf",
+      "bytes": 2153,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Mine.bin",
+      "bytes": 111336,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Mine.gltf",
+      "bytes": 2211,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Mug.bin",
+      "bytes": 16688,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Mug.gltf",
+      "bytes": 2172,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_SatelliteDish.bin",
+      "bytes": 120100,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_SatelliteDish.gltf",
+      "bytes": 5732,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Shelves_ThinShort.bin",
+      "bytes": 76048,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Shelves_ThinShort.gltf",
+      "bytes": 2429,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Shelves_ThinTall.bin",
+      "bytes": 145328,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Shelves_ThinTall.gltf",
+      "bytes": 2429,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Shelves_WideShort.bin",
+      "bytes": 76048,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Shelves_WideShort.gltf",
+      "bytes": 2429,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Shelves_WideTall.bin",
+      "bytes": 145328,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Shelves_WideTall.gltf",
+      "bytes": 2429,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Syringe.bin",
+      "bytes": 50548,
+      "format": "bin",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/Prop_Syringe.gltf",
+      "bytes": 2223,
+      "format": "gltf",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Enemies_BaseColor_png.png",
+      "bytes": 1076933,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Enemies_Large_BaseColor.png",
+      "bytes": 1910747,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Enemies_Large_Normal.png",
+      "bytes": 3116376,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Enemies_Large_ORM.png",
+      "bytes": 3299099,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Enemies_Normal.png",
+      "bytes": 313447,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Enemies_ORM.png",
+      "bytes": 3043013,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Guns_Batch1_BaseColor.png",
+      "bytes": 1437203,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Guns_Batch1_Normal.png",
+      "bytes": 2941899,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Guns_Batch1_ORM.png",
+      "bytes": 3107515,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Guns_Batch2_BaseColor.png",
+      "bytes": 1077844,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Guns_Batch2_Normal.png",
+      "bytes": 2934510,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Guns_Batch2_ORM.png",
+      "bytes": 2960135,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Props_Batch1_BaseColor.png",
+      "bytes": 298258,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Props_Batch1_Normal.png",
+      "bytes": 838136,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Props_Batch1_ORM.png",
+      "bytes": 842901,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Props_Batch2_BaseColor.png",
+      "bytes": 450209,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Props_Batch2_Normal.png",
+      "bytes": 770775,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Props_Batch2_ORM.png",
+      "bytes": 931537,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Props_Crates_BaseColor.png",
+      "bytes": 5601390,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Props_Crates_Normal.png",
+      "bytes": 12047004,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Props_Crates_ORM.png",
+      "bytes": 11086609,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Trim_01_BaseColor_Red.png",
+      "bytes": 965873,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Trim_01_Normal.png",
+      "bytes": 585626,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Trim_01_ORM.png",
+      "bytes": 3338790,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Trim_02_BaseColor.png",
+      "bytes": 1125543,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Trim_02_BaseColor_Red.png",
+      "bytes": 1150649,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Trim_02_Normal.png",
+      "bytes": 756841,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Trim_02_ORM.png",
+      "bytes": 3994352,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Trim_03_BaseColor.png",
+      "bytes": 1285125,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Trim_03_Cables.png",
+      "bytes": 779284,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Trim_03_Normal.png",
+      "bytes": 375307,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "glTF/T_Trim_03_ORM.png",
+      "bytes": 3009230,
+      "format": "png",
+      "interesting_name": false
+    },
+    {
+      "path": "License_Standard.txt",
+      "bytes": 838,
+      "format": "txt",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Enemy_EyeDrone.mtl",
+      "bytes": 517,
+      "format": "mtl",
+      "interesting_name": true
+    },
+    {
+      "path": "OBJ/Enemy_EyeDrone.obj",
+      "bytes": 234725,
+      "format": "obj",
+      "interesting_name": true
+    },
+    {
+      "path": "OBJ/Enemy_QuadShell.mtl",
+      "bytes": 508,
+      "format": "mtl",
+      "interesting_name": true
+    },
+    {
+      "path": "OBJ/Enemy_QuadShell.obj",
+      "bytes": 489009,
+      "format": "obj",
+      "interesting_name": true
+    },
+    {
+      "path": "OBJ/Enemy_Trilobite.mtl",
+      "bytes": 320,
+      "format": "mtl",
+      "interesting_name": true
+    },
+    {
+      "path": "OBJ/Enemy_Trilobite.obj",
+      "bytes": 517160,
+      "format": "obj",
+      "interesting_name": true
+    },
+    {
+      "path": "OBJ/Gun_Pistol.mtl",
+      "bytes": 549,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Gun_Pistol.obj",
+      "bytes": 232223,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Gun_Revolver.mtl",
+      "bytes": 297,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Gun_Revolver.obj",
+      "bytes": 309412,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Gun_Rifle.mtl",
+      "bytes": 549,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Gun_Rifle.obj",
+      "bytes": 420003,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Gun_SMG_Ammo.mtl",
+      "bytes": 549,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Gun_SMG_Ammo.obj",
+      "bytes": 28820,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Gun_Sniper.mtl",
+      "bytes": 549,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Gun_Sniper.obj",
+      "bytes": 599299,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Gun_Sniper_Ammo.mtl",
+      "bytes": 549,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Gun_Sniper_Ammo.obj",
+      "bytes": 33667,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Ammo.mtl",
+      "bytes": 552,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Ammo.obj",
+      "bytes": 461112,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Ammo_Closed.mtl",
+      "bytes": 552,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Ammo_Closed.obj",
+      "bytes": 152360,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Ammo_Small.mtl",
+      "bytes": 552,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Ammo_Small.obj",
+      "bytes": 223953,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Barrel1.mtl",
+      "bytes": 552,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Barrel1.obj",
+      "bytes": 149847,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Barrel2_Closed.mtl",
+      "bytes": 552,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Barrel2_Closed.obj",
+      "bytes": 269616,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Barrel2_Open.mtl",
+      "bytes": 552,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Barrel2_Open.obj",
+      "bytes": 269582,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Chair.mtl",
+      "bytes": 1016,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Chair.obj",
+      "bytes": 78212,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Chest.mtl",
+      "bytes": 312,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Chest.obj",
+      "bytes": 226741,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Crate.mtl",
+      "bytes": 552,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Crate.obj",
+      "bytes": 255143,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Crate_Large.mtl",
+      "bytes": 552,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Crate_Large.obj",
+      "bytes": 256498,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Crate_Tarp.mtl",
+      "bytes": 552,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Crate_Tarp.obj",
+      "bytes": 200611,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Crate_Tarp_Large.mtl",
+      "bytes": 552,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Crate_Tarp_Large.obj",
+      "bytes": 294534,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Desk_L.mtl",
+      "bytes": 1495,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Desk_L.obj",
+      "bytes": 50429,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Desk_Medium.mtl",
+      "bytes": 1495,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Desk_Medium.obj",
+      "bytes": 35606,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Desk_Small.mtl",
+      "bytes": 1495,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Desk_Small.obj",
+      "bytes": 34939,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Grenade.mtl",
+      "bytes": 552,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Grenade.obj",
+      "bytes": 109567,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_HealthPack.mtl",
+      "bytes": 552,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_HealthPack.obj",
+      "bytes": 155731,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_HealthPack_Tube.mtl",
+      "bytes": 552,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_HealthPack_Tube.obj",
+      "bytes": 21334,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_KeyCard.mtl",
+      "bytes": 552,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_KeyCard.obj",
+      "bytes": 38695,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Locker.mtl",
+      "bytes": 537,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Locker.obj",
+      "bytes": 25225,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Mine.mtl",
+      "bytes": 552,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Mine.obj",
+      "bytes": 131245,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Mug.mtl",
+      "bytes": 537,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Mug.obj",
+      "bytes": 35967,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_SatelliteDish.mtl",
+      "bytes": 1495,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_SatelliteDish.obj",
+      "bytes": 236992,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Shelves_ThinShort.mtl",
+      "bytes": 537,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Shelves_ThinShort.obj",
+      "bytes": 128659,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Shelves_ThinTall.mtl",
+      "bytes": 537,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Shelves_ThinTall.obj",
+      "bytes": 254059,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Shelves_WideShort.mtl",
+      "bytes": 537,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Shelves_WideShort.obj",
+      "bytes": 128659,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Shelves_WideTall.mtl",
+      "bytes": 537,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Shelves_WideTall.obj",
+      "bytes": 254059,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Syringe.mtl",
+      "bytes": 552,
+      "format": "mtl",
+      "interesting_name": false
+    },
+    {
+      "path": "OBJ/Prop_Syringe.obj",
+      "bytes": 73742,
+      "format": "obj",
+      "interesting_name": false
+    },
+    {
+      "path": "Preview_1.jpg",
+      "bytes": 275133,
+      "format": "jpg",
+      "interesting_name": false
+    }
+  ]
+}
