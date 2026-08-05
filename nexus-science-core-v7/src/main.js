@@ -29,11 +29,12 @@ function countContacts() {
 
 function updateStatus() {
   const batteryPercent = (runtime.batteryJoules / runtime.maxBatteryJoules) * 100;
-  const rootHeight = Number(runtime.data.qpos[2] || 0);
+  const rootHeight = runtime.rootPosition.z;
   setStatus(
     `<strong>MUJOCO AUTHORITY</strong> · ${renderer.backend}<br>` +
-    `SIM ${runtime.data.time.toFixed(2)} s · ${fps.toFixed(0)} FPS · ${countContacts()}/6 FEET<br>` +
-    `BATTERY ${batteryPercent.toFixed(1)}% · POWER ${runtime.lastPowerWatts.toFixed(1)} W · HEIGHT ${rootHeight.toFixed(3)} m`,
+    `SIM ${runtime.data.time.toFixed(2)} s · ${fps.toFixed(0)} FPS · ${countContacts()}/6 FEET · MAX ${runtime.maxFootContactsSeen}/6<br>` +
+    `DIST ${runtime.planarDisplacement.toFixed(3)} m · HEIGHT ${rootHeight.toFixed(3)} m<br>` +
+    `BATTERY ${batteryPercent.toFixed(1)}% · POWER ${runtime.lastPowerWatts.toFixed(1)} W · PEAK ${runtime.maxPowerWattsSeen.toFixed(1)} W`,
   );
 }
 
@@ -56,7 +57,7 @@ function animate(now) {
     }
 
     stableTimer += frameSeconds;
-    const height = Number(runtime.data.qpos[2] || 0);
+    const height = runtime.rootPosition.z;
     if (stableTimer >= 2 && height > 0.28 && Number.isFinite(height)) {
       runtime.captureStableSnapshot();
       stableTimer = 0;
