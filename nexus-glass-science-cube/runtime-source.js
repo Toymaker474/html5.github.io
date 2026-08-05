@@ -278,7 +278,7 @@ function beamBetween(a, b, radius, material, radial = 10) {
 
 function createWheelAssembly(side, z, radius, materials) {
   const suspension = new THREE.Group();
-  suspension.position.set(side * .82, .42, z);
+  suspension.position.set(side * .82, .29, z);
 
   const upper = beamBetween([0, .34, 0], [side * .16, .02, 0], .055, materials.dark, 8);
   suspension.add(upper);
@@ -316,7 +316,7 @@ function createWheelAssembly(side, z, radius, materials) {
 
 function createLegAssembly(side, z, phase, materials) {
   const hip = new THREE.Group();
-  hip.position.set(side * .72, .66, z);
+  hip.position.set(side * .72, 1.08, z);
 
   const hipJoint = new THREE.Mesh(new THREE.SphereGeometry(.14, 12, 8), materials.accent);
   hip.add(hipJoint);
@@ -340,7 +340,7 @@ function createLegAssembly(side, z, phase, materials) {
   const foot = boxPart([.28, .11, .43], materials.tire, [0, -.08, -.11]);
   ankle.add(foot);
 
-  return { root: hip, upper, knee, ankle, foot, phase, side, z };
+  return { root: hip, upper, knee, ankle, foot, phase, side, z, baseY: 1.08 };
 }
 
 function createManipulator(side, kind, materials) {
@@ -1295,7 +1295,7 @@ function syncVisuals() {
         leg.upper.rotation.z = leg.side * (.08 + lift * .05);
         leg.knee.rotation.x = .30 + lift * .72 + planted * .10 + rig.disabledTilt * .55;
         leg.ankle.rotation.x = -.16 - leg.knee.rotation.x * .42 - leg.root.rotation.x * .28;
-        leg.root.position.y = .66 + lift * .045 - rig.disabledTilt * .16;
+        leg.root.position.y = leg.baseY + lift * .045 - rig.disabledTilt * .16;
         leg.foot.rotation.y = swing * .07;
       }
 
