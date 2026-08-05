@@ -27,11 +27,11 @@ function makeMaterial(scene, name, albedo, metallic, roughness, emissive = null)
 function installMaterials(renderer) {
   const { scene } = renderer;
   Object.assign(renderer.materials, {
-    cadFrame: makeMaterial(scene, 'cad-frame-anodized-aluminium', new Color3(0.12, 0.135, 0.14), 0.86, 0.29),
-    cadShell: makeMaterial(scene, 'cad-shell-coated-polymer', new Color3(0.38, 0.40, 0.39), 0.20, 0.58),
-    cadShellDark: makeMaterial(scene, 'cad-shell-dark-polymer', new Color3(0.055, 0.062, 0.065), 0.14, 0.67),
-    cadJoint: makeMaterial(scene, 'cad-joint-machined-steel', new Color3(0.23, 0.24, 0.24), 0.94, 0.20),
-    cadFoot: makeMaterial(scene, 'cad-foot-elastomer', new Color3(0.016, 0.018, 0.019), 0.01, 0.95),
+    cadFrame: makeMaterial(scene, 'cad-frame-anodized-aluminium', new Color3(0.105, 0.118, 0.122), 0.88, 0.27),
+    cadShell: makeMaterial(scene, 'cad-shell-coated-polymer', new Color3(0.44, 0.45, 0.43), 0.16, 0.62),
+    cadShellDark: makeMaterial(scene, 'cad-shell-dark-polymer', new Color3(0.047, 0.052, 0.055), 0.12, 0.72),
+    cadJoint: makeMaterial(scene, 'cad-joint-machined-steel', new Color3(0.20, 0.21, 0.21), 0.92, 0.23),
+    cadFoot: makeMaterial(scene, 'cad-foot-elastomer', new Color3(0.014, 0.016, 0.017), 0.01, 0.97),
     cadSignal: makeMaterial(
       scene,
       'cad-status-optic',
@@ -40,8 +40,8 @@ function installMaterials(renderer) {
       0.18,
       new Color3(0.09, 0.006, 0.002),
     ),
-    plinth: makeMaterial(scene, 'specimen-plinth-material', new Color3(0.045, 0.048, 0.048), 0.10, 0.92),
-    marking: makeMaterial(scene, 'specimen-measurement-marking', new Color3(0.25, 0.255, 0.245), 0.28, 0.68),
+    plinth: makeMaterial(scene, 'specimen-plinth-material', new Color3(0.040, 0.043, 0.043), 0.08, 0.94),
+    marking: makeMaterial(scene, 'specimen-measurement-marking', new Color3(0.22, 0.225, 0.218), 0.24, 0.72),
   });
 }
 
@@ -61,21 +61,21 @@ function disposePrototypeState(renderer) {
 
 function createSpecimenPlinth(renderer) {
   const plinth = MeshBuilder.CreateCylinder('cad-specimen-plinth', {
-    diameter: 3.05,
-    height: 0.065,
+    diameter: 3.20,
+    height: 0.055,
     tessellation: 72,
   }, renderer.scene);
-  plinth.position.y = -0.052;
+  plinth.position.y = -0.047;
   plinth.material = renderer.materials.plinth;
   plinth.receiveShadows = true;
   plinth.isPickable = false;
 
   const ring = MeshBuilder.CreateTorus('cad-specimen-reference-ring', {
-    diameter: 2.62,
-    thickness: 0.008,
+    diameter: 2.72,
+    thickness: 0.006,
     tessellation: 96,
   }, renderer.scene);
-  ring.position.y = -0.016;
+  ring.position.y = -0.017;
   ring.material = renderer.materials.marking;
   ring.isPickable = false;
 
@@ -84,11 +84,11 @@ function createSpecimenPlinth(renderer) {
     const angle = index / 36 * Math.PI * 2;
     const major = index % 6 === 0;
     const tick = MeshBuilder.CreateBox(`cad-plinth-tick-${index}`, {
-      width: major ? 0.15 : 0.065,
-      height: 0.003,
-      depth: major ? 0.010 : 0.006,
+      width: major ? 0.14 : 0.055,
+      height: 0.0025,
+      depth: major ? 0.009 : 0.005,
     }, renderer.scene);
-    tick.position.set(Math.cos(angle) * 1.25, -0.016, Math.sin(angle) * 1.25);
+    tick.position.set(Math.cos(angle) * 1.30, -0.017, Math.sin(angle) * 1.30);
     tick.rotation.y = -angle;
     tick.material = renderer.materials.marking;
     tick.isPickable = false;
@@ -98,34 +98,35 @@ function createSpecimenPlinth(renderer) {
 }
 
 function installLightingAndCamera(renderer) {
-  renderer.scene.clearColor = new Color4(0.009, 0.011, 0.012, 1);
-  renderer.scene.imageProcessingConfiguration.contrast = 1.28;
-  renderer.scene.imageProcessingConfiguration.exposure = 1.02;
+  renderer.scene.clearColor = new Color4(0.008, 0.010, 0.011, 1);
+  renderer.scene.imageProcessingConfiguration.contrast = 1.22;
+  renderer.scene.imageProcessingConfiguration.exposure = 1.08;
 
   const ambient = renderer.scene.getLightByName('ambient-lab');
   if (ambient) {
-    ambient.intensity = 0.46;
-    ambient.diffuse = new Color3(0.70, 0.73, 0.74);
-    ambient.groundColor = new Color3(0.012, 0.014, 0.015);
+    ambient.intensity = 0.54;
+    ambient.diffuse = new Color3(0.72, 0.75, 0.76);
+    ambient.groundColor = new Color3(0.010, 0.012, 0.013);
   }
 
   if (renderer.keyLight) {
     renderer.keyLight.direction = new Vector3(-0.58, -1, 0.24);
-    renderer.keyLight.position = new Vector3(3.4, 5.4, -3.1);
-    renderer.keyLight.intensity = 2.7;
-    renderer.keyLight.diffuse = new Color3(1.0, 0.94, 0.86);
+    renderer.keyLight.position = new Vector3(3.8, 5.7, -3.5);
+    renderer.keyLight.intensity = 2.95;
+    renderer.keyLight.diffuse = new Color3(1.0, 0.95, 0.88);
   }
 
   const rim = new DirectionalLight('cad-rim-light', new Vector3(0.54, -0.38, -0.70), renderer.scene);
-  rim.position = new Vector3(-3.8, 3.7, 4.2);
-  rim.intensity = 1.45;
-  rim.diffuse = new Color3(0.40, 0.50, 0.58);
+  rim.position = new Vector3(-4.2, 3.9, 4.7);
+  rim.intensity = 1.30;
+  rim.diffuse = new Color3(0.38, 0.47, 0.54);
 
-  renderer.camera.alpha = -1.92;
-  renderer.camera.beta = 1.16;
-  renderer.camera.radius = 2.08;
-  renderer.camera.lowerRadiusLimit = 1.45;
-  renderer.camera.upperRadiusLimit = 4.8;
+  renderer.camera.alpha = -1.96;
+  renderer.camera.beta = 1.12;
+  renderer.camera.radius = 4.72;
+  renderer.camera.lowerRadiusLimit = 3.15;
+  renderer.camera.upperRadiusLimit = 7.2;
+  renderer.camera.fov = 0.78;
   renderer.camera.inertia = 0.54;
   renderer.camera.wheelPrecision = 72;
   renderer.camera.pinchPrecision = 96;
@@ -269,18 +270,18 @@ function installCadAssemblies(renderer) {
     const height = size[2] * 2;
 
     cloneCad(this, 'frame', `cad-frame-instance-${index}`, root, this.materials.cadFrame, {
-      targetPrimary: length * 0.98,
+      targetPrimary: length * 0.90,
       layout: 'torso',
     });
     cloneCad(this, 'top-cover', `cad-top-cover-instance-${index}`, root, this.materials.cadShell, {
-      targetPrimary: length * 0.97,
+      targetPrimary: length * 0.89,
       layout: 'torso',
-      localPosition: new Vector3(0, height * 0.12, 0),
+      localPosition: new Vector3(0, height * 0.10, 0),
     });
     cloneCad(this, 'bottom-cover', `cad-bottom-cover-instance-${index}`, root, this.materials.cadShellDark, {
-      targetPrimary: length * 0.96,
+      targetPrimary: length * 0.88,
       layout: 'torso',
-      localPosition: new Vector3(0, -height * 0.18, 0),
+      localPosition: new Vector3(0, -height * 0.14, 0),
     });
     return root;
   };
@@ -302,29 +303,19 @@ function installCadAssemblies(renderer) {
       : (left ? 'tibia-left' : 'tibia-right');
 
     cloneCad(this, segmentId, `cad-${upper ? 'femur' : 'tibia'}-instance-${index}`, root, upper ? this.materials.cadShell : this.materials.cadShellDark, {
-      targetPrimary: targetLength * 1.02,
+      targetPrimary: targetLength * 1.055,
       layout: 'limb',
     });
-
-    if (upper) {
-      const coxaId = left ? 'coxa-left' : 'coxa-right';
-      cloneCad(this, coxaId, `cad-coxa-instance-${index}`, root, this.materials.cadJoint, {
-        targetPrimary: Math.max(radius * 3.8, targetLength * 0.35),
-        layout: 'limb',
-        localPosition: new Vector3(0, targetLength * 0.43, 0),
-        scaleMultiplier: 0.86,
-      });
-    }
     return root;
   };
 
   renderer.createFootAssembly = function createFootAssembly(index, radius) {
     const root = new TransformNode(`cad-foot-root-${index}`, this.scene);
     cloneCad(this, 'foot-tip', `cad-foot-tip-instance-${index}`, root, this.materials.cadFoot, {
-      targetPrimary: radius * 2.8,
+      targetPrimary: radius * 1.70,
       layout: 'torso',
       localRotation: Quaternion.FromEulerAngles(0, 0, -Math.PI * 0.5),
-      localPosition: new Vector3(radius * 0.22, -radius * 0.28, 0),
+      localPosition: new Vector3(0, -radius * 0.08, 0),
     });
     return root;
   };
@@ -333,6 +324,17 @@ function installCadAssemblies(renderer) {
     const root = new TransformNode(`cad-sensor-hidden-${index}`, this.scene);
     root.setEnabled(false);
     return root;
+  };
+
+  renderer.updateFollowCamera = function updateFollowCamera() {
+    const position = this.runtime.rootPosition;
+    const authoritativeTarget = new Vector3(
+      position.x,
+      Math.max(0.18, position.z - 0.12),
+      -position.y,
+    );
+    this.followTarget = Vector3.Lerp(this.followTarget, authoritativeTarget, 0.09);
+    this.camera.setTarget(this.followTarget);
   };
 
   renderer.updateStateMaterials = function updateStateMaterials() {
@@ -351,11 +353,12 @@ export async function applyProductionArtDirection(renderer) {
   renderer.cad = await loadCadLibrary(renderer);
   installCadAssemblies(renderer);
   renderer.artDirection = Object.freeze({
-    id: 'nexus.cad-authored-hexapod.v1',
+    id: 'nexus.cad-authored-hexapod.v2',
     authoredCad: true,
     proceduralRobotShells: false,
     colliderVisibility: false,
     offlineAssetBundle: true,
+    fullBodyFraming: true,
     sourceRepository: renderer.cad.manifest.sourceRepository,
     sourceCommit: renderer.cad.manifest.sourceCommit,
     assetCount: renderer.cad.manifest.assets.length,
