@@ -1,5 +1,10 @@
-const CACHE='nexus-field-lab-v3';
-const CORE=['./style.css?v=3','./main.js?v=3','./manifest.webmanifest?v=3'];
+const CACHE='nexus-field-lab-v4';
+const CORE=[
+  './style.css?v=4',
+  './main.js?v=4',
+  './runtime-source.js?v=robot-rig-v4-20260805',
+  './manifest.webmanifest?v=4'
+];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting()));
@@ -31,7 +36,7 @@ self.addEventListener('fetch',event=>{
   }
 
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request,{cache:url.pathname.endsWith('/runtime-source.js')?'no-store':'default'})
       .then(response=>{
         if(url.origin===location.origin&&response.ok){
           const copy=response.clone();

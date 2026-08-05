@@ -7,12 +7,18 @@ on:
     paths:
       - '.github/workflows/nexus-materialize-runtime.yml'
       - '.nexus-payload/main.part.*'
+      - 'nexus-glass-science-cube/patch-robot-art.py'
+      - 'nexus-glass-science-cube/patch-robot-grounding.py'
+      - 'nexus-glass-science-cube/patch-index-v4.py'
   pull_request:
     branches: [main]
     paths:
       - '.nexus-materialize-trigger'
       - '.github/workflows/nexus-materialize-runtime.yml'
       - '.nexus-payload/main.part.*'
+      - 'nexus-glass-science-cube/patch-robot-art.py'
+      - 'nexus-glass-science-cube/patch-robot-grounding.py'
+      - 'nexus-glass-science-cube/patch-index-v4.py'
 
 permissions:
   contents: write
@@ -48,17 +54,114 @@ jobs:
           target.write_text(source, encoding='utf-8')
           print(f'Materialized {len(source):,} bytes from {len(parts)} payload parts')
 
-      - name: Validate JavaScript
-        run: node --check nexus-glass-science-cube/runtime-source.js
+      - name: Apply robot model and animation rebuild
+        run: python nexus-glass-science-cube/patch-robot-art.py
 
-      - name: Commit source if changed
+      - name: Ground suspension and articulated feet
+        run: python nexus-glass-science-cube/patch-robot-grounding.py
+
+      - name: Update V4 page asset references
+        run: python nexus-glass-science-cube/patch-index-v4.py
+
+      - name: Validate JavaScript
         run: |
-          if git diff --quiet -- nexus-glass-science-cube/runtime-source.js; then
-            echo 'Runtime source already current'
+          node --check nexus-glass-science-cube/runtime-source.js
+          node --check nexus-glass-science-cube/main.js
+          node --check nexus-glass-science-cube/sw.js
+
+      - name: Verify robot rig markers
+        run: |
+          grep -q 'function robotRole' nexus-glass-science-cube/runtime-source.js
+          grep -q 'createLegAssembly' nexus-glass-science-cube/runtime-source.js
+          grep -q 'rig.motionPhase' nexus-glass-science-cube/runtime-source.js
+          grep -q 'rebuildRobotVisual(robot)' nexus-glass-science-cube/runtime-source.js
+          grep -q 'baseY: 1.08' nexus-glass-science-cube/runtime-source.js
+          grep -q 'runtime-source.js' nexus-glass-science-cube/main.js
+          grep -q 'main.js?v=4' nexus-glass-science-cube/index.html
+
+      - name: Install Chromium smoke-test runtime
+        run: |
+          mkdir -p smoke-test artifacts
+          cd smoke-test
+          npm init -y >/dev/null
+          npm install playwright@1.55.0 >/dev/null
+          npx playwright install --with-deps chromium
+
+      - name: Run iPhone-sized WebGL smoke test
+        run: |
+          python3 -m http.server 4173 --directory nexus-glass-science-cube >/tmp/nexus-server.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          cat > smoke-test/smoke.mjs <<'EOF'
+          import { chromium } from 'playwright';
+
+          const browser = await chromium.launch({
+            headless: true,
+            args: ['--use-gl=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist']
+          });
+          const context = await browser.newContext({
+            viewport: { width: 430, height: 932 },
+            deviceScaleFactor: 1,
+            isMobile: true,
+            hasTouch: true
+          });
+          const page = await context.newPage();
+          const failures = [];
+          page.on('pageerror', error => failures.push(`pageerror: ${error.message}`));
+          page.on('console', message => {
+            if (message.type() === 'error') failures.push(`console: ${message.text()}`);
+          });
+
+          await page.goto('http://127.0.0.1:4173/?robot-rig=v4', {
+            waitUntil: 'domcontentloaded',
+            timeout: 120000
+          });
+          await page.waitForFunction(() => {
+            const robots = Number(document.querySelector('#robotCount')?.textContent || 0);
+            const fps = Number(document.querySelector('#fps')?.textContent || 0);
+            return robots >= 3 && fps > 0;
+          }, { timeout: 120000 });
+          await page.locator('#startBtn').click({ timeout: 30000 });
+          await page.waitForFunction(() => document.querySelector('#tutorial')?.classList.contains('hidden'), {
+            timeout: 30000
+          });
+          await page.waitForTimeout(5000);
+
+          const report = await page.evaluate(() => ({
+            robots: Number(document.querySelector('#robotCount')?.textContent || 0),
+            fps: Number(document.querySelector('#fps')?.textContent || 0),
+            canvasWidth: document.querySelector('#world')?.width || 0,
+            canvasHeight: document.querySelector('#world')?.height || 0,
+            tutorialHidden: document.querySelector('#tutorial')?.classList.contains('hidden') || false,
+            bootFault: document.body.textContent.includes('FIELD LAB BOOT FAULT')
+          }));
+          console.log(JSON.stringify(report));
+          await page.screenshot({ path: 'artifacts/nexus-robot-rig-v4.png', fullPage: true });
+          await browser.close();
+
+          if (report.bootFault || !report.tutorialHidden || report.robots < 3 || report.fps <= 0 || report.canvasWidth <= 0) {
+            failures.push(`invalid report: ${JSON.stringify(report)}`);
+          }
+          if (failures.length) throw new Error(failures.join('\n'));
+          EOF
+          node smoke-test/smoke.mjs
+
+      - name: Upload rendered robot screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-robot-rig-v4
+          path: artifacts/nexus-robot-rig-v4.png
+          if-no-files-found: warn
+
+      - name: Commit generated files if changed
+        run: |
+          if [ -z "$(git status --porcelain -- nexus-glass-science-cube/runtime-source.js nexus-glass-science-cube/index.html)" ]; then
+            echo 'Generated files already current'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add nexus-glass-science-cube/runtime-source.js
-          git commit -m 'Materialize editable NEXUS runtime source'
+          git add nexus-glass-science-cube/runtime-source.js nexus-glass-science-cube/index.html
+          git commit -m 'Finalize NEXUS articulated robot V4 build'
           git push origin HEAD:${{ github.head_ref || github.ref_name }}
