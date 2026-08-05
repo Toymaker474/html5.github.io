@@ -42,8 +42,12 @@ jobs:
           grep -q 'MjModel.from_xml_string' src/mujocoRuntime.js
           grep -q 'mj_step' src/mujocoRuntime.js
           grep -q 'actuator_force' src/mujocoRuntime.js
+          grep -q 'actuator_velocity' src/mujocoRuntime.js
+          grep -q 'maxFootContactsSeen' src/mujocoRuntime.js
+          grep -q 'planarDisplacement' src/mujocoRuntime.js
           grep -q 'touch_' src/hexapodModel.js
           grep -q 'WebGPUEngine' src/babylonRenderer.js
+          grep -q 'updateFollowCamera' src/babylonRenderer.js
           ! grep -R "position\.x +=\|rotation\.y +=\|Math\.sin.*mesh" src --include='*.js'
 
       - name: Install browser smoke-test runtime
@@ -55,7 +59,7 @@ jobs:
           npm install playwright@1.55.0 >/dev/null
           npx playwright install --with-deps chromium
 
-      - name: Boot and step MuJoCo in mobile-sized browser
+      - name: Prove MuJoCo motion in mobile-sized browser
         working-directory: .
         run: |
           cd nexus-science-core-v7
@@ -93,28 +97,26 @@ jobs:
             timeout: 120000,
           });
 
-          let reachedTerminalState = false;
-          try {
-            await page.waitForFunction(() => {
-              const text = document.querySelector('#status')?.textContent || '';
-              return text.includes('MUJOCO AUTHORITY') ||
-                text.includes('BOOT FAILURE') ||
-                text.includes('FAIL-CLOSED');
-            }, null, { timeout: 120000 });
-            reachedTerminalState = true;
-          } catch (error) {
-            diagnostics.push(`wait: ${error.message}`);
-          }
+          await page.waitForFunction(() => {
+            const text = document.querySelector('#status')?.textContent || '';
+            return text.includes('MUJOCO AUTHORITY') ||
+              text.includes('BOOT FAILURE') ||
+              text.includes('FAIL-CLOSED');
+          }, null, { timeout: 120000 });
 
-          await page.waitForTimeout(reachedTerminalState ? 5000 : 1000);
+          await page.waitForTimeout(7000);
           const report = await page.evaluate(() => {
             const status = document.querySelector('#status')?.textContent || '';
-            const simMatch = status.match(/SIM\s+(\d+\.\d+)\s+s/);
-            const powerMatch = status.match(/POWER\s+(\d+\.\d+)\s+W/);
+            const number = (pattern) => Number(status.match(pattern)?.[1] || 0);
             return {
               status,
-              simTime: Number(simMatch?.[1] || 0),
-              power: Number(powerMatch?.[1] || 0),
+              simTime: number(/SIM\s+(\d+\.\d+)\s+s/),
+              currentContacts: number(/·\s+(\d+)\/6\s+FEET/),
+              maxContacts: number(/MAX\s+(\d+)\/6/),
+              displacement: number(/DIST\s+(\d+\.\d+)\s+m/),
+              power: number(/POWER\s+(\d+\.\d+)\s+W/),
+              peakPower: number(/PEAK\s+(\d+\.\d+)\s+W/),
+              battery: number(/BATTERY\s+(\d+\.\d+)%/),
               canvasWidth: document.querySelector('#world')?.width || 0,
               canvasHeight: document.querySelector('#world')?.height || 0,
               bootFailure: status.includes('BOOT FAILURE'),
@@ -128,7 +130,17 @@ jobs:
 
           const evidence = { report, diagnostics };
           console.log(JSON.stringify(evidence, null, 2));
-          if (!report.authority || report.bootFailure || report.failClosed || report.simTime <= 1 || report.canvasWidth <= 0) {
+          const invalid =
+            !report.authority ||
+            report.bootFailure ||
+            report.failClosed ||
+            report.simTime <= 2 ||
+            report.maxContacts < 1 ||
+            report.displacement <= 0.03 ||
+            report.peakPower <= 0.1 ||
+            report.battery <= 0 ||
+            report.canvasWidth <= 0;
+          if (invalid) {
             throw new Error(`V7 scientific runtime failed closed: ${JSON.stringify(evidence)}`);
           }
           EOF
