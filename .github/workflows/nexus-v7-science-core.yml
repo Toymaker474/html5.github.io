@@ -57,6 +57,9 @@ jobs:
           grep -q 'LocomotionExperiment' src/research/experimentProtocol.js
           grep -q 'PBRMaterial' src/babylonRenderer.js
           grep -q 'ShadowGenerator' src/babylonRenderer.js
+          grep -q 'TransformNode' src/babylonRenderer.js
+          grep -q 'createTorsoAssembly' src/babylonRenderer.js
+          grep -q 'createLimbAssembly' src/babylonRenderer.js
           grep -q 'updateFollowCamera' src/babylonRenderer.js
           grep -q 'QUALITY–DIVERSITY ARCHIVE' index.html
           ! grep -R "position\.x +=\|rotation\.y +=\|Math\.sin.*mesh" src --include='*.js'
@@ -137,12 +140,23 @@ jobs:
               text.includes('FAIL-CLOSED');
           }, null, { timeout: 120000 });
 
-          await page.waitForTimeout(7000);
+          // Wait for authoritative simulation time, not an arbitrary wall-clock
+          // delay. Detailed PBR rendering can be slow under CI's software GPU.
+          await page.waitForFunction(() => {
+            const nexus = window.__NEXUS_V7__;
+            const text = document.querySelector('#status')?.textContent || '';
+            return text.includes('BOOT FAILURE') ||
+              text.includes('FAIL-CLOSED') ||
+              Number(nexus?.runtime?.data?.time || 0) >= 1.25;
+          }, null, { timeout: 35000 });
+
           const preEvolution = await page.evaluate(() => {
+            const nexus = window.__NEXUS_V7__;
             const status = document.querySelector('#status')?.textContent || '';
             const number = (pattern) => Number(status.match(pattern)?.[1] || 0);
             return {
               status,
+              authoritativeTime: Number(nexus?.runtime?.data?.time || 0),
               simTime: number(/SIM\s+(\d+\.\d+)\s+s/),
               maxContacts: number(/MAX\s+(\d+)\/6/),
               displacement: number(/DIST\s+(\d+\.\d+)\s+m/),
@@ -189,6 +203,9 @@ jobs:
               lastEnergy: nexus.coordinator.lastResult?.metrics.energyJoules || 0,
               lastDisplacement: nexus.coordinator.lastResult?.metrics.displacementMetres || 0,
               evolving: nexus.coordinator.enabled,
+              evaluation: nexus.evaluation,
+              visualAssemblies: nexus.renderer.meshes.filter((node) => node?.isEnabled?.()).length,
+              sceneMeshCount: nexus.renderer.scene.meshes.length,
               archiveCanvas: rect('#archive-map'),
               buttonHeights: buttons,
               layoutOverlap: overlaps(identity, research) || overlaps(identity, controls) || overlaps(research, controls),
@@ -206,7 +223,7 @@ jobs:
             !preEvolution.authority ||
             preEvolution.bootFailure ||
             preEvolution.failClosed ||
-            preEvolution.simTime <= 2 ||
+            preEvolution.authoritativeTime < 1.25 ||
             preEvolution.maxContacts < 1 ||
             preEvolution.displacement <= 0.03 ||
             preEvolution.peakPower <= 0.1 ||
@@ -217,6 +234,9 @@ jobs:
             postEvolution.archiveCells < 1 ||
             postEvolution.bestFitness <= 0 ||
             postEvolution.lastEnergy <= 0 ||
+            postEvolution.evaluation?.timeScale !== 4 ||
+            postEvolution.visualAssemblies < 10 ||
+            postEvolution.sceneMeshCount < 30 ||
             postEvolution.archiveCanvas.width <= 0 ||
             postEvolution.layoutOverlap ||
             postEvolution.buttonHeights.some(button => button.height < 42) ||
