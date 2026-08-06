@@ -28,7 +28,14 @@ if (!mjcf.includes('rgba="0.20 0.23 0.21 0.001"')) {
   fail('Course collisions are not hidden from the generic renderer with the expected nonzero collision alpha.');
 }
 
-const genome = createGenome(0x574f524c);
+// Freeze oscillator advance and neural residual for this unit test so the
+// measured difference is only the drive/steering multiplier applied to the
+// same twelve actuator targets.
+const genome = {
+  ...createGenome(0x574f524c),
+  frequencyHz: 0,
+  neuralGain: 0,
+};
 const makeController = (command) => {
   const controller = new NeuralCPGController(structuredClone(genome));
   controller.setDriveCommand(command);
@@ -55,13 +62,28 @@ const distance = (a, b) => Math.hypot(...a.map((value, index) => value - b[index
 if (distance(stop.controls, walk.controls) < 0.08) fail('Stop and Walk actuator vectors are not meaningfully different.');
 if (distance(left.controls, right.controls) < 0.08) fail('Left and Right actuator vectors are not meaningfully different.');
 
-const sideEffort = (controls, indexes) => indexes.reduce((sum, index) => sum + Math.abs(controls[index * 2]), 0);
 const leftLegIndexes = [0, 1, 2];
 const rightLegIndexes = [3, 4, 5];
-const leftCommandBias = sideEffort(left.controls, rightLegIndexes) - sideEffort(left.controls, leftLegIndexes);
-const rightCommandBias = sideEffort(right.controls, leftLegIndexes) - sideEffort(right.controls, rightLegIndexes);
-if (leftCommandBias <= 0.02) fail(`Left command did not create right-side drive bias: ${leftCommandBias}.`);
-if (rightCommandBias <= 0.02) fail(`Right command did not create left-side drive bias: ${rightCommandBias}.`);
+const averageDriveScale = (sample, indexes) => {
+  const ratios = [];
+  for (const index of indexes) {
+    const actuator = index * 2;
+    const walkDelta = walk.controls[actuator] - stop.controls[actuator];
+    const commandDelta = sample.controls[actuator] - stop.controls[actuator];
+    if (Math.abs(walkDelta) > 0.01) ratios.push(commandDelta / walkDelta);
+  }
+  if (!ratios.length) fail('Steering test found no measurable hip targets.');
+  return ratios.reduce((sum, value) => sum + value, 0) / ratios.length;
+};
+
+const leftInsideScale = averageDriveScale(left, leftLegIndexes);
+const leftOutsideScale = averageDriveScale(left, rightLegIndexes);
+const rightInsideScale = averageDriveScale(right, rightLegIndexes);
+const rightOutsideScale = averageDriveScale(right, leftLegIndexes);
+const leftCommandBias = leftOutsideScale - leftInsideScale;
+const rightCommandBias = rightOutsideScale - rightInsideScale;
+if (leftCommandBias <= 0.20) fail(`Left command did not create right-side drive bias: ${leftCommandBias}.`);
+if (rightCommandBias <= 0.20) fail(`Right command did not create left-side drive bias: ${rightCommandBias}.`);
 
 const report = Object.freeze({
   schema: 'nexus.robot-world-science-test.v1',
@@ -71,6 +93,10 @@ const report = Object.freeze({
   actuatorCount: walk.controls.length,
   stopWalkVectorDistance: distance(stop.controls, walk.controls),
   leftRightVectorDistance: distance(left.controls, right.controls),
+  leftInsideScale,
+  leftOutsideScale,
+  rightInsideScale,
+  rightOutsideScale,
   leftCommandBias,
   rightCommandBias,
   driveRevisions: {
