@@ -1,0 +1,226 @@
+name: Diagnose NEXUS V7 Mobile Camera
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/nexus-v7-camera-diagnostic.yml'
+      - 'nexus-science-core-v7/index.html'
+      - 'nexus-science-core-v7/src/mobileCameraFraming.js'
+      - 'nexus-science-core-v7/src/main.js'
+      - 'nexus-science-core-v7/src/babylonRenderer.js'
+      - 'nexus-science-core-v7/src/productionArtDirection.js'
+      - 'nexus-science-core-v7/src/referenceLegConnectivity.js'
+      - 'nexus-science-core-v7/src/robotPresets.js'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose-camera:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Build exact simulator
+        working-directory: nexus-science-core-v7
+        run: |
+          npm install --ignore-scripts=false
+          npm run build
+          test -f dist/index.html
+
+      - name: Install diagnostic browser
+        run: |
+          mkdir -p camera-diagnostic artifacts/camera
+          cd camera-diagnostic
+          npm init -y >/dev/null
+          npm install playwright@1.55.0 >/dev/null
+          npx playwright install --with-deps chromium
+
+      - name: Measure actual projected robot envelope
+        continue-on-error: true
+        run: |
+          cd nexus-science-core-v7
+          npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/nexus-camera-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          cd ..
+          trap 'kill $PREVIEW_PID || true' EXIT
+          cat > camera-diagnostic/diagnose.mjs <<'EOF'
+          import { writeFile } from 'node:fs/promises';
+          import { chromium } from 'playwright';
+
+          const browser = await chromium.launch({
+            headless: true,
+            args: [
+              '--use-gl=swiftshader',
+              '--enable-webgl',
+              '--enable-unsafe-swiftshader',
+              '--ignore-gpu-blocklist',
+            ],
+          });
+          const context = await browser.newContext({
+            viewport: { width: 430, height: 932 },
+            deviceScaleFactor: 1,
+            isMobile: true,
+            hasTouch: true,
+          });
+          const page = await context.newPage();
+          const diagnostics = [];
+          page.on('pageerror', error => diagnostics.push({ level: 'pageerror', message: error.message }));
+          page.on('requestfailed', request => diagnostics.push({
+            level: 'requestfailed',
+            message: `${request.url()} :: ${request.failure()?.errorText || 'unknown'}`,
+          }));
+          page.on('console', message => {
+            if (message.type() === 'error' || message.type() === 'warning') {
+              diagnostics.push({ level: message.type(), message: message.text() });
+            }
+          });
+
+          let navigationError = null;
+          try {
+            await page.goto('http://127.0.0.1:4173/?robot=explorer&diagnostic=camera', {
+              waitUntil: 'domcontentloaded',
+              timeout: 120000,
+            });
+            await page.waitForFunction(() => {
+              const nexus = window.__NEXUS_V7__;
+              const status = document.querySelector('#status')?.textContent || '';
+              return status.includes('FAIL-CLOSED') ||
+                (nexus?.activePreset?.id === 'explorer' && Number(nexus?.runtime?.data?.time || 0) >= 0.35);
+            }, null, { timeout: 120000 });
+            await page.waitForTimeout(6500);
+          } catch (error) {
+            navigationError = error instanceof Error ? error.message : String(error);
+          }
+
+          const report = await page.evaluate(() => {
+            const nexus = window.__NEXUS_V7__;
+            const renderer = nexus?.renderer;
+            const camera = renderer?.camera;
+            const isRobotMesh = mesh => {
+              const name = String(mesh?.name || '');
+              return mesh?.isEnabled?.() && mesh.isVisible !== false && (
+                name.startsWith('connected-') || /^cad-.*-instance-/.test(name)
+              );
+            };
+            const vector = value => value ? {
+              x: Number(value.x), y: Number(value.y), z: Number(value.z),
+            } : null;
+            const robotMeshes = renderer?.scene?.meshes?.filter(isRobotMesh) || [];
+            const meshBounds = robotMeshes.map(mesh => {
+              mesh.computeWorldMatrix(true);
+              const box = mesh.getBoundingInfo?.().boundingBox;
+              const minimum = box?.minimumWorld;
+              const maximum = box?.maximumWorld;
+              const dx = maximum && minimum ? maximum.x - minimum.x : 0;
+              const dy = maximum && minimum ? maximum.y - minimum.y : 0;
+              const dz = maximum && minimum ? maximum.z - minimum.z : 0;
+              return {
+                name: mesh.name,
+                parent: mesh.parent?.name || null,
+                enabled: mesh.isEnabled?.() ?? null,
+                visible: mesh.isVisible,
+                absolutePosition: vector(mesh.absolutePosition),
+                minimumWorld: vector(minimum),
+                maximumWorld: vector(maximum),
+                extent: { x: dx, y: dy, z: dz },
+                diagonal: Math.hypot(dx, dy, dz),
+                scaling: vector(mesh.scaling),
+              };
+            }).sort((a, b) => b.diagonal - a.diagonal);
+
+            let worldEnvelope = null;
+            if (meshBounds.length) {
+              const minima = {
+                x: Math.min(...meshBounds.map(mesh => mesh.minimumWorld?.x ?? Infinity)),
+                y: Math.min(...meshBounds.map(mesh => mesh.minimumWorld?.y ?? Infinity)),
+                z: Math.min(...meshBounds.map(mesh => mesh.minimumWorld?.z ?? Infinity)),
+              };
+              const maxima = {
+                x: Math.max(...meshBounds.map(mesh => mesh.maximumWorld?.x ?? -Infinity)),
+                y: Math.max(...meshBounds.map(mesh => mesh.maximumWorld?.y ?? -Infinity)),
+                z: Math.max(...meshBounds.map(mesh => mesh.maximumWorld?.z ?? -Infinity)),
+              };
+              worldEnvelope = {
+                minimum: minima,
+                maximum: maxima,
+                extent: {
+                  x: maxima.x - minima.x,
+                  y: maxima.y - minima.y,
+                  z: maxima.z - minima.z,
+                },
+                center: {
+                  x: (maxima.x + minima.x) / 2,
+                  y: (maxima.y + minima.y) / 2,
+                  z: (maxima.z + minima.z) / 2,
+                },
+              };
+            }
+
+            return {
+              schema: 'nexus.mobile-camera-diagnostic.v1',
+              activePreset: nexus?.activePreset?.id || null,
+              runtimeTime: Number(nexus?.runtime?.data?.time || 0),
+              rootPosition: nexus?.runtime?.rootPosition || null,
+              planarDisplacement: Number(nexus?.runtime?.planarDisplacement || 0),
+              status: document.querySelector('#status')?.textContent || '',
+              canvas: {
+                width: document.querySelector('#world')?.width || 0,
+                height: document.querySelector('#world')?.height || 0,
+              },
+              camera: camera ? {
+                alpha: Number(camera.alpha),
+                beta: Number(camera.beta),
+                radius: Number(camera.radius),
+                lowerRadiusLimit: Number(camera.lowerRadiusLimit),
+                upperRadiusLimit: Number(camera.upperRadiusLimit),
+                fov: Number(camera.fov),
+                target: vector(camera.target),
+                position: vector(camera.position),
+              } : null,
+              mobileCameraFit: renderer?.mobileCameraFit || null,
+              robotMeshCount: robotMeshes.length,
+              worldEnvelope,
+              largestRobotMeshes: meshBounds.slice(0, 40),
+            };
+          }).catch(error => ({
+            schema: 'nexus.mobile-camera-diagnostic.v1',
+            evaluationError: error instanceof Error ? error.message : String(error),
+          }));
+
+          report.navigationError = navigationError;
+          report.diagnostics = diagnostics;
+          await page.screenshot({ path: 'artifacts/camera/nexus-v7-camera-diagnostic.png', fullPage: true }).catch(() => {});
+          await writeFile('artifacts/camera/nexus-v7-camera-diagnostic.json', JSON.stringify(report, null, 2));
+          console.log(JSON.stringify(report, null, 2));
+          await browser.close();
+
+          if (navigationError || report.mobileCameraFit?.horizontallyContained !== true) {
+            process.exitCode = 1;
+          }
+          EOF
+          node camera-diagnostic/diagnose.mjs
+
+      - name: Upload camera diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-v7-camera-diagnostic-${{ github.run_id }}
+          path: |
+            artifacts/camera/nexus-v7-camera-diagnostic.png
+            artifacts/camera/nexus-v7-camera-diagnostic.json
+            /tmp/nexus-camera-preview.log
+          if-no-files-found: warn
+          retention-days: 7
