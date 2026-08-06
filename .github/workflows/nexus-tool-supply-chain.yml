@@ -1,0 +1,128 @@
+name: NEXUS Tool Supply Chain
+
+on:
+  push:
+    branches:
+      - agent/nexus-tool-supply-chain-v1
+    paths:
+      - 'nexus-tool-supply-chain/**'
+      - '.github/workflows/nexus-tool-supply-chain.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'nexus-tool-supply-chain/**'
+      - '.github/workflows/nexus-tool-supply-chain.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nexus-tool-supply-chain-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Validate, test, and inspect mobile web exchange
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+
+    steps:
+      - name: Check out exact proposal
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Check JavaScript syntax
+        run: |
+          find nexus-tool-supply-chain -type f -name '*.js' -o -name '*.mjs' | sort | xargs -r -n1 node --check
+
+      - name: Validate registry and genetic engine
+        working-directory: nexus-tool-supply-chain
+        run: npm run check
+
+      - name: Check forbidden paid-service language in executable configuration
+        run: |
+          if grep -RniE \
+            --include='*.json' \
+            --include='*.js' \
+            --include='*.mjs' \
+            --include='*.yml' \
+            --include='*.yaml' \
+            '(OPENAI_API_KEY|ANTHROPIC_API_KEY|STRIPE_SECRET|free trial|subscription required)' \
+            nexus-tool-supply-chain; then
+            echo 'Paid key, subscription, or trial language was found in executable/config files.'
+            exit 1
+          fi
+
+      - name: Install temporary open-source browser runner
+        run: |
+          mkdir -p /tmp/nexus-tool-browser
+          cd /tmp/nexus-tool-browser
+          npm init -y >/dev/null
+          npm install --no-save playwright@1.62.0
+          npx playwright install --with-deps chromium
+
+      - name: Start static mobile-web app
+        working-directory: nexus-tool-supply-chain
+        run: |
+          python3 -m http.server 4175 --bind 127.0.0.1 > /tmp/nexus-tool-server.log 2>&1 &
+          echo $! > /tmp/nexus-tool-server.pid
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4175/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/nexus-tool-server.log
+          exit 1
+
+      - name: Run iPhone-sized browser proof
+        working-directory: nexus-tool-supply-chain
+        run: node tests/mobile-smoke.mjs
+
+      - name: Build source and evidence hashes
+        if: always()
+        run: |
+          mkdir -p nexus-tool-supply-chain/artifacts
+          find nexus-tool-supply-chain \
+            -type f \
+            ! -path '*/artifacts/*' \
+            ! -path '*/node_modules/*' \
+            -print0 \
+            | sort -z \
+            | xargs -0 sha256sum \
+            > nexus-tool-supply-chain/artifacts/source-sha256.txt
+          if [ -d nexus-tool-supply-chain/artifacts ]; then
+            find nexus-tool-supply-chain/artifacts \
+              -type f \
+              ! -name 'evidence-sha256.txt' \
+              -print0 \
+              | sort -z \
+              | xargs -0 sha256sum \
+              > nexus-tool-supply-chain/artifacts/evidence-sha256.txt
+          fi
+
+      - name: Upload exact evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-tool-supply-chain-${{ github.run_id }}
+          path: |
+            nexus-tool-supply-chain/artifacts/**
+            /tmp/nexus-tool-server.log
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Stop static server
+        if: always()
+        run: |
+          if [ -f /tmp/nexus-tool-server.pid ]; then
+            kill "$(cat /tmp/nexus-tool-server.pid)" || true
+          fi
