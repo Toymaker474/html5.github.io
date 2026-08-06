@@ -12,8 +12,8 @@ permissions:
   contents: write
 
 concurrency:
-  group: nexus-v7-cycle01-step02
-  cancel-in-progress: false
+  group: nexus-v7-cycle01-step02-authoritative
+  cancel-in-progress: true
 
 jobs:
   test-render-publish:
