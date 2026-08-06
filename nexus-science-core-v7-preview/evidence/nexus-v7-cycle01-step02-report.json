@@ -8,14 +8,14 @@
     "connectivitySchema": "nexus.all-leg-connectivity.v2"
   },
   "runtimeSchema": "nexus.science-runtime.v1",
-  "runtimeTime": 2.447499999999959,
-  "displacementMetres": 0.13038847165018266,
+  "runtimeTime": 1.9474999999999696,
+  "displacementMetres": 0.062505755728474,
   "maximumFootContacts": 6,
   "peakActuatorPowerWatts": 310.5998062278403,
   "generation": 1,
   "archiveCells": 1,
-  "bestFitness": 2.20603464991908,
-  "energyJoules": 378.7076611339072,
+  "bestFitness": 2.193555744794033,
+  "energyJoules": 380.79206543211046,
   "connectivity": {
     "cycle": 1,
     "increment": 2,
@@ -44,9 +44,9 @@
         "duplicateCoxa": 0,
         "visualChain": "torso→coxa→femur→tibia→foot",
         "maximumPivotGapMetres": 0,
-        "mountLengthMetres": 0.10981330134368979,
-        "upperLengthMetres": 0.2983286778035262,
-        "lowerLengthMetres": 0.3612478373637692
+        "mountLengthMetres": 0.10981330134368972,
+        "upperLengthMetres": 0.29832867780352607,
+        "lowerLengthMetres": 0.36124783736376903
       },
       {
         "leg": "ml",
@@ -56,9 +56,9 @@
         "duplicateCoxa": 0,
         "visualChain": "torso→coxa→femur→tibia→foot",
         "maximumPivotGapMetres": 0,
-        "mountLengthMetres": 0.06697600000000008,
-        "upperLengthMetres": 0.29832867780352623,
-        "lowerLengthMetres": 0.36124783736376925
+        "mountLengthMetres": 0.06697600000000002,
+        "upperLengthMetres": 0.2983286778035261,
+        "lowerLengthMetres": 0.361247837363769
       },
       {
         "leg": "rl",
@@ -68,9 +68,9 @@
         "duplicateCoxa": 0,
         "visualChain": "torso→coxa→femur→tibia→foot",
         "maximumPivotGapMetres": 0,
-        "mountLengthMetres": 0.10981330134368979,
-        "upperLengthMetres": 0.29832867780352623,
-        "lowerLengthMetres": 0.3612478373637693
+        "mountLengthMetres": 0.10981330134368977,
+        "upperLengthMetres": 0.29832867780352595,
+        "lowerLengthMetres": 0.3612478373637691
       },
       {
         "leg": "fr",
@@ -80,9 +80,9 @@
         "duplicateCoxa": 0,
         "visualChain": "torso→coxa→femur→tibia→foot",
         "maximumPivotGapMetres": 0,
-        "mountLengthMetres": 0.10981330134368983,
-        "upperLengthMetres": 0.2983286778035262,
-        "lowerLengthMetres": 0.3612478373637692
+        "mountLengthMetres": 0.10981330134368975,
+        "upperLengthMetres": 0.298328677803526,
+        "lowerLengthMetres": 0.36124783736376903
       },
       {
         "leg": "mr",
@@ -92,9 +92,9 @@
         "duplicateCoxa": 0,
         "visualChain": "torso→coxa→femur→tibia→foot",
         "maximumPivotGapMetres": 0,
-        "mountLengthMetres": 0.06697600000000008,
-        "upperLengthMetres": 0.2983286778035262,
-        "lowerLengthMetres": 0.36124783736376925
+        "mountLengthMetres": 0.06697600000000002,
+        "upperLengthMetres": 0.29832867780352607,
+        "lowerLengthMetres": 0.36124783736376903
       },
       {
         "leg": "rr",
@@ -104,12 +104,12 @@
         "duplicateCoxa": 0,
         "visualChain": "torso→coxa→femur→tibia→foot",
         "maximumPivotGapMetres": 0,
-        "mountLengthMetres": 0.10981330134368979,
-        "upperLengthMetres": 0.2983286778035262,
-        "lowerLengthMetres": 0.3612478373637693
+        "mountLengthMetres": 0.10981330134368973,
+        "upperLengthMetres": 0.2983286778035261,
+        "lowerLengthMetres": 0.36124783736376914
       }
     ],
-    "updatedAtSimulationSeconds": 2.447499999999959
+    "updatedAtSimulationSeconds": 1.9474999999999696
   },
   "connectivityReady": true,
   "requiredHardware": {
@@ -240,14 +240,14 @@
     "width": 430,
     "height": 932
   },
-  "status": "MUJOCO AUTHORITY · WebGL2SIM 1.45 s · 5 FPS · 3/6 FEET · MAX 6/6DIST 0.126 m · HEIGHT 0.430 mBATTERY 98.7% · POWER 95.4 W · PEAK 310.6 W",
+  "status": "MUJOCO AUTHORITY · WebGL2SIM 1.95 s · 3 FPS · 3/6 FEET · MAX 6/6DIST 0.063 m · HEIGHT 0.428 mBATTERY 98.2% · POWER 47.2 W · PEAK 310.6 W",
   "diagnostics": [
     "warning: Failed to create WebGPU Context Provider",
-    "warning: WebGPU unavailable; using WebGL2. Error: No usable WebGPU adapter.\n    at $re (http://127.0.0.1:4173/assets/index-DOLrft09.js:4459:64567)\n    at async e.create (http://127.0.0.1:4173/assets/index-DOLrft09.js:4459:68070)\n    at async Z9 (http://127.0.0.1:4173/assets/index-DOLrft09.js:4536:1072)\n    at async Q9 (http://127.0.0.1:4173/assets/index-DOLrft09.js:4536:1476)\n    at async nae (http://127.0.0.1:4173/assets/index-DOLrft09.js:4536:3544)",
-    "warning: [.WebGL-0x112c000e1c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
-    "warning: [.WebGL-0x112c000e1c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
-    "warning: [.WebGL-0x112c000e1c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
-    "warning: [.WebGL-0x112c000e1c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+    "warning: WebGPU unavailable; using WebGL2. Error: No usable WebGPU adapter.\n    at rie (http://127.0.0.1:4173/assets/index-D0mee1sq.js:4459:64569)\n    at async e.create (http://127.0.0.1:4173/assets/index-D0mee1sq.js:4459:68072)\n    at async q9 (http://127.0.0.1:4173/assets/index-D0mee1sq.js:4536:1072)\n    at async J9 (http://127.0.0.1:4173/assets/index-D0mee1sq.js:4536:1476)\n    at async oae (http://127.0.0.1:4173/assets/index-D0mee1sq.js:4536:3544)",
+    "warning: [.WebGL-0x1194006bff00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x1194006bff00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x1194006bff00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x1194006bff00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
   ],
-  "bootRuntimeTime": 1.5824999999999774
+  "bootRuntimeTime": 1.597499999999977
 }

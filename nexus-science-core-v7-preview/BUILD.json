@@ -3,6 +3,6 @@
   "cycle": 1,
   "increment": 2,
   "sourceBranch": "nexus-mujoco-science-core-v7",
-  "sourceCommit": "b6978f0f21fc7137b371cfa384ee1143eb7712db",
-  "workflowRun": "31083112050"
+  "sourceCommit": "9f9f9a903c655a80eefb2ca1085660e1a42f1789",
+  "workflowRun": "31083762791"
 }
