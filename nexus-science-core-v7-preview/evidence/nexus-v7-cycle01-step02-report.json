@@ -1,0 +1,217 @@
+{
+  "schema": "nexus.cycle-evidence.v1",
+  "cycle": {
+    "cycle": 1,
+    "increment": 2,
+    "target": "all-six-leg authoritative connectivity",
+    "legCount": 6,
+    "connectivitySchema": "nexus.all-leg-connectivity.v2"
+  },
+  "runtimeSchema": "nexus.science-runtime.v1",
+  "runtimeTime": 1.4474999999999802,
+  "displacementMetres": 0.18426845661952976,
+  "maximumFootContacts": 4,
+  "peakActuatorPowerWatts": 305.66151161235285,
+  "generation": 1,
+  "archiveCells": 1,
+  "bestFitness": 1.1899846133341645,
+  "energyJoules": 551.406256846645,
+  "connectivity": {
+    "cycle": 1,
+    "increment": 2,
+    "connected": true,
+    "authoritativePivots": true,
+    "connectedLegs": 6,
+    "expectedLegs": 6,
+    "legOrder": [
+      "fl",
+      "ml",
+      "rl",
+      "fr",
+      "mr",
+      "rr"
+    ],
+    "floatingParts": 0,
+    "duplicateCoxa": 0,
+    "visualChain": "torso→coxa→femur→tibia→foot × 6",
+    "maximumPivotGapMetres": 0,
+    "legs": [
+      {
+        "leg": "fl",
+        "connected": true,
+        "authoritativePivots": true,
+        "floatingParts": 0,
+        "duplicateCoxa": 0,
+        "visualChain": "torso→coxa→femur→tibia→foot",
+        "maximumPivotGapMetres": 0,
+        "mountLengthMetres": 0.10981330134368963,
+        "upperLengthMetres": 0.2983286778035258,
+        "lowerLengthMetres": 0.36124783736376864
+      },
+      {
+        "leg": "ml",
+        "connected": true,
+        "authoritativePivots": true,
+        "floatingParts": 0,
+        "duplicateCoxa": 0,
+        "visualChain": "torso→coxa→femur→tibia→foot",
+        "maximumPivotGapMetres": 0,
+        "mountLengthMetres": 0.06697599999999998,
+        "upperLengthMetres": 0.29832867780352573,
+        "lowerLengthMetres": 0.3612478373637687
+      },
+      {
+        "leg": "rl",
+        "connected": true,
+        "authoritativePivots": true,
+        "floatingParts": 0,
+        "duplicateCoxa": 0,
+        "visualChain": "torso→coxa→femur→tibia→foot",
+        "maximumPivotGapMetres": 0,
+        "mountLengthMetres": 0.10981330134368968,
+        "upperLengthMetres": 0.29832867780352573,
+        "lowerLengthMetres": 0.36124783736376864
+      },
+      {
+        "leg": "fr",
+        "connected": true,
+        "authoritativePivots": true,
+        "floatingParts": 0,
+        "duplicateCoxa": 0,
+        "visualChain": "torso→coxa→femur→tibia→foot",
+        "maximumPivotGapMetres": 0,
+        "mountLengthMetres": 0.10981330134368962,
+        "upperLengthMetres": 0.29832867780352573,
+        "lowerLengthMetres": 0.3612478373637687
+      },
+      {
+        "leg": "mr",
+        "connected": true,
+        "authoritativePivots": true,
+        "floatingParts": 0,
+        "duplicateCoxa": 0,
+        "visualChain": "torso→coxa→femur→tibia→foot",
+        "maximumPivotGapMetres": 0,
+        "mountLengthMetres": 0.06697600000000001,
+        "upperLengthMetres": 0.29832867780352573,
+        "lowerLengthMetres": 0.36124783736376864
+      },
+      {
+        "leg": "rr",
+        "connected": true,
+        "authoritativePivots": true,
+        "floatingParts": 0,
+        "duplicateCoxa": 0,
+        "visualChain": "torso→coxa→femur→tibia→foot",
+        "maximumPivotGapMetres": 0,
+        "mountLengthMetres": 0.10981330134368962,
+        "upperLengthMetres": 0.29832867780352573,
+        "lowerLengthMetres": 0.36124783736376864
+      }
+    ],
+    "updatedAtSimulationSeconds": 1.4474999999999802
+  },
+  "connectivityReady": true,
+  "requiredHardware": {
+    "fl": {
+      "hipCarrier": true,
+      "hipAxle": true,
+      "kneeAxle": true,
+      "ankleAxle": true,
+      "coxaCad": true,
+      "hipSeal": true,
+      "kneeSeal": true,
+      "ankleSeal": true
+    },
+    "ml": {
+      "hipCarrier": true,
+      "hipAxle": true,
+      "kneeAxle": true,
+      "ankleAxle": true,
+      "coxaCad": true,
+      "hipSeal": true,
+      "kneeSeal": true,
+      "ankleSeal": true
+    },
+    "rl": {
+      "hipCarrier": true,
+      "hipAxle": true,
+      "kneeAxle": true,
+      "ankleAxle": true,
+      "coxaCad": true,
+      "hipSeal": true,
+      "kneeSeal": true,
+      "ankleSeal": true
+    },
+    "fr": {
+      "hipCarrier": true,
+      "hipAxle": true,
+      "kneeAxle": true,
+      "ankleAxle": true,
+      "coxaCad": true,
+      "hipSeal": true,
+      "kneeSeal": true,
+      "ankleSeal": true
+    },
+    "mr": {
+      "hipCarrier": true,
+      "hipAxle": true,
+      "kneeAxle": true,
+      "ankleAxle": true,
+      "coxaCad": true,
+      "hipSeal": true,
+      "kneeSeal": true,
+      "ankleSeal": true
+    },
+    "rr": {
+      "hipCarrier": true,
+      "hipAxle": true,
+      "kneeAxle": true,
+      "ankleAxle": true,
+      "coxaCad": true,
+      "hipSeal": true,
+      "kneeSeal": true,
+      "ankleSeal": true
+    }
+  },
+  "authoredCad": true,
+  "proceduralRobotShells": false,
+  "cadSourceCommit": "7d8fc8034d715d1c9373f48281ecfa500c994d8b",
+  "buttonHeights": [
+    {
+      "id": "telemetry-toggle",
+      "height": 44
+    },
+    {
+      "id": "pause",
+      "height": 44
+    },
+    {
+      "id": "reset",
+      "height": 44
+    },
+    {
+      "id": "mutate",
+      "height": 44
+    },
+    {
+      "id": "evolve",
+      "height": 44
+    }
+  ],
+  "layoutOverlap": false,
+  "canvas": {
+    "width": 430,
+    "height": 932
+  },
+  "status": "MUJOCO AUTHORITY · WebGL2SIM 0.95 s · 3 FPS · 4/6 FEET · MAX 4/6DIST 0.261 m · HEIGHT 0.387 mBATTERY 98.8% · POWER 22.0 W · PEAK 305.7 W",
+  "diagnostics": [
+    "warning: Failed to create WebGPU Context Provider",
+    "warning: WebGPU unavailable; using WebGL2. Error: No usable WebGPU adapter.\n    at kre (http://127.0.0.1:4173/assets/index-CiPg8wYt.js:4459:64569)\n    at async e.create (http://127.0.0.1:4173/assets/index-CiPg8wYt.js:4459:68072)\n    at async Oie (http://127.0.0.1:4173/assets/index-CiPg8wYt.js:4526:66513)",
+    "warning: [.WebGL-0x1b0c04532900]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x1b0c04532900]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x1b0c04532900]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x1b0c04532900]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+  ],
+  "bootRuntimeTime": 1.597499999999977
+}
