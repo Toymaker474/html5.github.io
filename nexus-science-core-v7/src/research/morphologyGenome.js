@@ -1,3 +1,5 @@
+import { compileWorldCourseMjcf } from '../worldCourseData.js';
+
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 export const LEG_LAYOUT = Object.freeze([
@@ -230,6 +232,7 @@ export function compileMorphologyToMjcf(morphology) {
   <worldbody>
     <light name="key" directional="true" pos="2 -3 6" dir="-0.25 0.35 -1" diffuse="0.85 0.78 0.66" />
     <geom name="ground" type="plane" size="12 12 0.2" rgba="0.11 0.13 0.10 1" friction="1.35 0.03 0.002" />
+    ${compileWorldCourseMjcf()}
 
     <body name="robot" pos="0 0 ${spawnHeight}">
       <freejoint name="root" />
