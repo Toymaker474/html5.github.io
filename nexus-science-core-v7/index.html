@@ -504,7 +504,32 @@
       telemetryToggle.setAttribute('aria-expanded', String(open));
       telemetryToggle.textContent = open ? 'Close' : 'Data';
     });
+
+    const presetToggle = document.querySelector('#preset-toggle');
+    const presetPanel = document.querySelector('#preset-panel');
+    const presetClose = document.querySelector('#preset-close');
+    const presetBackdrop = document.querySelector('#preset-backdrop');
+    const syncPresetBackdrop = () => {
+      if (presetBackdrop) presetBackdrop.dataset.open = String(presetPanel?.dataset.open === 'true');
+    };
+    presetToggle?.addEventListener('click', () => queueMicrotask(syncPresetBackdrop));
+    presetClose?.addEventListener('click', () => queueMicrotask(syncPresetBackdrop));
+    presetBackdrop?.addEventListener('click', () => {
+      if (presetPanel) {
+        presetPanel.dataset.open = 'false';
+        presetPanel.setAttribute('aria-hidden', 'true');
+      }
+      if (presetToggle) {
+        presetToggle.setAttribute('aria-expanded', 'false');
+        presetToggle.textContent = 'Robots';
+      }
+      syncPresetBackdrop();
+    });
   </script>
   <script type="module" src="/src/main.js"></script>
+  <script type="module">
+    import { installMobileCameraFraming } from '/src/mobileCameraFraming.js';
+    installMobileCameraFraming();
+  </script>
 </body>
 </html>
