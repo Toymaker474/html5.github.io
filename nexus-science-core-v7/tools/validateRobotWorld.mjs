@@ -28,13 +28,23 @@ if (!mjcf.includes('rgba="0.20 0.23 0.21 0.001"')) {
   fail('Course collisions are not hidden from the generic renderer with the expected nonzero collision alpha.');
 }
 
-// Freeze oscillator advance and neural residual for this unit test so the
-// measured difference is only the drive/steering multiplier applied to the
-// same twelve actuator targets.
+// Freeze oscillator advance and neural residual, then use explicit nonzero
+// tripod phases. This isolates the steering multiplier while keeping the same
+// production actuator-output function.
+const baseGenome = createGenome(0x574f524c);
 const genome = {
-  ...createGenome(0x574f524c),
+  ...baseGenome,
   frequencyHz: 0,
   neuralGain: 0,
+  phaseOffsets: [
+    Math.PI * 0.5,
+    -Math.PI * 0.5,
+    Math.PI * 0.5,
+    -Math.PI * 0.5,
+    Math.PI * 0.5,
+    -Math.PI * 0.5,
+  ],
+  outputGains: [1, 1, 1, 1, 1, 1],
 };
 const makeController = (command) => {
   const controller = new NeuralCPGController(structuredClone(genome));
