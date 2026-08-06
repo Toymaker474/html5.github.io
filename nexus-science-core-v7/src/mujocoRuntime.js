@@ -1,8 +1,13 @@
 import loadMujoco from '@mujoco/mujoco';
-import { HEXAPOD_MJCF, LEG_METADATA } from './hexapodModel.js';
+import {
+  compileMorphologyToMjcf,
+  DEFAULT_MORPHOLOGY,
+  LEG_METADATA,
+} from './hexapodModel.js';
 import { OscillatorController, createGenome, mutateGenome } from './controller.js';
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+const EXPECTED_ACTUATOR_COUNT = LEG_METADATA.length * 2;
 
 function quaternionToRollPitch(w, x, y, z) {
   const sinRoll = 2 * (w * x + y * z);
@@ -20,23 +25,47 @@ function copyInto(target, source) {
 }
 
 export class MujocoScienceRuntime {
-  static async create() {
+  static async create({
+    morphology = DEFAULT_MORPHOLOGY,
+    controllerGenome = createGenome(),
+    presetId = 'explorer',
+    batteryJoules = 6500,
+  } = {}) {
     const module = await loadMujoco();
-    return new MujocoScienceRuntime(module);
+    return new MujocoScienceRuntime(module, {
+      morphology,
+      controllerGenome,
+      presetId,
+      batteryJoules,
+    });
   }
 
-  constructor(module) {
+  constructor(module, {
+    morphology = DEFAULT_MORPHOLOGY,
+    controllerGenome = createGenome(),
+    presetId = 'explorer',
+    batteryJoules = 6500,
+  } = {}) {
     this.mujoco = module;
-    this.model = module.MjModel.from_xml_string(HEXAPOD_MJCF);
-    if (!this.model) throw new Error('MuJoCo rejected the V7 MJCF morphology.');
+    this.presetId = presetId;
+    this.morphology = morphology;
+    this.model = module.MjModel.from_xml_string(compileMorphologyToMjcf(morphology));
+    if (!this.model) throw new Error(`MuJoCo rejected robot preset ${presetId}.`);
 
     this.data = new module.MjData(this.model);
-    if (!this.data) throw new Error('MuJoCo could not allocate authoritative simulation state.');
+    if (!this.data) throw new Error(`MuJoCo could not allocate state for robot preset ${presetId}.`);
+    if (this.data.ctrl.length !== EXPECTED_ACTUATOR_COUNT) {
+      this.data.delete?.();
+      this.model.delete?.();
+      throw new Error(
+        `Robot preset ${presetId} has ${this.data.ctrl.length} actuators; expected ${EXPECTED_ACTUATOR_COUNT}.`,
+      );
+    }
 
-    this.controller = new OscillatorController(createGenome());
+    this.controller = new OscillatorController(controllerGenome);
     this.paused = false;
-    this.batteryJoules = 6500;
-    this.maxBatteryJoules = 6500;
+    this.batteryJoules = batteryJoules;
+    this.maxBatteryJoules = batteryJoules;
     this.lastPowerWatts = 0;
     this.maxPowerWattsSeen = 0;
     this.maxFootContactsSeen = 0;
