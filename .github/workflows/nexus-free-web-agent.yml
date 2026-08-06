@@ -1,23 +1,30 @@
 name: NEXUS Free Web Agent
 
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: '17 */6 * * *'
-  pull_request:
+  push:
     branches:
       - nexus-mujoco-science-core-v7
     paths:
       - 'nexus-science-core-v7/**'
       - 'tools/free-web-agent/**'
       - '.github/workflows/nexus-free-web-agent.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'nexus-science-core-v7/**'
+      - 'tools/free-web-agent/**'
+      - '.github/workflows/nexus-free-web-agent.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '17 8 * * *'
 
 permissions:
   contents: read
   issues: write
 
 concurrency:
-  group: nexus-free-web-agent-${{ github.ref }}
+  group: nexus-free-web-agent-${{ github.event_name }}
   cancel-in-progress: true
 
 env:
@@ -27,30 +34,31 @@ env:
   LIGHTHOUSE_VERSION: '0.15.1'
   GITLEAKS_VERSION: '8.30.1'
   GITLEAKS_SHA256: '551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb'
+  OLLAMA_VERSION: '0.32.6'
+  OLLAMA_SHA256: 'dec2fa50d24e6868ca3c4c977d69d059399372105f951a9acc320a5a79aadcfc'
+  QWEN_MODEL: 'qwen2.5-coder:0.5b-instruct-q4_K_M'
 
 jobs:
   verify-mobile-web-simulation:
-    name: Build, mobile test, security scan, and report
+    name: Build, mobile test, security scan, and open-source AI review
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 55
 
     steps:
-      - name: Check out exact source
+      - name: Check out exact V7 source
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'nexus-mujoco-science-core-v7' || github.event.pull_request.head.sha || github.sha }}
 
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-          cache-dependency-path: ${{ env.PROJECT_DIR }}/package-lock.json
 
-      - name: Install project exactly
+      - name: Install project
         working-directory: ${{ env.PROJECT_DIR }}
-        run: npm ci
+        run: npm install --ignore-scripts=false
 
       - name: Build exact simulation
         working-directory: ${{ env.PROJECT_DIR }}
@@ -58,9 +66,10 @@ jobs:
 
       - name: Check JavaScript syntax
         run: |
-          find "$PROJECT_DIR/src" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
-          find "$PROJECT_DIR/tools" -type f -name '*.mjs' -print0 | xargs -0 -n1 node --check
+          find "$PROJECT_DIR/src" -type f -name '*.js' -print0 | xargs -0 -r -n1 node --check
+          find "$PROJECT_DIR/tools" -type f -name '*.mjs' -print0 | xargs -0 -r -n1 node --check
           node --check tools/free-web-agent/mobile-audit.mjs
+          node --check tools/free-web-agent/qwen-review.mjs
           node --check tools/free-web-agent/make-report.mjs
 
       - name: Audit npm dependencies
@@ -102,9 +111,7 @@ jobs:
           cat /tmp/nexus-preview.log
           exit 1
 
-      - name: Test as iPhone-sized touch device
-        env:
-          NODE_PATH: /tmp/nexus-browser-agent/node_modules
+      - name: Test as an iPhone-sized touch device
         run: node tools/free-web-agent/mobile-audit.mjs
 
       - name: Run Lighthouse locally without paid upload
@@ -113,10 +120,36 @@ jobs:
           npx lhci collect \
             --url=http://127.0.0.1:4173/ \
             --numberOfRuns=1 \
-            --settings.chromeFlags='--headless --no-sandbox --disable-gpu' \
-            --settings.preset=desktop
+            --settings.chromeFlags='--headless --no-sandbox --disable-gpu'
           mkdir -p "$GITHUB_WORKSPACE/artifacts/lighthouse"
           cp -R .lighthouseci/. "$GITHUB_WORKSPACE/artifacts/lighthouse/"
+
+      - name: Install verified Ollama for real open-source AI review
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq zstd
+          curl --fail --location --retry 4 \
+            "https://github.com/ollama/ollama/releases/download/v${OLLAMA_VERSION}/ollama-linux-amd64.tar.zst" \
+            --output /tmp/ollama.tar.zst
+          echo "${OLLAMA_SHA256}  /tmp/ollama.tar.zst" | sha256sum --check --strict
+          sudo tar --zstd -xf /tmp/ollama.tar.zst -C /usr
+          ollama --version
+
+      - name: Run Qwen review inside the GitHub cloud computer
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        continue-on-error: true
+        run: |
+          OLLAMA_HOST=127.0.0.1:11434 OLLAMA_CONTEXT_LENGTH=16384 ollama serve > /tmp/ollama.log 2>&1 &
+          echo $! > /tmp/ollama.pid
+          for attempt in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          ollama pull "$QWEN_MODEL"
+          node tools/free-web-agent/qwen-review.mjs
 
       - name: Build human-readable web-agent report
         if: always()
@@ -131,6 +164,7 @@ jobs:
             artifacts/**
             gitleaks-report.json
             /tmp/nexus-preview.log
+            /tmp/ollama.log
           if-no-files-found: warn
           retention-days: 14
 
@@ -149,9 +183,8 @@ jobs:
               gh issue create --title "$TITLE" --body-file "$BODY_FILE"
           fi
 
-      - name: Stop preview server
+      - name: Stop temporary cloud services
         if: always()
         run: |
-          if [ -f /tmp/nexus-preview.pid ]; then
-            kill "$(cat /tmp/nexus-preview.pid)" || true
-          fi
+          if [ -f /tmp/nexus-preview.pid ]; then kill "$(cat /tmp/nexus-preview.pid)" || true; fi
+          if [ -f /tmp/ollama.pid ]; then kill "$(cat /tmp/ollama.pid)" || true; fi
