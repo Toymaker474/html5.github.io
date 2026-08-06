@@ -10,6 +10,7 @@ on:
       - 'nexus-science-core-v7/src/main.js'
       - 'nexus-science-core-v7/src/operationalCore.js'
       - 'nexus-science-core-v7/src/mobileCameraFraming.js'
+      - 'nexus-science-core-v7/src/mobileRendererOverhaul.js'
       - 'nexus-science-core-v7/src/productionArtDirection.js'
       - 'nexus-science-core-v7/src/mujocoRuntime.js'
       - 'nexus-science-core-v7/src/controller.js'
@@ -45,8 +46,10 @@ jobs:
           npm install --ignore-scripts=false
           node --check src/operationalCore.js
           node --check src/mobileCameraFraming.js
+          node --check src/mobileRendererOverhaul.js
           grep -q "nexus.operational-core.v1" src/operationalCore.js
-          grep -q "installOperationalCore" src/mobileCameraFraming.js
+          grep -q "applyMobileRendererOverhaul" src/mobileCameraFraming.js
+          grep -q "standard-lit-cad" src/mobileRendererOverhaul.js
           npm run build
           test -f dist/index.html
 
@@ -171,9 +174,14 @@ jobs:
             throw new Error('Operational controls remained bound to the old preset runtime.');
           }
 
-          await page.waitForFunction(() => window.__NEXUS_V7__?.renderer?.mobileCameraFit?.horizontallyContained === true, null, { timeout: 30000 });
+          await page.waitForFunction(() => {
+            const fit = window.__NEXUS_V7__?.renderer?.mobileCameraFit;
+            return fit?.horizontallyContained === true && fit?.readableFill === true;
+          }, null, { timeout: 30000 });
+          await page.waitForTimeout(900);
+
           const report = await page.evaluate(() => ({
-            schema: 'nexus.operational-browser-proof.v1',
+            schema: 'nexus.operational-browser-proof.v2',
             activePreset: window.__NEXUS_V7__.activePreset.id,
             runtimeTime: window.__NEXUS_V7__.runtime.data.time,
             generation: window.__NEXUS_V7__.experiment.generation,
@@ -193,10 +201,27 @@ jobs:
           if (report.ledger.length !== 6 || report.ledger.some(row => row.status !== 'pass')) {
             throw new Error(`Incomplete command ledger: ${JSON.stringify(report.ledger)}`);
           }
-          if (report.performanceProfile?.shadowsEnabled !== false || report.performanceProfile?.radiusSafeFollow !== true) {
-            throw new Error(`Functional renderer profile missing: ${JSON.stringify(report.performanceProfile)}`);
+          const profile = report.performanceProfile;
+          if (
+            profile?.schema !== 'nexus.mobile-renderer-overhaul.v2' ||
+            profile?.materialMode !== 'standard-lit-cad' ||
+            profile?.authoredCadPreserved !== true ||
+            profile?.shadowsEnabled !== false ||
+            profile?.radiusSafeFollow !== true ||
+            profile?.disabledDecorationCount < 18 ||
+            profile?.renderWidth < 180 ||
+            profile?.renderHeight < 400
+          ) {
+            throw new Error(`Mobile renderer overhaul missing: ${JSON.stringify(profile)}`);
           }
-          if (!(report.frameRate > 1)) throw new Error(`Render loop stalled at ${report.frameRate} FPS.`);
+          const bounds = report.cameraFit?.viewportBounds;
+          if (
+            report.cameraFit?.readableFill !== true ||
+            !bounds || bounds.widthRatio < 0.62 || bounds.widthRatio > 0.84
+          ) {
+            throw new Error(`Robot is still too small or cropped: ${JSON.stringify(report.cameraFit)}`);
+          }
+          if (!(report.frameRate > 4)) throw new Error(`Render loop remained unusable at ${report.frameRate} FPS.`);
           if (diagnostics.length) throw new Error(`Browser diagnostics failed: ${diagnostics.join(' | ')}`);
           if (report.controlLabels.some(button => button.disabled)) throw new Error('A tool remained disabled after the verified command sequence.');
 
