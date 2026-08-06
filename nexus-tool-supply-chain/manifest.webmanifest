@@ -1,0 +1,12 @@
+{
+  "name": "NEXUS Tool Exchange",
+  "short_name": "Tool Exchange",
+  "description": "Free, open-source, evidence-driven tools for humans and AI agents.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#050908",
+  "theme_color": "#07100f",
+  "orientation": "any",
+  "categories": ["developer", "productivity", "utilities"]
+}
