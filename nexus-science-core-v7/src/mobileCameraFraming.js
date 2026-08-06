@@ -1,9 +1,13 @@
 import { Matrix, Vector3 } from '@babylonjs/core';
 import { installOperationalCore } from './operationalCore.js';
+import { applyMobileRendererOverhaul } from './mobileRendererOverhaul.js';
 
 const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, value));
-const MOBILE_EDGE_MARGIN_PX = 14;
-const SETTLE_MILLISECONDS = 2800;
+const MOBILE_EDGE_MARGIN_PX = 10;
+const TARGET_FILL_RATIO = 0.70;
+const MIN_READABLE_FILL_RATIO = 0.62;
+const MAX_READABLE_FILL_RATIO = 0.84;
+const SETTLE_MILLISECONDS = 4200;
 
 function isRobotMesh(mesh) {
   const name = String(mesh?.name || '');
@@ -29,9 +33,9 @@ function calculateFitRadius(renderer, preset) {
   const longitudinalHalfSpan = morphology.torso.halfLength + morphology.leg.footRadius;
   const projectedHalfSpan = Math.hypot(longitudinalHalfSpan * 0.65, lateralHalfSpan * 0.90);
   return clamp(
-    projectedHalfSpan / Math.max(0.08, Math.tan(horizontalFov / 2)) * 1.35,
-    5.55,
-    8.4,
+    projectedHalfSpan / Math.max(0.08, Math.tan(horizontalFov / 2)) * 1.08,
+    4.15,
+    7.2,
   );
 }
 
@@ -65,18 +69,25 @@ function measureRobotBounds(renderer) {
   }
 
   if (!projectedPoints) return null;
+  const projectedWidth = right - left;
+  const widthRatio = projectedWidth / width;
+  const horizontallyContained = left >= MOBILE_EDGE_MARGIN_PX && right <= width - MOBILE_EDGE_MARGIN_PX;
   return Object.freeze({
     left,
     right,
     top,
     bottom,
-    width: right - left,
+    width: projectedWidth,
     height: bottom - top,
+    widthRatio,
     viewportWidth: width,
     viewportHeight: height,
     meshCount: meshes.length,
     projectedPoints,
-    horizontallyContained: left >= MOBILE_EDGE_MARGIN_PX && right <= width - MOBILE_EDGE_MARGIN_PX,
+    horizontallyContained,
+    readableFill: horizontallyContained &&
+      widthRatio >= MIN_READABLE_FILL_RATIO &&
+      widthRatio <= MAX_READABLE_FILL_RATIO,
   });
 }
 
@@ -107,17 +118,18 @@ function installGarageBackdropObserver() {
   sync();
 }
 
-function enforceSafeRadius(renderer, safeRadius) {
+function enforceSafeRadius(renderer, fittedRadius) {
   const camera = renderer.camera;
-  const boundedRadius = clamp(safeRadius, 2.8, 11.5);
+  const boundedRadius = clamp(fittedRadius, 2.8, 11.5);
+  const inspectionFloor = Math.max(2.65, boundedRadius * 0.92);
 
   camera.inertialRadiusOffset = 0;
-  camera.lowerRadiusLimit = boundedRadius;
+  camera.lowerRadiusLimit = inspectionFloor;
   camera.upperRadiusLimit = Math.max(12, boundedRadius + 1);
-  if (!Number.isFinite(camera.radius) || camera.radius < boundedRadius) {
-    camera.radius = boundedRadius;
+  if (!Number.isFinite(camera.radius) || camera.radius < inspectionFloor) {
+    camera.radius = inspectionFloor;
   }
-  renderer.mobileMinimumRadius = boundedRadius;
+  renderer.mobileMinimumRadius = inspectionFloor;
   return boundedRadius;
 }
 
@@ -129,52 +141,67 @@ export function installMobileCameraFraming() {
   let activePresetId = null;
   let settleUntil = 0;
   let frame = 0;
-  let safeRadius = 5.55;
+  let fittedRadius = 4.8;
 
   function applyInitialFit(renderer, preset) {
-    safeRadius = calculateFitRadius(renderer, preset);
+    applyMobileRendererOverhaul(renderer);
+    fittedRadius = calculateFitRadius(renderer, preset);
     renderer.camera.alpha = -Math.PI / 2.28;
     renderer.camera.beta = 1.03;
-    renderer.camera.radius = safeRadius;
-    enforceSafeRadius(renderer, safeRadius);
+    renderer.camera.radius = fittedRadius;
+    enforceSafeRadius(renderer, fittedRadius);
     renderer.mobileCameraFit = Object.freeze({
-      schema: 'nexus.mobile-camera-fit.v1',
+      schema: 'nexus.mobile-camera-fit.v2',
       presetId: preset.id,
-      targetRadius: safeRadius,
-      safeMinimumRadius: safeRadius,
+      targetRadius: fittedRadius,
+      safeMinimumRadius: renderer.mobileMinimumRadius,
       appliedRadius: renderer.camera.radius,
+      targetFillRatio: TARGET_FILL_RATIO,
       viewportBounds: null,
       horizontallyContained: false,
+      readableFill: false,
       settled: false,
     });
     settleUntil = performance.now() + SETTLE_MILLISECONDS;
   }
 
   function updateFitEvidence(renderer, preset) {
-    enforceSafeRadius(renderer, safeRadius);
+    enforceSafeRadius(renderer, fittedRadius);
     const bounds = measureRobotBounds(renderer);
     if (!bounds) return;
 
-    if (performance.now() < settleUntil && !bounds.horizontallyContained) {
+    const settling = performance.now() < settleUntil;
+    if (!bounds.horizontallyContained) {
       const leftOverflow = Math.max(0, MOBILE_EDGE_MARGIN_PX - bounds.left);
       const rightOverflow = Math.max(0, bounds.right - (bounds.viewportWidth - MOBILE_EDGE_MARGIN_PX));
       const overflow = Math.max(leftOverflow, rightOverflow);
-      const scale = clamp(1 + overflow / Math.max(180, bounds.viewportWidth) * 1.35, 1.03, 1.22);
-      safeRadius = enforceSafeRadius(renderer, Math.max(safeRadius, renderer.camera.radius * scale));
-      renderer.camera.radius = safeRadius;
+      const scaleOut = clamp(1 + overflow / Math.max(120, bounds.viewportWidth) * 1.45, 1.025, 1.20);
+      fittedRadius = clamp(Math.max(fittedRadius, renderer.camera.radius) * scaleOut, 2.8, 11.5);
+      renderer.camera.radius = fittedRadius;
+    } else if (settling && bounds.widthRatio < MIN_READABLE_FILL_RATIO) {
+      const scaleIn = clamp(bounds.widthRatio / TARGET_FILL_RATIO, 0.78, 0.97);
+      fittedRadius = clamp(renderer.camera.radius * scaleIn, 2.8, 11.5);
+      renderer.camera.radius = fittedRadius;
+    } else if (settling && bounds.widthRatio > MAX_READABLE_FILL_RATIO) {
+      const scaleOut = clamp(bounds.widthRatio / TARGET_FILL_RATIO, 1.03, 1.16);
+      fittedRadius = clamp(renderer.camera.radius * scaleOut, 2.8, 11.5);
+      renderer.camera.radius = fittedRadius;
     }
 
-    enforceSafeRadius(renderer, safeRadius);
+    enforceSafeRadius(renderer, fittedRadius);
     const finalBounds = measureRobotBounds(renderer) || bounds;
     renderer.mobileCameraFit = Object.freeze({
-      schema: 'nexus.mobile-camera-fit.v1',
+      schema: 'nexus.mobile-camera-fit.v2',
       presetId: preset.id,
       targetRadius: calculateFitRadius(renderer, preset),
-      safeMinimumRadius: safeRadius,
+      fittedRadius,
+      safeMinimumRadius: renderer.mobileMinimumRadius,
       appliedRadius: renderer.camera.radius,
+      targetFillRatio: TARGET_FILL_RATIO,
       viewportBounds: finalBounds,
       horizontallyContained: finalBounds.horizontallyContained,
-      settled: performance.now() >= settleUntil || finalBounds.horizontallyContained,
+      readableFill: finalBounds.readableFill,
+      settled: finalBounds.readableFill || performance.now() >= settleUntil,
     });
   }
 
@@ -190,9 +217,10 @@ export function installMobileCameraFraming() {
     }
 
     if (renderer && preset && renderer === activeRenderer) {
+      applyMobileRendererOverhaul(renderer);
       frame += 1;
-      if (frame % 8 === 0) updateFitEvidence(renderer, preset);
-      else enforceSafeRadius(renderer, safeRadius);
+      if (frame % 6 === 0) updateFitEvidence(renderer, preset);
+      else enforceSafeRadius(renderer, fittedRadius);
     }
 
     requestAnimationFrame(tick);
