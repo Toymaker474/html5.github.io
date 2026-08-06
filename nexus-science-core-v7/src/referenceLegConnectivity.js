@@ -7,7 +7,7 @@ import {
   Vector3,
 } from '@babylonjs/core';
 
-const REFERENCE_LEG = 'fl';
+const LEG_IDS = Object.freeze(['fl', 'ml', 'rl', 'fr', 'mr', 'rr']);
 const EPSILON = 1e-7;
 
 function makeMaterial(scene, name, albedo, metallic, roughness) {
@@ -69,7 +69,7 @@ function setSegmentBetween(node, start, end) {
   const direction = end.subtract(start);
   const length = direction.length();
   if (!Number.isFinite(length) || length < EPSILON) {
-    throw new Error(`${node.name}: reference-leg segment has zero or invalid length.`);
+    throw new Error(`${node.name}: connected-leg segment has zero or invalid length.`);
   }
   node.position.copyFrom(start.add(end).scale(0.5));
   node.rotationQuaternion = quaternionFromTo(Vector3.Up(), direction);
@@ -92,12 +92,13 @@ function updateAxle(mesh, position, axis) {
   mesh.rotationQuaternion = quaternionFromTo(Vector3.Up(), axis);
 }
 
-function cloneCoxa(renderer, parent) {
-  const template = renderer.cad?.templates?.['coxa-left'];
-  if (!template) throw new Error('Pinned CAD library is missing coxa-left.');
+function cloneCoxa(renderer, parent, legId) {
+  const side = legId.endsWith('l') ? 'left' : 'right';
+  const template = renderer.cad?.templates?.[`coxa-${side}`];
+  if (!template) throw new Error(`Pinned CAD library is missing coxa-${side}.`);
 
-  const mesh = template.mesh.clone('reference-fl-coxa-cad', parent, false);
-  if (!mesh) throw new Error('Unable to clone front-left coxa CAD.');
+  const mesh = template.mesh.clone(`connected-${legId}-coxa-cad`, parent, false);
+  if (!mesh) throw new Error(`Unable to clone ${legId} coxa CAD.`);
   mesh.setEnabled(true);
   mesh.isVisible = true;
   mesh.isPickable = false;
@@ -108,67 +109,72 @@ function cloneCoxa(renderer, parent) {
   return mesh;
 }
 
-function createHardware(renderer) {
-  const root = new TransformNode('reference-fl-connectivity-root', renderer.scene);
-  const mountMaterial = makeMaterial(
-    renderer.scene,
-    'reference-fl-load-bearing-aluminium',
-    new Color3(0.115, 0.125, 0.128),
-    0.88,
-    0.28,
-  );
-  const axleMaterial = makeMaterial(
-    renderer.scene,
-    'reference-fl-machined-joint-steel',
-    new Color3(0.25, 0.255, 0.25),
-    0.95,
-    0.19,
-  );
-  const sealMaterial = makeMaterial(
-    renderer.scene,
-    'reference-fl-bearing-seal',
-    new Color3(0.025, 0.028, 0.029),
-    0.06,
-    0.92,
-  );
+function createSharedMaterials(renderer) {
+  return {
+    mount: makeMaterial(
+      renderer.scene,
+      'connected-leg-load-bearing-aluminium',
+      new Color3(0.115, 0.125, 0.128),
+      0.88,
+      0.28,
+    ),
+    axle: makeMaterial(
+      renderer.scene,
+      'connected-leg-machined-joint-steel',
+      new Color3(0.25, 0.255, 0.25),
+      0.95,
+      0.19,
+    ),
+    seal: makeMaterial(
+      renderer.scene,
+      'connected-leg-bearing-seal',
+      new Color3(0.025, 0.028, 0.029),
+      0.06,
+      0.92,
+    ),
+  };
+}
 
-  const hipCarrier = MeshBuilder.CreateCylinder('reference-fl-hip-carrier', {
+function createHardware(renderer, materials, legId) {
+  const root = new TransformNode(`connected-${legId}-root`, renderer.scene);
+
+  const hipCarrier = MeshBuilder.CreateCylinder(`connected-${legId}-hip-carrier`, {
     height: 1,
     diameter: 0.082,
     tessellation: 28,
   }, renderer.scene);
   hipCarrier.parent = root;
-  hipCarrier.material = mountMaterial;
+  hipCarrier.material = materials.mount;
   hipCarrier.isPickable = false;
   renderer.shadowGenerator.addShadowCaster(hipCarrier, false);
 
-  const hipAxle = MeshBuilder.CreateCylinder('reference-fl-hip-axle', {
+  const hipAxle = MeshBuilder.CreateCylinder(`connected-${legId}-hip-axle`, {
     height: 0.145,
     diameter: 0.096,
     tessellation: 32,
   }, renderer.scene);
   hipAxle.parent = root;
-  hipAxle.material = axleMaterial;
+  hipAxle.material = materials.axle;
   hipAxle.isPickable = false;
   renderer.shadowGenerator.addShadowCaster(hipAxle, false);
 
-  const kneeAxle = MeshBuilder.CreateCylinder('reference-fl-knee-axle', {
+  const kneeAxle = MeshBuilder.CreateCylinder(`connected-${legId}-knee-axle`, {
     height: 0.128,
     diameter: 0.088,
     tessellation: 32,
   }, renderer.scene);
   kneeAxle.parent = root;
-  kneeAxle.material = axleMaterial;
+  kneeAxle.material = materials.axle;
   kneeAxle.isPickable = false;
   renderer.shadowGenerator.addShadowCaster(kneeAxle, false);
 
-  const ankleAxle = MeshBuilder.CreateCylinder('reference-fl-ankle-axle', {
+  const ankleAxle = MeshBuilder.CreateCylinder(`connected-${legId}-ankle-axle`, {
     height: 0.105,
     diameter: 0.072,
     tessellation: 28,
   }, renderer.scene);
   ankleAxle.parent = root;
-  ankleAxle.material = axleMaterial;
+  ankleAxle.material = materials.axle;
   ankleAxle.isPickable = false;
   renderer.shadowGenerator.addShadowCaster(ankleAxle, false);
 
@@ -177,21 +183,21 @@ function createHardware(renderer) {
     ['knee', 0.096],
     ['ankle', 0.080],
   ].map(([joint, diameter]) => {
-    const seal = MeshBuilder.CreateTorus(`reference-fl-${joint}-bearing-seal`, {
+    const seal = MeshBuilder.CreateTorus(`connected-${legId}-${joint}-bearing-seal`, {
       diameter,
       thickness: 0.010,
       tessellation: 32,
     }, renderer.scene);
     seal.parent = root;
-    seal.material = sealMaterial;
+    seal.material = materials.seal;
     seal.isPickable = false;
     renderer.shadowGenerator.addShadowCaster(seal, false);
     return seal;
   });
 
-  const coxaRoot = new TransformNode('reference-fl-coxa-root', renderer.scene);
+  const coxaRoot = new TransformNode(`connected-${legId}-coxa-root`, renderer.scene);
   coxaRoot.parent = root;
-  const coxa = cloneCoxa(renderer, coxaRoot);
+  const coxa = cloneCoxa(renderer, coxaRoot, legId);
 
   return {
     root,
@@ -202,45 +208,36 @@ function createHardware(renderer) {
     kneeAxle,
     ankleAxle,
     seals,
-    materials: [mountMaterial, axleMaterial, sealMaterial],
   };
 }
 
-function roleForGeom(connectivity, geom) {
-  const alpha = Number(geom.rgba?.[3] ?? 1);
-  if (alpha < 0.01) return null;
-  const objectType = Number(geom.objtype);
-  if (Number.isFinite(objectType) && objectType !== connectivity.geomObjectType) return null;
-  const objectId = Number(geom.objid);
-  for (const [role, id] of Object.entries(connectivity.geomIds)) {
-    if (id === objectId) return role;
-  }
-  return null;
-}
-
 function locateAssemblies(renderer) {
-  const found = {};
+  const found = { torso: null, legs: Object.fromEntries(LEG_IDS.map((legId) => [legId, {}])) };
   for (const assembly of renderer.meshes) {
-    const role = assembly?.metadata?.referenceLegRole;
-    if (role) found[role] = assembly;
+    const role = assembly?.metadata?.connectedLegRole;
+    if (!role) continue;
+    if (role === 'torso') {
+      found.torso = assembly;
+      continue;
+    }
+    const legId = assembly?.metadata?.connectedLeg;
+    if (found.legs[legId]) found.legs[legId][role] = assembly;
   }
   return found;
 }
 
-function validateConnectedState(connectivity, points, lengths) {
+function validateLegState(leg, points, lengths) {
   const finitePoints = Object.entries(points).every(([, point]) =>
     [point.x, point.y, point.z].every(Number.isFinite));
-  if (!finitePoints) throw new Error('Reference-leg connectivity contains non-finite pivot coordinates.');
+  if (!finitePoints) throw new Error(`${leg.id}: connectivity contains non-finite pivot coordinates.`);
 
   const minimumLength = Math.min(lengths.upper, lengths.lower, lengths.mount);
   if (!Number.isFinite(minimumLength) || minimumLength < 0.035) {
-    throw new Error(`Reference-leg connectivity produced an invalid link length: ${minimumLength}`);
+    throw new Error(`${leg.id}: connectivity produced an invalid link length: ${minimumLength}`);
   }
 
-  connectivity.report = Object.freeze({
-    cycle: 1,
-    increment: 1,
-    referenceLeg: REFERENCE_LEG,
+  leg.report = Object.freeze({
+    leg: leg.id,
     connected: true,
     authoritativePivots: true,
     floatingParts: 0,
@@ -250,23 +247,20 @@ function validateConnectedState(connectivity, points, lengths) {
     mountLengthMetres: lengths.mount,
     upperLengthMetres: lengths.upper,
     lowerLengthMetres: lengths.lower,
-    updatedAtSimulationSeconds: Number(connectivity.renderer.runtime.data.time),
   });
+  leg.ready = true;
 }
 
-function updateConnectivity(connectivity) {
-  const { renderer } = connectivity;
-  const assemblies = locateAssemblies(renderer);
-  if (!assemblies.torso || !assemblies.upper || !assemblies.lower || !assemblies.foot) {
-    connectivity.ready = false;
+function updateLeg(connectivity, leg, assemblies, bodyCenter) {
+  if (!assemblies.upper || !assemblies.lower || !assemblies.foot) {
+    leg.ready = false;
     return;
   }
 
-  const positions = renderer.runtime.data.xpos;
-  const bodyCenter = toBabylonPosition(positions, connectivity.bodyIds.robot);
-  const hip = toBabylonPosition(positions, connectivity.bodyIds.hip);
-  const knee = toBabylonPosition(positions, connectivity.bodyIds.knee);
-  const foot = toBabylonPosition(positions, connectivity.bodyIds.foot);
+  const positions = connectivity.renderer.runtime.data.xpos;
+  const hip = toBabylonPosition(positions, leg.bodyIds.hip);
+  const knee = toBabylonPosition(positions, leg.bodyIds.knee);
+  const foot = toBabylonPosition(positions, leg.bodyIds.foot);
 
   const upperDirection = knee.subtract(hip);
   const lowerDirection = foot.subtract(knee);
@@ -279,87 +273,147 @@ function updateConnectivity(connectivity) {
   assemblies.foot.position.copyFrom(foot);
   assemblies.foot.rotationQuaternion = quaternionFromTo(Vector3.Up(), lowerDirection);
 
-  updateRod(connectivity.hardware.hipCarrier, torsoMount, hip);
+  updateRod(leg.hardware.hipCarrier, torsoMount, hip);
 
-  const bodyUp = Vector3.Up();
   const hipAxis = stableJointAxis(mountDirection, upperDirection, Vector3.Forward());
   const kneeAxis = stableJointAxis(upperDirection, lowerDirection, Vector3.Forward());
-  const ankleAxis = stableJointAxis(lowerDirection, bodyUp, Vector3.Right());
-  updateAxle(connectivity.hardware.hipAxle, hip, hipAxis);
-  updateAxle(connectivity.hardware.kneeAxle, knee, kneeAxis);
-  updateAxle(connectivity.hardware.ankleAxle, foot, ankleAxis);
+  const ankleAxis = stableJointAxis(lowerDirection, Vector3.Up(), Vector3.Right());
+  updateAxle(leg.hardware.hipAxle, hip, hipAxis);
+  updateAxle(leg.hardware.kneeAxle, knee, kneeAxis);
+  updateAxle(leg.hardware.ankleAxle, foot, ankleAxis);
 
-  const [hipSeal, kneeSeal, ankleSeal] = connectivity.hardware.seals;
+  const [hipSeal, kneeSeal, ankleSeal] = leg.hardware.seals;
   updateAxle(hipSeal, hip, hipAxis);
   updateAxle(kneeSeal, knee, kneeAxis);
   updateAxle(ankleSeal, foot, ankleAxis);
 
-  connectivity.hardware.coxaRoot.position.copyFrom(hip);
-  connectivity.hardware.coxaRoot.rotationQuaternion = quaternionFromTo(Vector3.Up(), upperDirection);
+  leg.hardware.coxaRoot.position.copyFrom(hip);
+  leg.hardware.coxaRoot.rotationQuaternion = quaternionFromTo(Vector3.Up(), upperDirection);
 
-  validateConnectedState(connectivity, {
-    bodyCenter,
-    torsoMount,
-    hip,
-    knee,
-    foot,
-  }, {
+  validateLegState(leg, { bodyCenter, torsoMount, hip, knee, foot }, {
     mount: Vector3.Distance(torsoMount, hip),
     upper: upperLength,
     lower: lowerLength,
   });
-  connectivity.ready = true;
 }
 
-export function installReferenceLegConnectivity(renderer) {
+function updateConnectivity(connectivity) {
+  const { renderer } = connectivity;
+  const assemblies = locateAssemblies(renderer);
+  if (!assemblies.torso) {
+    connectivity.ready = false;
+    return;
+  }
+
+  const bodyCenter = toBabylonPosition(renderer.runtime.data.xpos, connectivity.robotBodyId);
+  for (const legId of LEG_IDS) {
+    updateLeg(connectivity, connectivity.legs[legId], assemblies.legs[legId], bodyCenter);
+  }
+
+  const legReports = LEG_IDS.map((legId) => connectivity.legs[legId].report);
+  const connectedLegs = legReports.filter((report) => report?.connected === true).length;
+  const allConnected = connectedLegs === LEG_IDS.length;
+  const floatingParts = legReports.reduce((sum, report) => sum + Number(report?.floatingParts ?? 1), 0);
+  const duplicateCoxa = legReports.reduce((sum, report) => sum + Number(report?.duplicateCoxa ?? 1), 0);
+  const maximumPivotGapMetres = Math.max(...legReports.map((report) => Number(report?.maximumPivotGapMetres ?? Infinity)));
+
+  connectivity.report = Object.freeze({
+    cycle: 1,
+    increment: 2,
+    connected: allConnected,
+    authoritativePivots: allConnected,
+    connectedLegs,
+    expectedLegs: LEG_IDS.length,
+    legOrder: [...LEG_IDS],
+    floatingParts,
+    duplicateCoxa,
+    visualChain: 'torso→coxa→femur→tibia→foot × 6',
+    maximumPivotGapMetres,
+    legs: Object.freeze(legReports),
+    updatedAtSimulationSeconds: Number(renderer.runtime.data.time),
+  });
+  connectivity.ready = allConnected && floatingParts === 0 && duplicateCoxa === 0 && maximumPivotGapMetres === 0;
+}
+
+function roleForGeom(connectivity, geom) {
+  const alpha = Number(geom.rgba?.[3] ?? 1);
+  if (alpha < 0.01) return null;
+  const objectType = Number(geom.objtype);
+  if (Number.isFinite(objectType) && objectType !== connectivity.geomObjectType) return null;
+  const objectId = Number(geom.objid);
+  if (objectId === connectivity.torsoGeomId) return { role: 'torso', legId: null };
+  return connectivity.geomRoleIndex.get(objectId) || null;
+}
+
+export function installAllLegConnectivity(renderer) {
   if (!renderer?.runtime?.mujoco || !renderer?.runtime?.model) {
-    throw new Error('Reference-leg connectivity requires an initialized MuJoCo runtime.');
+    throw new Error('All-leg connectivity requires an initialized MuJoCo runtime.');
   }
   if (!renderer.artDirection?.authoredCad) {
-    throw new Error('Reference-leg connectivity refuses to attach to a procedural robot shell.');
+    throw new Error('All-leg connectivity refuses to attach to a procedural robot shell.');
   }
 
   const { runtime } = renderer;
   const bodyObjectType = runtime.mujoco.mjtObj.mjOBJ_BODY.value;
   const geomObjectType = runtime.mujoco.mjtObj.mjOBJ_GEOM.value;
+  const materials = createSharedMaterials(renderer);
+  const legs = {};
+  const geomRoleIndex = new Map();
+
+  for (const legId of LEG_IDS) {
+    const leg = {
+      id: legId,
+      ready: false,
+      report: Object.freeze({ leg: legId, connected: false, floatingParts: null }),
+      bodyIds: {
+        hip: resolveId(runtime, bodyObjectType, `hip_${legId}_body`),
+        knee: resolveId(runtime, bodyObjectType, `knee_${legId}_body`),
+        foot: resolveId(runtime, bodyObjectType, `foot_${legId}_body`),
+      },
+      geomIds: {
+        upper: resolveId(runtime, geomObjectType, `upper_${legId}`),
+        lower: resolveId(runtime, geomObjectType, `lower_${legId}`),
+        foot: resolveId(runtime, geomObjectType, `foot_${legId}`),
+      },
+      hardware: null,
+    };
+    leg.hardware = createHardware(renderer, materials, legId);
+    legs[legId] = leg;
+    for (const [role, objectId] of Object.entries(leg.geomIds)) {
+      if (geomRoleIndex.has(objectId)) throw new Error(`Duplicate MuJoCo geometry id ${objectId} while mapping ${legId}.${role}.`);
+      geomRoleIndex.set(objectId, Object.freeze({ role, legId }));
+    }
+  }
+
   const connectivity = {
-    id: 'nexus.reference-leg-connectivity.v1',
+    id: 'nexus.all-leg-connectivity.v2',
     renderer,
     ready: false,
     report: Object.freeze({
       cycle: 1,
-      increment: 1,
-      referenceLeg: REFERENCE_LEG,
+      increment: 2,
       connected: false,
+      connectedLegs: 0,
+      expectedLegs: LEG_IDS.length,
       floatingParts: null,
     }),
-    bodyIds: {
-      robot: resolveId(runtime, bodyObjectType, 'robot'),
-      hip: resolveId(runtime, bodyObjectType, `hip_${REFERENCE_LEG}_body`),
-      knee: resolveId(runtime, bodyObjectType, `knee_${REFERENCE_LEG}_body`),
-      foot: resolveId(runtime, bodyObjectType, `foot_${REFERENCE_LEG}_body`),
-    },
-    geomIds: {
-      torso: resolveId(runtime, geomObjectType, 'torso_collision'),
-      upper: resolveId(runtime, geomObjectType, `upper_${REFERENCE_LEG}`),
-      lower: resolveId(runtime, geomObjectType, `lower_${REFERENCE_LEG}`),
-      foot: resolveId(runtime, geomObjectType, `foot_${REFERENCE_LEG}`),
-    },
+    robotBodyId: resolveId(runtime, bodyObjectType, 'robot'),
+    torsoGeomId: resolveId(runtime, geomObjectType, 'torso_collision'),
     geomObjectType,
-    hardware: null,
+    geomRoleIndex,
+    legs,
+    materials,
   };
-
-  connectivity.hardware = createHardware(renderer);
 
   const originalCreateVisualAssembly = renderer.createVisualAssembly.bind(renderer);
   renderer.createVisualAssembly = function createConnectedVisualAssembly(index, geom) {
     const assembly = originalCreateVisualAssembly(index, geom);
-    const role = roleForGeom(connectivity, geom);
-    if (role) {
+    const mapping = roleForGeom(connectivity, geom);
+    if (mapping) {
       assembly.metadata = {
         ...(assembly.metadata || {}),
-        referenceLegRole: role,
-        referenceLeg: REFERENCE_LEG,
+        connectedLegRole: mapping.role,
+        connectedLeg: mapping.legId,
         authoritativeObjectId: Number(geom.objid),
       };
     }
@@ -367,18 +421,19 @@ export function installReferenceLegConnectivity(renderer) {
   };
 
   const originalSync = renderer.sync.bind(renderer);
-  renderer.sync = function syncWithReferenceConnectivity() {
+  renderer.sync = function syncWithAllLegConnectivity() {
     originalSync();
     updateConnectivity(connectivity);
   };
 
   const originalDispose = renderer.dispose.bind(renderer);
-  renderer.dispose = function disposeWithReferenceConnectivity() {
-    connectivity.hardware.root.dispose(false, false);
-    connectivity.hardware.materials.forEach((material) => material.dispose());
+  renderer.dispose = function disposeWithAllLegConnectivity() {
+    for (const legId of LEG_IDS) connectivity.legs[legId].hardware.root.dispose(false, false);
+    Object.values(connectivity.materials).forEach((material) => material.dispose());
     originalDispose();
   };
 
   renderer.referenceLegConnectivity = connectivity;
+  renderer.allLegConnectivity = connectivity;
   return connectivity;
 }
