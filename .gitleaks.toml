@@ -1,0 +1,12 @@
+title = "NEXUS secret-scanning rules"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "God Genic browser localStorage key name is not a password or API credential"
+targetRules = ["generic-api-key"]
+condition = "AND"
+regexTarget = "line"
+paths = ['''^sandbox-god-genic/src/rewarded-ad\.js$''']
+regexes = ['''^const STORAGE_KEY=['"]godgenic_rewarded_ad_v1['"];$''']
