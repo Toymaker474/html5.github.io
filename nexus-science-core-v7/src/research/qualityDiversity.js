@@ -37,7 +37,13 @@ export class QualityDiversityArchive {
   constructor({ binsX = 12, binsY = 12, seed = 0x4d415045 } = {}) {
     this.binsX = binsX;
     this.binsY = binsY;
-    this.random = new DeterministicRandom(seed);
+    this.seed = seed >>> 0;
+    this.reset(this.seed);
+  }
+
+  reset(seed = this.seed) {
+    this.seed = seed >>> 0;
+    this.random = new DeterministicRandom(this.seed);
     this.cells = new Map();
     this.insertions = 0;
     this.replacements = 0;
