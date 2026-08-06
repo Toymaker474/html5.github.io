@@ -1,0 +1,389 @@
+name: NEXUS V7 Realism Cycle 01 Step 02
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - nexus-mujoco-science-core-v7
+    paths:
+      - 'nexus-science-core-v7/**'
+      - '.github/workflows/nexus-v7-cycle01-step02.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nexus-v7-cycle01-step02
+  cancel-in-progress: false
+
+jobs:
+  test-render-publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout exact V7 branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: nexus-mujoco-science-core-v7
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Build and enforce source gates
+        working-directory: nexus-science-core-v7
+        run: |
+          npm install --ignore-scripts=false
+          node --check src/referenceLegConnectivity.js
+          node --check src/main.js
+          npm run build
+          test -f dist/index.html
+          test -f dist/cad/manifest.json
+          grep -q 'installAllLegConnectivity' src/main.js
+          grep -q 'nexus.all-leg-connectivity.v2' src/referenceLegConnectivity.js
+          grep -q "const LEG_IDS = Object.freeze(\['fl', 'ml', 'rl', 'fr', 'mr', 'rr'\])" src/referenceLegConnectivity.js
+          grep -q 'connectedLegs' src/referenceLegConnectivity.js
+          grep -q "visualChain: 'torso→coxa→femur→tibia→foot × 6'" src/referenceLegConnectivity.js
+          ! grep -R "position\.x +=\|rotation\.y +=\|Math\.sin.*mesh" src --include='*.js'
+
+      - name: Install capture and browser tooling
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          mkdir -p cycle01-step02-runner artifacts/frames
+          cd cycle01-step02-runner
+          npm init -y >/dev/null
+          npm install playwright@1.55.0 >/dev/null
+          npx playwright install --with-deps chromium
+
+      - name: Run full local simulation, evolution, mobile, and connectivity test
+        run: |
+          cd nexus-science-core-v7
+          npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/nexus-cycle01-step02-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          cd ..
+          trap 'kill $PREVIEW_PID || true' EXIT
+          cat > cycle01-step02-runner/evidence.mjs <<'EOF_NODE'
+          import { writeFile } from 'node:fs/promises';
+          import { chromium } from 'playwright';
+
+          const LEG_IDS = ['fl', 'ml', 'rl', 'fr', 'mr', 'rr'];
+          const browser = await chromium.launch({
+            headless: true,
+            args: [
+              '--use-gl=swiftshader',
+              '--enable-webgl',
+              '--enable-unsafe-swiftshader',
+              '--ignore-gpu-blocklist',
+            ],
+          });
+          const context = await browser.newContext({
+            viewport: { width: 430, height: 932 },
+            deviceScaleFactor: 1,
+            isMobile: true,
+            hasTouch: true,
+          });
+          const page = await context.newPage();
+          const diagnostics = [];
+          page.on('pageerror', error => diagnostics.push(`pageerror: ${error.message}`));
+          page.on('console', message => {
+            if (message.type() === 'error' || message.type() === 'warning') {
+              diagnostics.push(`${message.type()}: ${message.text()}`);
+            }
+          });
+          page.on('requestfailed', request => {
+            diagnostics.push(`requestfailed: ${request.url()} :: ${request.failure()?.errorText || 'unknown'}`);
+          });
+
+          await page.goto('http://127.0.0.1:4173/?cycle=01&increment=02', {
+            waitUntil: 'domcontentloaded',
+            timeout: 120000,
+          });
+
+          await page.waitForFunction(() => {
+            const nexus = window.__NEXUS_V7__;
+            const status = document.querySelector('#status')?.textContent || '';
+            const report = nexus?.renderer?.allLegConnectivity?.report;
+            return status.includes('BOOT FAILURE') ||
+              status.includes('FAIL-CLOSED') ||
+              (nexus?.renderer?.allLegConnectivity?.ready === true &&
+                report?.connectedLegs === 6 &&
+                Number(nexus?.runtime?.data?.time || 0) >= 1.5);
+          }, null, { timeout: 120000 });
+
+          const bootState = await page.evaluate(() => {
+            const nexus = window.__NEXUS_V7__;
+            const status = document.querySelector('#status')?.textContent || '';
+            return {
+              status,
+              bootFailure: status.includes('BOOT FAILURE'),
+              failClosed: status.includes('FAIL-CLOSED'),
+              runtimeTime: Number(nexus?.runtime?.data?.time || 0),
+              connectivity: nexus?.renderer?.allLegConnectivity?.report || null,
+            };
+          });
+          if (bootState.bootFailure || bootState.failClosed) {
+            throw new Error(`Boot failed closed: ${JSON.stringify(bootState)}`);
+          }
+
+          await page.click('#evolve');
+          await page.waitForFunction(() => {
+            const nexus = window.__NEXUS_V7__;
+            return nexus?.experiment?.generation >= 1 &&
+              nexus?.archive?.cells?.size >= 1 &&
+              nexus?.renderer?.allLegConnectivity?.ready === true &&
+              nexus?.renderer?.allLegConnectivity?.report?.connectedLegs === 6;
+          }, null, { timeout: 90000 });
+          await page.waitForTimeout(900);
+
+          const report = await page.evaluate((legIds) => {
+            const nexus = window.__NEXUS_V7__;
+            const connectivity = nexus.renderer.allLegConnectivity;
+            const meshNames = nexus.renderer.scene.meshes.map(mesh => mesh.name);
+            const buttons = [...document.querySelectorAll('button')].map(button => ({
+              id: button.id,
+              height: button.getBoundingClientRect().height,
+            }));
+            const rect = selector => {
+              const value = document.querySelector(selector).getBoundingClientRect();
+              return { left: value.left, right: value.right, top: value.top, bottom: value.bottom, width: value.width, height: value.height };
+            };
+            const overlaps = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+            const identity = rect('#identity');
+            const research = rect('#research-panel');
+            const controls = rect('#controls');
+            const requiredHardware = Object.fromEntries(legIds.map(legId => [legId, {
+              hipCarrier: meshNames.includes(`connected-${legId}-hip-carrier`),
+              hipAxle: meshNames.includes(`connected-${legId}-hip-axle`),
+              kneeAxle: meshNames.includes(`connected-${legId}-knee-axle`),
+              ankleAxle: meshNames.includes(`connected-${legId}-ankle-axle`),
+              coxaCad: meshNames.includes(`connected-${legId}-coxa-cad`),
+              hipSeal: meshNames.includes(`connected-${legId}-hip-bearing-seal`),
+              kneeSeal: meshNames.includes(`connected-${legId}-knee-bearing-seal`),
+              ankleSeal: meshNames.includes(`connected-${legId}-ankle-bearing-seal`),
+            }]));
+
+            return {
+              schema: 'nexus.cycle-evidence.v1',
+              cycle: nexus.realismCycle,
+              runtimeSchema: nexus.schema,
+              runtimeTime: Number(nexus.runtime.data.time || 0),
+              displacementMetres: Number(nexus.runtime.planarDisplacement || 0),
+              maximumFootContacts: Number(nexus.runtime.maxFootContactsSeen || 0),
+              peakActuatorPowerWatts: Number(nexus.runtime.maxPowerWattsSeen || 0),
+              generation: nexus.experiment.generation,
+              archiveCells: nexus.archive.cells.size,
+              bestFitness: Number(nexus.archive.best?.fitness || 0),
+              energyJoules: Number(nexus.coordinator.lastResult?.metrics?.energyJoules || 0),
+              connectivity: connectivity.report,
+              connectivityReady: connectivity.ready,
+              requiredHardware,
+              authoredCad: nexus.renderer.artDirection?.authoredCad,
+              proceduralRobotShells: nexus.renderer.artDirection?.proceduralRobotShells,
+              cadSourceCommit: nexus.renderer.artDirection?.sourceCommit,
+              buttonHeights: buttons,
+              layoutOverlap: overlaps(identity, research) || overlaps(identity, controls) || overlaps(research, controls),
+              canvas: {
+                width: document.querySelector('#world')?.width || 0,
+                height: document.querySelector('#world')?.height || 0,
+              },
+              status: document.querySelector('#status')?.textContent || '',
+            };
+          }, LEG_IDS);
+          report.diagnostics = [...diagnostics];
+
+          const hardwareReady = Object.values(report.requiredHardware)
+            .every(group => Object.values(group).every(Boolean));
+          const legReportsValid = Array.isArray(report.connectivity?.legs) &&
+            report.connectivity.legs.length === 6 &&
+            report.connectivity.legs.every((leg, index) =>
+              leg?.leg === LEG_IDS[index] &&
+              leg?.connected === true &&
+              leg?.authoritativePivots === true &&
+              leg?.floatingParts === 0 &&
+              leg?.duplicateCoxa === 0 &&
+              leg?.maximumPivotGapMetres === 0 &&
+              leg?.mountLengthMetres > 0.035 &&
+              leg?.upperLengthMetres > 0.035 &&
+              leg?.lowerLengthMetres > 0.035);
+
+          const invalid =
+            report.runtimeSchema !== 'nexus.science-runtime.v1' ||
+            report.cycle?.cycle !== 1 || report.cycle?.increment !== 2 ||
+            report.runtimeTime < 1.5 || report.displacementMetres <= 0.03 ||
+            report.maximumFootContacts < 1 || report.peakActuatorPowerWatts <= 0.1 ||
+            report.generation < 1 || report.archiveCells < 1 || report.bestFitness <= 0 || report.energyJoules <= 0 ||
+            report.connectivityReady !== true || report.connectivity?.connected !== true ||
+            report.connectivity?.connectedLegs !== 6 || report.connectivity?.expectedLegs !== 6 ||
+            report.connectivity?.floatingParts !== 0 || report.connectivity?.duplicateCoxa !== 0 ||
+            report.connectivity?.maximumPivotGapMetres !== 0 || !legReportsValid || !hardwareReady ||
+            report.authoredCad !== true || report.proceduralRobotShells !== false ||
+            report.cadSourceCommit !== '7d8fc8034d715d1c9373f48281ecfa500c994d8b' ||
+            report.layoutOverlap || report.buttonHeights.some(button => button.height < 42) ||
+            report.canvas.width <= 0 || report.canvas.height <= 0 ||
+            report.diagnostics.some(entry => entry.startsWith('pageerror:') || entry.startsWith('requestfailed:'));
+
+          await page.screenshot({ path: 'artifacts/nexus-v7-cycle01-step02.png', fullPage: true });
+          for (let frame = 0; frame < 54; frame += 1) {
+            const file = `artifacts/frames/frame-${String(frame).padStart(3, '0')}.png`;
+            await page.screenshot({ path: file, fullPage: true });
+            await page.waitForTimeout(85);
+          }
+          await writeFile('artifacts/nexus-v7-cycle01-step02-report.json', JSON.stringify(report, null, 2));
+          await browser.close();
+
+          console.log(JSON.stringify(report, null, 2));
+          if (invalid) throw new Error(`Cycle 01 Step 02 failed closed: ${JSON.stringify(report)}`);
+          EOF_NODE
+          node cycle01-step02-runner/evidence.mjs
+
+      - name: Encode tested motion GIF
+        run: |
+          ffmpeg -y -framerate 12 -i artifacts/frames/frame-%03d.png \
+            -filter_complex "fps=12,scale=430:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=160:stats_mode=diff[p];[s1][p]paletteuse=dither=bayer:bayer_scale=3:diff_mode=rectangle" \
+            -loop 0 artifacts/nexus-v7-cycle01-step02.gif
+          test -s artifacts/nexus-v7-cycle01-step02.gif
+          test -s artifacts/nexus-v7-cycle01-step02.png
+          test -s artifacts/nexus-v7-cycle01-step02-report.json
+
+      - name: Bind exact build receipt and evidence
+        run: |
+          cat > nexus-science-core-v7/dist/BUILD.json <<EOF_BUILD
+          {
+            "schema": "nexus.github-pages-preview.v1",
+            "cycle": 1,
+            "increment": 2,
+            "sourceBranch": "nexus-mujoco-science-core-v7",
+            "sourceCommit": "${GITHUB_SHA}",
+            "workflowRun": "${GITHUB_RUN_ID}"
+          }
+          EOF_BUILD
+          mkdir -p nexus-science-core-v7/dist/evidence
+          cp artifacts/nexus-v7-cycle01-step02.png nexus-science-core-v7/dist/evidence/
+          cp artifacts/nexus-v7-cycle01-step02.gif nexus-science-core-v7/dist/evidence/
+          cp artifacts/nexus-v7-cycle01-step02-report.json nexus-science-core-v7/dist/evidence/
+
+      - name: Publish exact tested build to GitHub Pages branch source
+        run: |
+          git fetch origin main
+          rm -rf /tmp/nexus-pages-main
+          git worktree add -B nexus-cycle01-pages /tmp/nexus-pages-main origin/main
+          rm -rf /tmp/nexus-pages-main/nexus-science-core-v7-preview
+          mkdir -p /tmp/nexus-pages-main/nexus-science-core-v7-preview
+          cp -a nexus-science-core-v7/dist/. /tmp/nexus-pages-main/nexus-science-core-v7-preview/
+          cd /tmp/nexus-pages-main
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add nexus-science-core-v7-preview
+          if git diff --cached --quiet; then
+            echo 'GitHub.io preview is already current.'
+          else
+            git commit -m 'Publish NEXUS V7 realism cycle 01 step 02 preview'
+            git push origin HEAD:main
+          fi
+
+      - name: Verify deployed GitHub.io simulation
+        env:
+          LIVE_BASE: https://toymaker474.github.io/html5.github.io/nexus-science-core-v7-preview
+        run: |
+          cat > cycle01-step02-runner/live-check.mjs <<'EOF_NODE'
+          import { writeFile } from 'node:fs/promises';
+          import { chromium } from 'playwright';
+
+          const base = process.env.LIVE_BASE;
+          const expectedCommit = process.env.GITHUB_SHA;
+          const runId = process.env.GITHUB_RUN_ID;
+          let receipt = null;
+          for (let attempt = 0; attempt < 48; attempt += 1) {
+            try {
+              const response = await fetch(`${base}/BUILD.json?run=${runId}&attempt=${attempt}`, { cache: 'no-store' });
+              if (response.ok) {
+                const candidate = await response.json();
+                if (candidate.sourceCommit === expectedCommit && candidate.increment === 2) {
+                  receipt = candidate;
+                  break;
+                }
+              }
+            } catch {}
+            await new Promise(resolve => setTimeout(resolve, 10000));
+          }
+          if (!receipt) throw new Error(`GitHub Pages did not expose source commit ${expectedCommit}.`);
+
+          const browser = await chromium.launch({
+            headless: true,
+            args: ['--use-gl=swiftshader', '--enable-webgl', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
+          });
+          const context = await browser.newContext({
+            viewport: { width: 430, height: 932 },
+            deviceScaleFactor: 1,
+            isMobile: true,
+            hasTouch: true,
+          });
+          const page = await context.newPage();
+          const failures = [];
+          page.on('pageerror', error => failures.push(`pageerror: ${error.message}`));
+          page.on('requestfailed', request => failures.push(`requestfailed: ${request.url()}`));
+          await page.goto(`${base}/?cycle=01&increment=02&run=${runId}`, {
+            waitUntil: 'domcontentloaded',
+            timeout: 120000,
+          });
+          await page.waitForFunction(() => {
+            const nexus = window.__NEXUS_V7__;
+            return nexus?.renderer?.allLegConnectivity?.ready === true &&
+              nexus?.renderer?.allLegConnectivity?.report?.connectedLegs === 6 &&
+              Number(nexus?.runtime?.data?.time || 0) >= 1;
+          }, null, { timeout: 120000 });
+          await page.click('#evolve');
+          await page.waitForFunction(() => {
+            const nexus = window.__NEXUS_V7__;
+            return nexus?.experiment?.generation >= 1 && nexus?.archive?.cells?.size >= 1;
+          }, null, { timeout: 90000 });
+          const live = await page.evaluate(() => {
+            const nexus = window.__NEXUS_V7__;
+            return {
+              schema: 'nexus.github-pages-live-test.v1',
+              runtimeSchema: nexus.schema,
+              cycle: nexus.realismCycle,
+              runtimeTime: Number(nexus.runtime.data.time || 0),
+              displacementMetres: Number(nexus.runtime.planarDisplacement || 0),
+              generation: nexus.experiment.generation,
+              archiveCells: nexus.archive.cells.size,
+              connectivity: nexus.renderer.allLegConnectivity.report,
+              backend: nexus.renderer.backend,
+              status: document.querySelector('#status')?.textContent || '',
+            };
+          });
+          live.receipt = receipt;
+          live.failures = failures;
+          await writeFile('artifacts/nexus-v7-cycle01-step02-live-report.json', JSON.stringify(live, null, 2));
+          await browser.close();
+          console.log(JSON.stringify(live, null, 2));
+
+          if (live.runtimeSchema !== 'nexus.science-runtime.v1' ||
+              live.cycle?.increment !== 2 ||
+              live.runtimeTime < 1 ||
+              live.displacementMetres <= 0.03 ||
+              live.generation < 1 ||
+              live.archiveCells < 1 ||
+              live.connectivity?.connected !== true ||
+              live.connectivity?.connectedLegs !== 6 ||
+              live.connectivity?.floatingParts !== 0 ||
+              live.connectivity?.maximumPivotGapMetres !== 0 ||
+              failures.length > 0) {
+            throw new Error(`Live GitHub.io test failed closed: ${JSON.stringify(live)}`);
+          }
+          EOF_NODE
+          node cycle01-step02-runner/live-check.mjs
+
+      - name: Upload immutable evidence bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-v7-cycle01-step02-evidence
+          path: |
+            artifacts/nexus-v7-cycle01-step02.png
+            artifacts/nexus-v7-cycle01-step02.gif
+            artifacts/nexus-v7-cycle01-step02-report.json
+            artifacts/nexus-v7-cycle01-step02-live-report.json
