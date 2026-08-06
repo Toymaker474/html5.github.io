@@ -2,9 +2,8 @@ name: NEXUS V7 Realism Cycle 01 Step 02
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - nexus-mujoco-science-core-v7
+  pull_request:
+    branches: [main]
     paths:
       - 'nexus-science-core-v7/**'
       - '.github/workflows/nexus-v7-cycle01-step01-preview.yml'
@@ -27,6 +26,9 @@ jobs:
         with:
           fetch-depth: 0
           ref: nexus-mujoco-science-core-v7
+
+      - name: Bind checked-out V7 source commit
+        run: echo "SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Set up Node 24
         uses: actions/setup-node@v4
@@ -257,7 +259,7 @@ jobs:
             "cycle": 1,
             "increment": 2,
             "sourceBranch": "nexus-mujoco-science-core-v7",
-            "sourceCommit": "${GITHUB_SHA}",
+            "sourceCommit": "${SOURCE_SHA}",
             "workflowRun": "${GITHUB_RUN_ID}"
           }
           EOF_BUILD
@@ -294,7 +296,7 @@ jobs:
           import { chromium } from 'playwright';
 
           const base = process.env.LIVE_BASE;
-          const expectedCommit = process.env.GITHUB_SHA;
+          const expectedCommit = process.env.SOURCE_SHA;
           const runId = process.env.GITHUB_RUN_ID;
           let receipt = null;
           for (let attempt = 0; attempt < 48; attempt += 1) {
