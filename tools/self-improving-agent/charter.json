@@ -1,0 +1,81 @@
+{
+  "schema": "nexus.self-improving-agent-charter.v1",
+  "name": "NEXUS Self-Improving Web Foundry",
+  "mission": "Improve one bounded agent module or create one useful AI-friendly static web tool per verified cycle.",
+  "freeOnly": true,
+  "paidApisAllowed": false,
+  "subscriptionsAllowed": false,
+  "trialsAllowed": false,
+  "automaticMergeAllowed": false,
+  "automaticProductionPublishAllowed": false,
+  "humanReviewRequired": true,
+  "maxOpenImprovementPullRequests": 1,
+  "maxFilesPerProposal": 4,
+  "maxTotalGeneratedBytes": 61440,
+  "maxBytesPerFile": 32768,
+  "requiredTestFiles": 1,
+  "allowedRoots": [
+    "tools/self-improving-agent/modules/",
+    "tools/self-improving-agent/tests/",
+    "ai-friendly-web-tools/"
+  ],
+  "lockedPaths": [
+    ".github/",
+    "package.json",
+    "package-lock.json",
+    "tools/self-improving-agent/SELF_IMPROVING_AGENT_RULE.md",
+    "tools/self-improving-agent/charter.json",
+    "tools/self-improving-agent/collect-context.mjs",
+    "tools/self-improving-agent/plan-with-qwen.mjs",
+    "tools/self-improving-agent/validate-and-stage.mjs",
+    "tools/self-improving-agent/verify-artifact.mjs"
+  ],
+  "proposalKinds": [
+    "agent-module-improvement",
+    "new-ai-web-tool"
+  ],
+  "priorityAreas": [
+    "plain-language agent reports",
+    "machine-readable manifests and schemas",
+    "mobile simulation diagnostics",
+    "evidence viewers and integrity tools",
+    "prompt and task translators",
+    "agent-to-agent handoff formats",
+    "offline-first browser utilities",
+    "touch-friendly developer dashboards",
+    "performance and bundle analysis",
+    "accessibility for complex technical systems"
+  ],
+  "forbiddenCodePatterns": [
+    "child_process",
+    "exec(",
+    "execSync(",
+    "spawn(",
+    "spawnSync(",
+    "eval(",
+    "new Function",
+    "process.env.GITHUB_TOKEN",
+    "process.env.GH_TOKEN",
+    "git push",
+    "gh pr",
+    "rm -rf",
+    "fs.rm",
+    "unlink(",
+    "rmdir(",
+    "document.cookie",
+    "http://",
+    "https://"
+  ],
+  "requiredProposalSchema": {
+    "schema": "nexus.self-improvement-proposal.v1",
+    "requiredFields": [
+      "title",
+      "summary",
+      "kind",
+      "whyNow",
+      "files",
+      "acceptanceTests",
+      "knownLimits"
+    ]
+  }
+}
