@@ -79,6 +79,7 @@ export function mutateGenome(parent, seed = (parent.seed + 0x9E3779B9) >>> 0) {
  * - six phase oscillators coupled with a Kuramoto-style network;
  * - contact feedback changes oscillator phase instead of teleporting limbs;
  * - a continuous-time recurrent neural residual handles balance corrections;
+ * - drive and steering commands change actuator targets, never body transforms;
  * - outputs remain actuator targets and never directly alter body transforms.
  */
 export class NeuralCPGController {
@@ -87,6 +88,13 @@ export class NeuralCPGController {
     this.phases = new Float64Array(LEG_METADATA.length);
     this.neuralState = new Float64Array(LEG_METADATA.length);
     this.lastTimeSeconds = null;
+    this.driveCommand = Object.freeze({
+      schema: 'nexus.robot-drive-command.v1',
+      mode: 'walk',
+      throttle: 1,
+      turn: 0,
+      revision: 0,
+    });
     this.setGenome(genome);
   }
 
@@ -99,10 +107,27 @@ export class NeuralCPGController {
     this.lastTimeSeconds = null;
   }
 
+  setDriveCommand({ mode = 'walk', throttle = 1, turn = 0 } = {}) {
+    const safeThrottle = clamp(Number(throttle) || 0, 0, 1);
+    const safeTurn = clamp(Number(turn) || 0, -1, 1);
+    const validModes = new Set(['stop', 'walk', 'left', 'right']);
+    const safeMode = validModes.has(mode) ? mode : 'walk';
+    this.driveCommand = Object.freeze({
+      schema: 'nexus.robot-drive-command.v1',
+      mode: safeMode,
+      throttle: safeThrottle,
+      turn: safeTurn,
+      revision: this.driveCommand.revision + 1,
+    });
+    return this.driveCommand;
+  }
+
   updateOscillators(dt, observation) {
     const count = LEG_METADATA.length;
     const g = this.genome;
-    const omega = Math.PI * 2 * g.frequencyHz;
+    const command = this.driveCommand;
+    const cadence = 0.30 + command.throttle * 0.70;
+    const omega = Math.PI * 2 * g.frequencyHz * cadence;
     const derivatives = new Float64Array(count);
 
     for (let i = 0; i < count; i += 1) {
@@ -157,21 +182,25 @@ export class NeuralCPGController {
     this.updateNeuralResidual(dt, observation);
 
     const g = this.genome;
+    const command = this.driveCommand;
     for (let i = 0; i < LEG_METADATA.length; i += 1) {
+      const leg = LEG_METADATA[i];
       const phase = this.phases[i];
       const swing = Math.sin(phase);
       const lift = Math.max(0, Math.sin(phase + Math.PI * 0.35));
       const contact = observation.footContacts[i] > 0.001 ? 1 : 0;
       const neuralResidual = this.neuralState[i] * g.neuralGain;
       const gain = g.outputGains[i];
+      const steeringGain = clamp(1 - command.turn * leg.side * 0.48, 0.38, 1.48);
+      const movementGain = command.throttle * steeringGain;
 
       this.controls[i * 2] = clamp(
-        gain * g.hipAmplitude * swing + neuralResidual,
+        movementGain * gain * g.hipAmplitude * swing + neuralResidual * (0.30 + command.throttle * 0.70),
         -0.70,
         0.70,
       );
       this.controls[i * 2 + 1] = clamp(
-        g.kneeStance + gain * g.kneeLift * lift - contact * g.contactGain - neuralResidual * 0.5,
+        g.kneeStance + movementGain * gain * g.kneeLift * lift - contact * g.contactGain - neuralResidual * 0.5,
         -1.28,
         0.28,
       );
