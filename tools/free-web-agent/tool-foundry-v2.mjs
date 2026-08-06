@@ -37,7 +37,7 @@ for (const capability of catalog.capabilities) {
     ? trackedFiles.includes(`tools/free-web-agent/${capability.generate}.mjs`)
     : false;
   const tokenEvidence = capability.evidenceTokens.every(token => evidenceText.includes(token));
-  const found = trackedImplementation || tokenEvidence;
+  const found = capability.generate ? trackedImplementation : tokenEvidence;
 
   if (found) {
     results.push({ ...capability, status: 'found' });
