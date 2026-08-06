@@ -1,4 +1,5 @@
 import { Matrix, Vector3 } from '@babylonjs/core';
+import { installOperationalCore } from './operationalCore.js';
 
 const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, value));
 const MOBILE_EDGE_MARGIN_PX = 14;
@@ -110,10 +111,6 @@ function enforceSafeRadius(renderer, safeRadius) {
   const camera = renderer.camera;
   const boundedRadius = clamp(safeRadius, 2.8, 11.5);
 
-  // Babylon can retain zoom inertia after camera construction or touch-state
-  // changes. A recommendation-only radius was therefore able to decay back to
-  // the old close-up limit. The mobile world must never silently crop the
-  // robot, so the measured full-body radius becomes the actual safe minimum.
   camera.inertialRadiusOffset = 0;
   camera.lowerRadiusLimit = boundedRadius;
   camera.upperRadiusLimit = Math.max(12, boundedRadius + 1);
@@ -125,6 +122,7 @@ function enforceSafeRadius(renderer, safeRadius) {
 }
 
 export function installMobileCameraFraming() {
+  installOperationalCore();
   installGarageBackdropObserver();
 
   let activeRenderer = null;
