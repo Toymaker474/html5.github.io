@@ -1,6 +1,7 @@
 import { Matrix, Vector3 } from '@babylonjs/core';
 import { installOperationalCore } from './operationalCore.js';
 import { applyMobileRendererOverhaul } from './mobileRendererOverhaul.js';
+import { installMobileWorldApp } from './mobileWorldApp.js';
 
 const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, value));
 const MOBILE_EDGE_MARGIN_PX = 10;
@@ -135,6 +136,7 @@ function enforceSafeRadius(renderer, fittedRadius) {
 
 export function installMobileCameraFraming() {
   installOperationalCore();
+  installMobileWorldApp();
   installGarageBackdropObserver();
 
   let activeRenderer = null;
@@ -206,9 +208,9 @@ export function installMobileCameraFraming() {
   }
 
   function tick() {
-    const nexus = window.__NEXUS_V7__;
-    const renderer = nexus?.renderer;
-    const preset = nexus?.activePreset;
+    const current = window.__NEXUS_V7__;
+    const renderer = current?.renderer;
+    const preset = current?.activePreset;
 
     if (renderer && preset && (renderer !== activeRenderer || preset.id !== activePresetId)) {
       activeRenderer = renderer;
