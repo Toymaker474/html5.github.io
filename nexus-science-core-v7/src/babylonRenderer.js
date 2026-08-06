@@ -325,104 +325,91 @@ export class BabylonMujocoRenderer {
       thickness: Math.max(0.012, size[2] * 0.12),
       tessellation: 36,
     }, this.scene), this.materials.joint, root);
-    ring.scaling.z = size[1] / Math.max(size[0], 1e-6);
-
-    const lens = this.finishPart(MeshBuilder.CreateSphere(`core-lens-${index}`, {
-      diameter: Math.min(size[0], size[1]) * 0.58,
-      segments: 24,
-    }, this.scene), this.materials.sensor, root);
-    lens.position.y = size[2] * 0.83;
-    lens.scaling.y = 0.32;
+    ring.rotation.x = Math.PI / 2;
 
     return root;
   }
 
   createLimbAssembly(index, size) {
     const root = new TransformNode(`machine-limb-${index}`, this.scene);
-    const radius = size[0];
-    const height = size[2] * 2 + radius * 2;
+    const radius = Math.max(0.012, size[0]);
+    const halfLength = Math.max(radius, size[1]);
+    const fullLength = halfLength * 2;
+    const shaftLength = Math.max(radius * 0.5, fullLength - radius * 2);
 
-    this.finishPart(MeshBuilder.CreateCapsule(`limb-spine-${index}`, {
-      radius,
-      height,
-      tessellation: 28,
-      subdivisions: 4,
+    const shaft = this.finishPart(MeshBuilder.CreateCylinder(`limb-shaft-${index}`, {
+      diameter: radius * 1.42,
+      height: shaftLength,
+      tessellation: 24,
     }, this.scene), this.materials.limb, root);
 
-    const armour = this.finishPart(MeshBuilder.CreateBox(`limb-armour-${index}`, {
-      width: radius * 1.34,
-      depth: radius * 1.55,
-      height: Math.max(radius * 1.4, height * 0.43),
-    }, this.scene), this.materials.armour, root);
-    armour.position.y = height * 0.08;
-    armour.position.x = radius * 0.42;
+    const spine = this.finishPart(MeshBuilder.CreateBox(`limb-spine-${index}`, {
+      width: radius * 0.62,
+      depth: radius * 1.78,
+      height: shaftLength * 0.93,
+    }, this.scene), this.materials.structure, root);
+    spine.position.x = radius * 0.63;
 
-    for (const sign of [-1, 1]) {
-      const collar = this.finishPart(MeshBuilder.CreateTorus(`limb-collar-${index}-${sign}`, {
-        diameter: radius * 2.22,
-        thickness: radius * 0.24,
-        tessellation: 24,
+    for (const end of [-1, 1]) {
+      const joint = this.finishPart(MeshBuilder.CreateCylinder(`limb-joint-${index}-${end}`, {
+        diameter: radius * 2.42,
+        height: radius * 1.62,
+        tessellation: 28,
       }, this.scene), this.materials.joint, root);
-      collar.position.y = sign * Math.max(radius * 0.7, height * 0.33);
+      joint.rotation.z = Math.PI / 2;
+      joint.position.y = end * (halfLength - radius * 0.46);
+
+      const bearing = this.finishPart(MeshBuilder.CreateTorus(`limb-bearing-${index}-${end}`, {
+        diameter: radius * 1.58,
+        thickness: radius * 0.22,
+        tessellation: 24,
+      }, this.scene), this.materials.core, root);
+      bearing.rotation.y = Math.PI / 2;
+      bearing.position.copyFrom(joint.position);
     }
 
-    const actuator = this.finishPart(MeshBuilder.CreateCylinder(`limb-actuator-${index}`, {
-      diameter: radius * 1.52,
-      height: Math.max(radius * 1.5, height * 0.24),
-      tessellation: 24,
-    }, this.scene), this.materials.joint, root);
-    actuator.position.y = height * 0.24;
-
     const cable = this.finishPart(MeshBuilder.CreateCylinder(`limb-cable-${index}`, {
-      diameter: Math.max(0.007, radius * 0.18),
-      height: height * 0.72,
-      tessellation: 10,
-    }, this.scene), this.materials.cable, root);
-    cable.position.x = -radius * 1.04;
-    cable.position.z = radius * 0.58;
+      diameter: radius * 0.28,
+      height: shaftLength * 0.82,
+      tessellation: 12,
+    }, this.scene), this.materials.cable, root, false);
+    cable.position.x = -radius * 0.9;
+    cable.position.z = radius * 0.52;
 
     return root;
   }
 
   createFootAssembly(index, radius) {
     const root = new TransformNode(`machine-foot-${index}`, this.scene);
-    const foot = this.finishPart(MeshBuilder.CreateSphere(`foot-shell-${index}`, {
-      diameter: radius * 2,
-      segments: 30,
-    }, this.scene), this.materials.foot, root);
-    foot.scaling.set(1.02, 0.82, 1.12);
-
     const pad = this.finishPart(MeshBuilder.CreateCylinder(`foot-pad-${index}`, {
-      diameter: radius * 1.62,
-      height: radius * 0.28,
-      tessellation: 28,
+      diameter: radius * 2.25,
+      height: radius * 0.56,
+      tessellation: 30,
     }, this.scene), this.materials.foot, root);
-    pad.position.y = -radius * 0.72;
+    pad.position.y = -radius * 0.2;
 
-    const sensorRing = this.finishPart(MeshBuilder.CreateTorus(`foot-sensor-ring-${index}`, {
-      diameter: radius * 1.70,
-      thickness: Math.max(0.006, radius * 0.12),
-      tessellation: 28,
-    }, this.scene), this.materials.sensor, root);
-    sensorRing.position.y = -radius * 0.10;
-
-    const ankle = this.finishPart(MeshBuilder.CreateCylinder(`foot-ankle-${index}`, {
-      diameter: radius * 0.76,
-      height: radius * 0.62,
-      tessellation: 22,
+    const knuckle = this.finishPart(MeshBuilder.CreateSphere(`foot-knuckle-${index}`, {
+      diameter: radius * 1.18,
+      segments: 20,
     }, this.scene), this.materials.joint, root);
-    ankle.position.y = radius * 0.76;
+    knuckle.position.y = radius * 0.30;
 
+    const plate = this.finishPart(MeshBuilder.CreateBox(`foot-contact-plate-${index}`, {
+      width: radius * 1.55,
+      depth: radius * 1.10,
+      height: radius * 0.18,
+    }, this.scene), this.materials.structure, root);
+    plate.position.y = -radius * 0.50;
     return root;
   }
 
   createSensorAssembly(index, radius) {
     const root = new TransformNode(`machine-sensor-${index}`, this.scene);
-    const optic = this.finishPart(MeshBuilder.CreateSphere(`sensor-optic-${index}`, {
-      diameter: radius * 2,
-      segments: 20,
+    const sensor = this.finishPart(MeshBuilder.CreateSphere(`sensor-node-${index}`, {
+      diameter: Math.max(0.02, radius * 2),
+      segments: 16,
     }, this.scene), this.materials.sensor, root, false);
-    optic.scaling.y = 0.55;
+    sensor.scaling.y = 0.58;
     return root;
   }
 
@@ -447,7 +434,13 @@ export class BabylonMujocoRenderer {
     const position = this.runtime.rootPosition;
     const authoritativeTarget = new Vector3(position.x, Math.max(0.30, position.z + 0.06), -position.y);
     this.followTarget = Vector3.Lerp(this.followTarget, authoritativeTarget, 0.105);
-    this.camera.setTarget(this.followTarget);
+
+    // ArcRotateCamera.setTarget() rebuilds alpha, beta and radius from the
+    // current position. Calling it every simulation frame silently collapsed
+    // the mobile fit radius to its lower limit. Mutating the existing target
+    // vector follows the authoritative MuJoCo body without destroying the
+    // user's or the mobile fitter's chosen orbit distance.
+    this.camera.target.copyFrom(this.followTarget);
   }
 
   updateStateMaterials() {
