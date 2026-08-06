@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07100f">
+  <meta name="description" content="A free, open-source, evidence-driven exchange for AI-friendly tools.">
+  <title>NEXUS Tool Exchange</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#marketplace">Skip to tools</a>
+
+  <header class="hero shell">
+    <div class="hero__eyebrow">
+      <span class="status-dot" aria-hidden="true"></span>
+      NEXUS OPEN TOOL ECONOMY
+    </div>
+    <h1>Build tools agents can actually trust.</h1>
+    <p class="hero__copy">
+      Free and open-source tools enter quarantine, pass evidence gates, earn ratings,
+      and become reusable building blocks for mobile web now and Windows handhelds later.
+    </p>
+    <div class="hero__actions">
+      <a class="button button--primary" href="#marketplace">Browse verified tools</a>
+      <button class="button" id="breed-top" type="button">Breed a better stack</button>
+    </div>
+    <div class="stat-grid" aria-label="Registry summary">
+      <article class="stat-card">
+        <span class="stat-card__value" id="stat-tools">—</span>
+        <span class="stat-card__label">tool genomes</span>
+      </article>
+      <article class="stat-card">
+        <span class="stat-card__value" id="stat-certified">—</span>
+        <span class="stat-card__label">certified</span>
+      </article>
+      <article class="stat-card">
+        <span class="stat-card__value" id="stat-free">100%</span>
+        <span class="stat-card__label">free / no trials</span>
+      </article>
+      <article class="stat-card">
+        <span class="stat-card__value" id="stat-evidence">—</span>
+        <span class="stat-card__label">evidence records</span>
+      </article>
+    </div>
+  </header>
+
+  <main>
+    <section class="shell section" aria-labelledby="pipeline-title">
+      <div class="section-heading">
+        <div>
+          <p class="kicker">Samantha safety chain</p>
+          <h2 id="pipeline-title">Nothing jumps straight into production.</h2>
+        </div>
+        <p>Every stage produces evidence. Missing or conflicting proof stops promotion.</p>
+      </div>
+
+      <ol class="pipeline">
+        <li class="pipeline__stage">
+          <span class="pipeline__number">01</span>
+          <h3>Discover</h3>
+          <p>Search existing open-source tools before building another one.</p>
+        </li>
+        <li class="pipeline__stage">
+          <span class="pipeline__number">02</span>
+          <h3>Quarantine</h3>
+          <p>Verify source, license, version, hashes, dependencies, and permissions.</p>
+        </li>
+        <li class="pipeline__stage">
+          <span class="pipeline__number">03</span>
+          <h3>Prove</h3>
+          <p>Run real tests, mobile checks, security scans, and failure recovery.</p>
+        </li>
+        <li class="pipeline__stage">
+          <span class="pipeline__number">04</span>
+          <h3>Package</h3>
+          <p>Publish an AI-readable contract, evidence bundle, and human instructions.</p>
+        </li>
+        <li class="pipeline__stage">
+          <span class="pipeline__number">05</span>
+          <h3>Evolve</h3>
+          <p>Breed higher-quality tool stacks from measured traits—not hype.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section class="section section--market" id="marketplace" aria-labelledby="market-title">
+      <div class="shell">
+        <div class="section-heading">
+          <div>
+            <p class="kicker">Agent marketplace</p>
+            <h2 id="market-title">Useful tools earn reputation.</h2>
+          </div>
+          <p>Reputation credits are not real money. They are evidence-backed trust before future commercial licensing.</p>
+        </div>
+
+        <form class="filters" id="filters" role="search">
+          <label class="search-field">
+            <span class="sr-only">Search tools</span>
+            <input id="search" type="search" placeholder="Search tools or capabilities" autocomplete="off">
+          </label>
+          <label>
+            <span>Platform</span>
+            <select id="platform-filter">
+              <option value="all">All platforms</option>
+              <option value="mobile-web">Mobile web</option>
+              <option value="web">Web</option>
+              <option value="github-actions">GitHub cloud</option>
+              <option value="windows">Windows</option>
+              <option value="future-handheld">Future handheld</option>
+            </select>
+          </label>
+          <label>
+            <span>Trust</span>
+            <select id="trust-filter">
+              <option value="all">All trust levels</option>
+              <option value="CERTIFIED">Certified</option>
+              <option value="VERIFIED-PENDING">Needs final proof</option>
+              <option value="QUARANTINE">Quarantine</option>
+            </select>
+          </label>
+          <label class="check-field">
+            <input id="certified-only" type="checkbox">
+            <span>Certified only</span>
+          </label>
+        </form>
+
+        <div class="market-toolbar">
+          <p id="result-count" aria-live="polite">Loading tools…</p>
+          <button class="button button--small" id="export-registry" type="button">Export agent registry</button>
+        </div>
+
+        <div class="tool-grid" id="tool-grid" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="shell section" id="genetic-lab" aria-labelledby="genetic-title">
+      <div class="genetic-panel">
+        <div class="section-heading">
+          <div>
+            <p class="kicker">Genetic tool lab</p>
+            <h2 id="genetic-title">Breed better stacks without mutating live code.</h2>
+          </div>
+          <p>The algorithm recombines capabilities and keeps the best evidence-backed bundles.</p>
+        </div>
+
+        <div class="lab-controls">
+          <label>
+            <span>Tools per stack</span>
+            <input id="bundle-size" type="range" min="2" max="6" value="4">
+            <output id="bundle-size-output" for="bundle-size">4</output>
+          </label>
+          <label>
+            <span>Generations</span>
+            <input id="generations" type="range" min="4" max="60" value="24">
+            <output id="generations-output" for="generations">24</output>
+          </label>
+          <button class="button button--primary" id="breed" type="button">Run evolution</button>
+        </div>
+
+        <div class="bundle-grid" id="bundle-grid">
+          <div class="empty-state">
+            <strong>No evolved stack yet.</strong>
+            <span>Run evolution to produce ranked, reusable agent tool bundles.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="shell section" aria-labelledby="future-title">
+      <div class="future-grid">
+        <article class="future-card">
+          <p class="kicker">Now</p>
+          <h2 id="future-title">Mobile-web foundry</h2>
+          <p>GitHub Pages interface, GitHub cloud tests, static offline package, touch-first controls, and agent-readable JSON.</p>
+        </article>
+        <article class="future-card">
+          <p class="kicker">Next</p>
+          <h2>Windows / Ally X forge</h2>
+          <p>Signed PowerShell launchers, sandboxed local models, controller UI, GPU benchmarks, recovery receipts, and portable tool packs.</p>
+        </article>
+        <article class="future-card">
+          <p class="kicker">Later</p>
+          <h2>Agent licensing exchange</h2>
+          <p>Verified publisher identities, usage receipts, ratings resistant to spam, optional paid licenses, and revenue sharing without locking core tools.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="tool-dialog" class="tool-dialog">
+    <div class="tool-dialog__inner">
+      <button class="icon-button" id="dialog-close" type="button" aria-label="Close tool details">×</button>
+      <div id="dialog-content"></div>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <footer class="shell footer">
+    <p>NEXUS Tool Exchange v0.1 — evidence before reputation, safety before automation.</p>
+    <span id="offline-state">Checking offline support…</span>
+  </footer>
+
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
