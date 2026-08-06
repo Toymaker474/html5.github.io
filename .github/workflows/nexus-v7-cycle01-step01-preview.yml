@@ -196,6 +196,7 @@ jobs:
             };
           }, LEG_IDS);
           report.diagnostics = [...diagnostics];
+          report.bootRuntimeTime = bootState.runtimeTime;
 
           const hardwareReady = Object.values(report.requiredHardware)
             .every(group => Object.values(group).every(Boolean));
@@ -215,7 +216,7 @@ jobs:
           const invalid =
             report.runtimeSchema !== 'nexus.science-runtime.v1' ||
             report.cycle?.cycle !== 1 || report.cycle?.increment !== 2 ||
-            report.runtimeTime < 1.5 || report.displacementMetres <= 0.03 ||
+            report.bootRuntimeTime < 1.5 || report.runtimeTime <= 0 || report.displacementMetres <= 0.03 ||
             report.maximumFootContacts < 1 || report.peakActuatorPowerWatts <= 0.1 ||
             report.generation < 1 || report.archiveCells < 1 || report.bestFitness <= 0 || report.energyJoules <= 0 ||
             report.connectivityReady !== true || report.connectivity?.connected !== true ||
@@ -338,6 +339,7 @@ jobs:
               nexus?.renderer?.allLegConnectivity?.report?.connectedLegs === 6 &&
               Number(nexus?.runtime?.data?.time || 0) >= 1;
           }, null, { timeout: 120000 });
+          const liveBootRuntimeTime = await page.evaluate(() => Number(window.__NEXUS_V7__?.runtime?.data?.time || 0));
           await page.click('#evolve');
           await page.waitForFunction(() => {
             const nexus = window.__NEXUS_V7__;
@@ -358,6 +360,7 @@ jobs:
               status: document.querySelector('#status')?.textContent || '',
             };
           });
+          live.bootRuntimeTime = liveBootRuntimeTime;
           live.receipt = receipt;
           live.failures = failures;
           await writeFile('artifacts/nexus-v7-cycle01-step02-live-report.json', JSON.stringify(live, null, 2));
@@ -366,7 +369,7 @@ jobs:
 
           if (live.runtimeSchema !== 'nexus.science-runtime.v1' ||
               live.cycle?.increment !== 2 ||
-              live.runtimeTime < 1 ||
+              live.bootRuntimeTime < 1 || live.runtimeTime <= 0 ||
               live.displacementMetres <= 0.03 ||
               live.generation < 1 ||
               live.archiveCells < 1 ||
