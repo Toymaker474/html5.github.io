@@ -139,7 +139,8 @@ jobs:
           if (resetReceipt.after.simulationTime > 0.005) {
             throw new Error(`Reset receipt was not captured at t=0: ${resetReceipt.after.simulationTime}.`);
           }
-          if (Math.abs(resetReceipt.after.batteryJoules - window.__NEXUS_V7__.runtime.maxBatteryJoules) > 0.01) {
+          const maxBatteryJoules = await page.evaluate(() => window.__NEXUS_V7__.runtime.maxBatteryJoules);
+          if (Math.abs(resetReceipt.after.batteryJoules - maxBatteryJoules) > 0.01) {
             throw new Error('Reset did not restore the battery state.');
           }
 
