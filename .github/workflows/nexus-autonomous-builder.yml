@@ -1,0 +1,264 @@
+name: NEXUS Autonomous Open-Source Builder
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/nexus-autonomous-builder.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '43 9 * * 0'
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: nexus-autonomous-builder
+  cancel-in-progress: false
+
+env:
+  BASE_BRANCH: nexus-mujoco-science-core-v7
+  PROJECT_DIR: nexus-science-core-v7
+  TASK_ID: mobile-performance-001
+  TASK_TITLE: 'NEXUS AUTO 001: real mobile frame-time telemetry'
+  AIDER_VERSION: '0.86.2'
+  OLLAMA_VERSION: '0.32.6'
+  OLLAMA_SHA256: 'dec2fa50d24e6868ca3c4c977d69d059399372105f951a9acc320a5a79aadcfc'
+  CODING_MODEL: 'qwen2.5-coder:1.5b-instruct-q4_K_M'
+
+jobs:
+  build-tested-draft:
+    name: Create one tested draft improvement
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+
+    steps:
+      - name: Check out current protected V7 branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BASE_BRANCH }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Set up Python for Aider
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Prepare evidence
+        run: mkdir -p artifacts/autonomous-builder
+
+      - name: Skip duplicate open proposal
+        id: duplicate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NUMBER="$(gh pr list \
+            --base "$BASE_BRANCH" \
+            --state open \
+            --search "${TASK_TITLE} in:title" \
+            --json number \
+            --jq '.[0].number // empty')"
+          if [ -n "$NUMBER" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "An open autonomous proposal already exists: PR #$NUMBER" | tee artifacts/autonomous-builder/result.txt
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install and verify the existing project
+        if: steps.duplicate.outputs.skip != 'true'
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: |
+          npm install --ignore-scripts=false --no-package-lock
+          npm run build
+
+      - name: Return ephemeral checkout to exact clean source
+        if: steps.duplicate.outputs.skip != 'true'
+        run: |
+          git reset --hard HEAD
+          git clean -fd -e "$PROJECT_DIR/node_modules/"
+          test -z "$(git status --porcelain)"
+
+      - name: Install pinned open-source Aider
+        if: steps.duplicate.outputs.skip != 'true'
+        run: |
+          python -m pip install --disable-pip-version-check "aider-chat==${AIDER_VERSION}"
+          python -m aider --version
+
+      - name: Install verified Ollama
+        if: steps.duplicate.outputs.skip != 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq zstd
+          curl --fail --location --retry 4 \
+            "https://github.com/ollama/ollama/releases/download/v${OLLAMA_VERSION}/ollama-linux-amd64.tar.zst" \
+            --output /tmp/ollama.tar.zst
+          echo "${OLLAMA_SHA256}  /tmp/ollama.tar.zst" | sha256sum --check --strict
+          sudo tar --zstd -xf /tmp/ollama.tar.zst -C /usr
+          ollama --version
+
+      - name: Start Qwen inside the GitHub cloud computer
+        if: steps.duplicate.outputs.skip != 'true'
+        run: |
+          OLLAMA_HOST=127.0.0.1:11434 OLLAMA_CONTEXT_LENGTH=24576 ollama serve > artifacts/autonomous-builder/ollama.log 2>&1 &
+          echo $! > /tmp/nexus-auto-ollama.pid
+          for attempt in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          ollama pull "$CODING_MODEL"
+          ollama show "$CODING_MODEL" > artifacts/autonomous-builder/model.txt
+
+      - name: Create isolated proposal branch
+        if: steps.duplicate.outputs.skip != 'true'
+        run: |
+          BRANCH="agent/nexus-auto-${TASK_ID}-${GITHUB_RUN_ID}"
+          echo "PROPOSAL_BRANCH=$BRANCH" >> "$GITHUB_ENV"
+          git switch -c "$BRANCH"
+          git config user.name 'nexus-autonomous-builder[bot]'
+          git config user.email 'nexus-autonomous-builder@users.noreply.github.com'
+
+      - name: Let Aider make only the bounded change
+        if: steps.duplicate.outputs.skip != 'true'
+        env:
+          OLLAMA_API_BASE: http://127.0.0.1:11434
+          AIDER_ANALYTICS: 'false'
+        run: |
+          set -o pipefail
+          python -m aider \
+            --model "ollama_chat/${CODING_MODEL}" \
+            --message-file tools/autonomous-builder/task-mobile-performance.md \
+            --yes-always \
+            --no-auto-commits \
+            --no-dirty-commits \
+            --no-stream \
+            --no-analytics \
+            --no-check-update \
+            --no-gitignore \
+            --disable-playwright \
+            nexus-science-core-v7/src/main.js \
+            nexus-science-core-v7/src/mobilePerformanceTelemetry.js \
+            2>&1 | tee artifacts/autonomous-builder/aider.log
+          rm -f .aider.chat.history.md .aider.input.history
+
+      - name: Reject edits outside the task boundary
+        if: steps.duplicate.outputs.skip != 'true'
+        run: |
+          {
+            git diff --name-only
+            git ls-files --others --exclude-standard
+          } | sort -u | sed '/^$/d' > artifacts/autonomous-builder/changed-files.txt
+          test -s artifacts/autonomous-builder/changed-files.txt
+          while IFS= read -r file; do
+            case "$file" in
+              nexus-science-core-v7/src/main.js|nexus-science-core-v7/src/mobilePerformanceTelemetry.js)
+                ;;
+              *)
+                echo "Blocked out-of-scope file: $file"
+                exit 1
+                ;;
+            esac
+          done < artifacts/autonomous-builder/changed-files.txt
+          git diff --check
+
+      - name: Build and test the AI change
+        if: steps.duplicate.outputs.skip != 'true'
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: |
+          node --check src/main.js
+          node --check src/mobilePerformanceTelemetry.js
+          npm install --ignore-scripts=false --no-package-lock
+          npm run build
+
+      - name: Preserve exact proposed diff
+        if: steps.duplicate.outputs.skip != 'true'
+        run: |
+          git diff --binary > artifacts/autonomous-builder/proposed.patch
+          git diff --stat > artifacts/autonomous-builder/diff-stat.txt
+          sha256sum artifacts/autonomous-builder/proposed.patch > artifacts/autonomous-builder/proposed.patch.sha256
+
+      - name: Commit and push tested proposal branch
+        if: steps.duplicate.outputs.skip != 'true'
+        run: |
+          git add \
+            nexus-science-core-v7/src/main.js \
+            nexus-science-core-v7/src/mobilePerformanceTelemetry.js
+          git commit -m 'Add real mobile frame-time telemetry'
+          git push --set-upstream origin "$PROPOSAL_BRANCH"
+
+      - name: Open a protected draft pull request
+        if: steps.duplicate.outputs.skip != 'true'
+        id: pull_request
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > /tmp/nexus-auto-pr.md <<EOF
+          ## What this is
+
+          A free/open-source autonomous coding proposal created by Aider and Qwen inside a GitHub-hosted runner.
+
+          ## Safety boundary
+
+          - Targets the protected \`$BASE_BRANCH\` research branch, not production \`main\`.
+          - Draft only; it cannot auto-merge.
+          - Edits were restricted to two approved files.
+          - The production build and JavaScript syntax checks passed before push.
+          - Exact patch and model/build logs are stored in workflow artifacts.
+
+          ## Task
+
+          Add real, bounded mobile frame-time telemetry without altering physics, evolution, controls, or art.
+          EOF
+          gh pr create \
+            --draft \
+            --base "$BASE_BRANCH" \
+            --head "$PROPOSAL_BRANCH" \
+            --title "$TASK_TITLE" \
+            --body-file /tmp/nexus-auto-pr.md \
+            | tee artifacts/autonomous-builder/pr-url.txt
+
+      - name: Fall back to an issue if GitHub blocks bot-created PRs
+        if: steps.duplicate.outputs.skip != 'true' && steps.pull_request.outcome != 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > /tmp/nexus-auto-issue.md <<EOF
+          The autonomous builder created and pushed a tested proposal branch, but repository settings blocked automatic draft-PR creation.
+
+          **Branch:** \`$PROPOSAL_BRANCH\`
+          **Base:** \`$BASE_BRANCH\`
+          **Task:** $TASK_TITLE
+
+          Nothing was merged into the live site. Build logs and the exact patch are in workflow artifacts for run \`$GITHUB_RUN_ID\`.
+          EOF
+          gh issue create \
+            --title "Autonomous proposal ready: $TASK_ID" \
+            --body-file /tmp/nexus-auto-issue.md \
+            | tee artifacts/autonomous-builder/issue-url.txt
+
+      - name: Stop Ollama
+        if: always()
+        run: |
+          if [ -f /tmp/nexus-auto-ollama.pid ]; then
+            kill "$(cat /tmp/nexus-auto-ollama.pid)" || true
+          fi
+
+      - name: Upload autonomous-builder evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-autonomous-builder-${{ github.run_id }}
+          path: artifacts/autonomous-builder/**
+          if-no-files-found: warn
+          retention-days: 30
