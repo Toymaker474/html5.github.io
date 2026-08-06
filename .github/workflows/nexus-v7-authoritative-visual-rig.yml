@@ -1,0 +1,251 @@
+name: Validate NEXUS V7 Authoritative Visual Rig
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/nexus-v7-authoritative-visual-rig.yml'
+      - 'nexus-science-core-v7/src/authoritativeVisualRig.js'
+      - 'nexus-science-core-v7/src/mobileRendererOverhaul.js'
+      - 'nexus-science-core-v7/src/mobileCameraFraming.js'
+      - 'nexus-science-core-v7/src/referenceLegConnectivity.js'
+      - 'nexus-science-core-v7/src/productionArtDirection.js'
+      - 'nexus-science-core-v7/src/main.js'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nexus-v7-authoritative-rig-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify-moving-endpoints:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 22
+
+    steps:
+      - name: Checkout exact pull-request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Build rigged simulator
+        working-directory: nexus-science-core-v7
+        run: |
+          npm install --ignore-scripts=false
+          node --check src/authoritativeVisualRig.js
+          node --check src/mobileRendererOverhaul.js
+          grep -q "MuJoCo body xpos + geom_size" src/authoritativeVisualRig.js
+          grep -q "installAuthoritativeVisualRig" src/mobileRendererOverhaul.js
+          npm run build
+
+      - name: Install mobile browser
+        run: |
+          mkdir -p rig-test artifacts/rig
+          cd rig-test
+          npm init -y >/dev/null
+          npm install playwright@1.55.0 >/dev/null
+          npx playwright install --with-deps chromium
+
+      - name: Measure moving CAD endpoints
+        run: |
+          cd nexus-science-core-v7
+          npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/nexus-rig-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          cd ..
+          trap 'kill $PREVIEW_PID || true' EXIT
+          cat > rig-test/verify.mjs <<'EOF'
+          import { writeFile } from 'node:fs/promises';
+          import { chromium } from 'playwright';
+
+          const browser = await chromium.launch({
+            headless: true,
+            args: [
+              '--use-gl=swiftshader',
+              '--enable-webgl',
+              '--enable-unsafe-swiftshader',
+              '--ignore-gpu-blocklist',
+            ],
+          });
+          const context = await browser.newContext({
+            viewport: { width: 430, height: 932 },
+            deviceScaleFactor: 3,
+            isMobile: true,
+            hasTouch: true,
+          });
+          const page = await context.newPage();
+          const diagnostics = [];
+          page.on('pageerror', error => diagnostics.push(`pageerror: ${error.message}`));
+          page.on('requestfailed', request => diagnostics.push(`requestfailed: ${request.url()} :: ${request.failure()?.errorText || 'unknown'}`));
+          page.on('console', message => {
+            if (message.type() === 'error') diagnostics.push(`console-error: ${message.text()}`);
+          });
+
+          await page.goto('http://127.0.0.1:4173/?robot=sandwalker&test=authoritative-rig', {
+            waitUntil: 'domcontentloaded',
+            timeout: 120000,
+          });
+          await page.waitForFunction(() => {
+            const renderer = window.__NEXUS_V7__?.renderer;
+            return renderer?.authoritativeVisualRig?.report?.ready === true &&
+              renderer?.mobileCameraFit?.readableFill === true &&
+              Number(window.__NEXUS_V7__?.runtime?.data?.time || 0) > 0.45;
+          }, null, { timeout: 120000 });
+
+          const measure = () => page.evaluate(() => {
+            const renderer = window.__NEXUS_V7__.renderer;
+            const runtime = window.__NEXUS_V7__.runtime;
+            const connectivity = renderer.referenceLegConnectivity;
+            const rig = renderer.authoritativeVisualRig;
+            const xpos = runtime.data.xpos;
+
+            const bodyPoint = (bodyId) => {
+              const offset = bodyId * 3;
+              return {
+                x: Number(xpos[offset]),
+                y: Number(xpos[offset + 2]),
+                z: -Number(xpos[offset + 1]),
+              };
+            };
+            const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+            const transform = (matrix, x, y, z) => {
+              const m = matrix.m;
+              return {
+                x: x * m[0] + y * m[4] + z * m[8] + m[12],
+                y: x * m[1] + y * m[5] + z * m[9] + m[13],
+                z: x * m[2] + y * m[6] + z * m[10] + m[14],
+              };
+            };
+
+            const samples = [];
+            let maximumEndpointErrorMetres = 0;
+            let maximumFootAnchorErrorMetres = 0;
+            for (const segment of rig.segments.values()) {
+              segment.assembly.computeWorldMatrix(true);
+              const halfBase = segment.thicknessReference * 0.5;
+              const matrix = segment.assembly.getWorldMatrix();
+              const endpointA = transform(matrix, 0, -halfBase, 0);
+              const endpointB = transform(matrix, 0, halfBase, 0);
+              const leg = connectivity.legs[segment.legId];
+              const start = bodyPoint(segment.role === 'upper' ? leg.bodyIds.hip : leg.bodyIds.knee);
+              const end = bodyPoint(segment.role === 'upper' ? leg.bodyIds.knee : leg.bodyIds.foot);
+              const direct = distance(endpointA, start) + distance(endpointB, end);
+              const reversed = distance(endpointA, end) + distance(endpointB, start);
+              const first = direct <= reversed ? endpointA : endpointB;
+              const second = direct <= reversed ? endpointB : endpointA;
+              const expectedOverlap = segment.endpointOverlapMetres;
+              const startError = Math.abs(distance(first, start) - expectedOverlap);
+              const endError = Math.abs(distance(second, end) - expectedOverlap);
+              maximumEndpointErrorMetres = Math.max(maximumEndpointErrorMetres, startError, endError);
+
+              samples.push({
+                key: segment.key,
+                templateId: segment.templateId,
+                expectedTemplateSide: segment.legId.endsWith('l') ? 'left' : 'right',
+                authoritativeLengthMetres: segment.authoritativeLength,
+                visualLengthMetres: segment.visualLength,
+                expectedOverlapMetres: expectedOverlap,
+                startErrorMetres: startError,
+                endErrorMetres: endError,
+                rootScaleY: Number(segment.assembly.scaling.y),
+              });
+            }
+
+            for (const legId of ['fl', 'ml', 'rl', 'fr', 'mr', 'rr']) {
+              const leg = connectivity.legs[legId];
+              const footAssembly = renderer.meshes.find((assembly) =>
+                assembly?.metadata?.connectedLeg === legId &&
+                assembly?.metadata?.connectedLegRole === 'foot');
+              if (!footAssembly) continue;
+              const footBody = bodyPoint(leg.bodyIds.foot);
+              const footPosition = {
+                x: Number(footAssembly.position.x),
+                y: Number(footAssembly.position.y),
+                z: Number(footAssembly.position.z),
+              };
+              maximumFootAnchorErrorMetres = Math.max(
+                maximumFootAnchorErrorMetres,
+                distance(footPosition, footBody),
+              );
+            }
+
+            return {
+              simulationTime: Number(runtime.data.time),
+              maximumEndpointErrorMetres,
+              maximumFootAnchorErrorMetres,
+              rigReport: rig.report,
+              connectivityReport: connectivity.report,
+              cameraFit: renderer.mobileCameraFit,
+              performanceProfile: renderer.performanceProfile,
+              samples,
+            };
+          });
+
+          const first = await measure();
+          await page.waitForTimeout(1100);
+          const second = await measure();
+          const report = {
+            schema: 'nexus.authoritative-visual-rig-browser-proof.v1',
+            activePreset: await page.evaluate(() => window.__NEXUS_V7__.activePreset.id),
+            first,
+            second,
+            diagnostics,
+          };
+
+          for (const sample of [first, second]) {
+            if (sample.rigReport?.ready !== true || sample.rigReport.segmentCount !== 12) {
+              throw new Error(`Visual rig incomplete: ${JSON.stringify(sample.rigReport)}`);
+            }
+            if (
+              sample.rigReport.correctSideAssets !== 12 ||
+              sample.rigReport.connectedEndpoints !== 24 ||
+              sample.rigReport.maximumEndpointGapMetres !== 0
+            ) {
+              throw new Error(`Rig report failed connectivity: ${JSON.stringify(sample.rigReport)}`);
+            }
+            if (sample.maximumEndpointErrorMetres > 0.004) {
+              throw new Error(`Rendered limb endpoint drifted by ${sample.maximumEndpointErrorMetres} m.`);
+            }
+            if (sample.maximumFootAnchorErrorMetres > 0.002) {
+              throw new Error(`Rendered foot anchor drifted by ${sample.maximumFootAnchorErrorMetres} m.`);
+            }
+            if (sample.cameraFit?.readableFill !== true) {
+              throw new Error(`Rig is not readable in the mobile frame: ${JSON.stringify(sample.cameraFit)}`);
+            }
+            if (sample.samples.some((record) =>
+              !record.templateId.endsWith(record.expectedTemplateSide) ||
+              record.visualLengthMetres <= record.authoritativeLengthMetres ||
+              record.rootScaleY <= 0.25)) {
+              throw new Error(`Wrong-side or invalid CAD segment: ${JSON.stringify(sample.samples)}`);
+            }
+          }
+          if (second.simulationTime <= first.simulationTime + 0.15) {
+            throw new Error('MuJoCo motion did not advance between endpoint samples.');
+          }
+          if (diagnostics.length) throw new Error(`Browser diagnostics failed: ${diagnostics.join(' | ')}`);
+
+          await page.screenshot({ path: 'artifacts/rig/nexus-v7-authoritative-visual-rig.png', fullPage: true });
+          await writeFile('artifacts/rig/nexus-v7-authoritative-visual-rig.json', JSON.stringify(report, null, 2));
+          console.log(JSON.stringify(report, null, 2));
+          await browser.close();
+          EOF
+          node rig-test/verify.mjs
+
+      - name: Upload visual-rig evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-v7-authoritative-visual-rig-${{ github.run_id }}
+          path: |
+            artifacts/rig/nexus-v7-authoritative-visual-rig.png
+            artifacts/rig/nexus-v7-authoritative-visual-rig.json
+            /tmp/nexus-rig-preview.log
+          if-no-files-found: warn
+          retention-days: 14
