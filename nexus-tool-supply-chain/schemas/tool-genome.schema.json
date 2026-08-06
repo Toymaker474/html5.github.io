@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexus.local/schemas/tool-genome.schema.json",
+  "title": "NEXUS AI-Friendly Tool Genome",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "version",
+    "category",
+    "summary",
+    "source",
+    "cost",
+    "platforms",
+    "capabilities",
+    "inputs",
+    "outputs",
+    "command",
+    "limits",
+    "metrics",
+    "ratings",
+    "gates",
+    "evidence"
+  ],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "name": { "type": "string", "minLength": 2 },
+    "version": { "type": "string", "minLength": 1 },
+    "category": { "type": "string", "minLength": 2 },
+    "summary": { "type": "string", "minLength": 20 },
+    "source": {
+      "type": "object",
+      "required": ["openSource", "license", "url", "pinned"],
+      "properties": {
+        "openSource": { "const": true },
+        "license": { "type": "string", "minLength": 2 },
+        "url": { "type": "string", "format": "uri" },
+        "pinned": { "type": "string", "minLength": 2 }
+      },
+      "additionalProperties": false
+    },
+    "cost": {
+      "type": "object",
+      "required": ["free", "subscription", "trial"],
+      "properties": {
+        "free": { "const": true },
+        "subscription": { "const": false },
+        "trial": { "const": false }
+      },
+      "additionalProperties": false
+    },
+    "platforms": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 2 }
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 2 }
+    },
+    "inputs": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "outputs": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "command": { "type": "string", "minLength": 2 },
+    "limits": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "metrics": {
+      "type": "object",
+      "required": [
+        "reliability",
+        "usefulness",
+        "security",
+        "agentCompatibility",
+        "mobileQuality",
+        "documentation",
+        "openness",
+        "performance"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        ".*": { "type": "number", "minimum": 0, "maximum": 100 }
+      }
+    },
+    "ratings": {
+      "type": "object",
+      "required": ["average", "count"],
+      "properties": {
+        "average": { "type": "number", "minimum": 0, "maximum": 100 },
+        "count": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "gates": {
+      "type": "object",
+      "required": [
+        "sourcePinned",
+        "licenseVerified",
+        "testsPassing",
+        "hashRecorded",
+        "humanDocs",
+        "agentContract"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        ".*": { "type": "boolean" }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 2 }
+    }
+  },
+  "additionalProperties": false
+}
