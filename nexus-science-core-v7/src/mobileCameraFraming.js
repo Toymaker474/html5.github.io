@@ -106,6 +106,24 @@ function installGarageBackdropObserver() {
   sync();
 }
 
+function enforceSafeRadius(renderer, safeRadius) {
+  const camera = renderer.camera;
+  const boundedRadius = clamp(safeRadius, 2.8, 11.5);
+
+  // Babylon can retain zoom inertia after camera construction or touch-state
+  // changes. A recommendation-only radius was therefore able to decay back to
+  // the old close-up limit. The mobile world must never silently crop the
+  // robot, so the measured full-body radius becomes the actual safe minimum.
+  camera.inertialRadiusOffset = 0;
+  camera.lowerRadiusLimit = boundedRadius;
+  camera.upperRadiusLimit = Math.max(12, boundedRadius + 1);
+  if (!Number.isFinite(camera.radius) || camera.radius < boundedRadius) {
+    camera.radius = boundedRadius;
+  }
+  renderer.mobileMinimumRadius = boundedRadius;
+  return boundedRadius;
+}
+
 export function installMobileCameraFraming() {
   installGarageBackdropObserver();
 
@@ -113,18 +131,19 @@ export function installMobileCameraFraming() {
   let activePresetId = null;
   let settleUntil = 0;
   let frame = 0;
+  let safeRadius = 5.55;
 
   function applyInitialFit(renderer, preset) {
-    const targetRadius = calculateFitRadius(renderer, preset);
+    safeRadius = calculateFitRadius(renderer, preset);
     renderer.camera.alpha = -Math.PI / 2.28;
     renderer.camera.beta = 1.03;
-    renderer.camera.radius = targetRadius;
-    renderer.camera.lowerRadiusLimit = Math.max(2.8, targetRadius * 0.54);
-    renderer.camera.upperRadiusLimit = 10;
+    renderer.camera.radius = safeRadius;
+    enforceSafeRadius(renderer, safeRadius);
     renderer.mobileCameraFit = Object.freeze({
       schema: 'nexus.mobile-camera-fit.v1',
       presetId: preset.id,
-      targetRadius,
+      targetRadius: safeRadius,
+      safeMinimumRadius: safeRadius,
       appliedRadius: renderer.camera.radius,
       viewportBounds: null,
       horizontallyContained: false,
@@ -134,6 +153,7 @@ export function installMobileCameraFraming() {
   }
 
   function updateFitEvidence(renderer, preset) {
+    enforceSafeRadius(renderer, safeRadius);
     const bounds = measureRobotBounds(renderer);
     if (!bounds) return;
 
@@ -142,14 +162,17 @@ export function installMobileCameraFraming() {
       const rightOverflow = Math.max(0, bounds.right - (bounds.viewportWidth - MOBILE_EDGE_MARGIN_PX));
       const overflow = Math.max(leftOverflow, rightOverflow);
       const scale = clamp(1 + overflow / Math.max(180, bounds.viewportWidth) * 1.35, 1.03, 1.22);
-      renderer.camera.radius = Math.min(renderer.camera.upperRadiusLimit, renderer.camera.radius * scale);
+      safeRadius = enforceSafeRadius(renderer, Math.max(safeRadius, renderer.camera.radius * scale));
+      renderer.camera.radius = safeRadius;
     }
 
+    enforceSafeRadius(renderer, safeRadius);
     const finalBounds = measureRobotBounds(renderer) || bounds;
     renderer.mobileCameraFit = Object.freeze({
       schema: 'nexus.mobile-camera-fit.v1',
       presetId: preset.id,
       targetRadius: calculateFitRadius(renderer, preset),
+      safeMinimumRadius: safeRadius,
       appliedRadius: renderer.camera.radius,
       viewportBounds: finalBounds,
       horizontallyContained: finalBounds.horizontallyContained,
@@ -171,6 +194,7 @@ export function installMobileCameraFraming() {
     if (renderer && preset && renderer === activeRenderer) {
       frame += 1;
       if (frame % 8 === 0) updateFitEvidence(renderer, preset);
+      else enforceSafeRadius(renderer, safeRadius);
     }
 
     requestAnimationFrame(tick);
