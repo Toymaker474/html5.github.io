@@ -79,7 +79,36 @@ function measureRobotBounds(renderer) {
   });
 }
 
+function installGarageBackdropObserver() {
+  const panel = document.querySelector('#preset-panel');
+  const backdrop = document.querySelector('#preset-backdrop');
+  const closeButton = document.querySelector('#preset-close');
+  if (!(panel instanceof HTMLElement) || !(backdrop instanceof HTMLButtonElement)) return;
+  if (backdrop.dataset.observerInstalled === 'true') return;
+  backdrop.dataset.observerInstalled = 'true';
+
+  const sync = () => {
+    const open = panel.dataset.open === 'true';
+    backdrop.dataset.open = String(open);
+    backdrop.setAttribute('aria-hidden', String(!open));
+  };
+
+  const observer = new MutationObserver(sync);
+  observer.observe(panel, { attributes: true, attributeFilter: ['data-open'] });
+  backdrop.addEventListener('click', () => {
+    if (closeButton instanceof HTMLButtonElement) closeButton.click();
+    else {
+      panel.dataset.open = 'false';
+      panel.setAttribute('aria-hidden', 'true');
+    }
+    sync();
+  });
+  sync();
+}
+
 export function installMobileCameraFraming() {
+  installGarageBackdropObserver();
+
   let activeRenderer = null;
   let activePresetId = null;
   let settleUntil = 0;
