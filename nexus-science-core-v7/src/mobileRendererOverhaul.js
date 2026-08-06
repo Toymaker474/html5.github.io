@@ -1,4 +1,5 @@
 import { Color3, StandardMaterial, Vector3 } from '@babylonjs/core';
+import { installAuthoritativeVisualRig } from './authoritativeVisualRig.js';
 
 const configuredRenderers = new WeakSet();
 
@@ -97,9 +98,12 @@ function installSafeFollow(renderer) {
 }
 
 export function applyMobileRendererOverhaul(renderer) {
-  if (!renderer || configuredRenderers.has(renderer)) return renderer?.performanceProfile || null;
+  if (!renderer) return null;
   const mobile = window.matchMedia('(max-width: 700px)').matches;
   if (!mobile) return null;
+
+  installAuthoritativeVisualRig(renderer);
+  if (configuredRenderers.has(renderer)) return renderer.performanceProfile || null;
 
   configuredRenderers.add(renderer);
   installSafeFollow(renderer);
@@ -139,6 +143,7 @@ export function applyMobileRendererOverhaul(renderer) {
     authoredCadPreserved: Boolean(renderer.artDirection?.authoredCad),
     shadowsEnabled: false,
     radiusSafeFollow: true,
+    authoritativeVisualRigInstalled: true,
     hardwareScalingLevel,
     renderWidth: renderer.engine.getRenderWidth(),
     renderHeight: renderer.engine.getRenderHeight(),
