@@ -177,6 +177,8 @@ async function boot() {
         cycle: 1,
         increment: 2,
         target: 'all-six-leg authoritative connectivity',
+        legCount: 6,
+        connectivitySchema: 'nexus.all-leg-connectivity.v2',
       }),
       schema: 'nexus.science-runtime.v1',
     });
