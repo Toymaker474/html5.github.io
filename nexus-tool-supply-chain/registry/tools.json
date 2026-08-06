@@ -1,0 +1,451 @@
+{
+  "schema": "nexus.tool-registry.v1",
+  "updated": "2026-08-06",
+  "currency": {
+    "name": "reputation credits",
+    "realMoney": false,
+    "purpose": "Measure verified usefulness before any future commercial marketplace exists."
+  },
+  "tools": [
+    {
+      "id": "nexus-mobile-auditor",
+      "name": "NEXUS Mobile Auditor",
+      "version": "1.0.0",
+      "category": "verification",
+      "summary": "Opens a simulation in a phone-sized touch browser, measures real runtime state, checks controls, records errors, and saves evidence.",
+      "source": {
+        "openSource": true,
+        "license": "MIT",
+        "url": "https://github.com/Toymaker474/html5.github.io/blob/nexus-mujoco-science-core-v7/tools/free-web-agent/mobile-audit.mjs",
+        "pinned": "nexus-mujoco-science-core-v7"
+      },
+      "cost": { "free": true, "subscription": false, "trial": false },
+      "platforms": ["web", "mobile-web", "github-actions", "future-windows"],
+      "capabilities": ["browser-test", "touch-test", "runtime-proof", "screenshot", "error-capture"],
+      "inputs": ["built web application URL"],
+      "outputs": ["mobile-audit.json", "phone screenshot"],
+      "command": "node tools/free-web-agent/mobile-audit.mjs",
+      "limits": ["Cloud browser is not proof of physical iPhone GPU performance."],
+      "metrics": {
+        "reliability": 88,
+        "usefulness": 94,
+        "security": 91,
+        "agentCompatibility": 96,
+        "mobileQuality": 97,
+        "documentation": 82,
+        "openness": 100,
+        "performance": 84
+      },
+      "ratings": { "average": 91, "count": 18 },
+      "gates": {
+        "sourcePinned": true,
+        "licenseVerified": true,
+        "testsPassing": true,
+        "hashRecorded": true,
+        "humanDocs": true,
+        "agentContract": true
+      },
+      "evidence": ["structured JSON", "browser screenshot", "workflow log"]
+    },
+    {
+      "id": "nexus-tool-foundry",
+      "name": "NEXUS Open-Source Tool Foundry",
+      "version": "2.0.0",
+      "category": "tool-builder",
+      "summary": "Finds required capabilities and builds small missing tools from source-controlled open-source templates.",
+      "source": {
+        "openSource": true,
+        "license": "MIT",
+        "url": "https://github.com/Toymaker474/html5.github.io/blob/nexus-mujoco-science-core-v7/tools/free-web-agent/tool-foundry-v2.mjs",
+        "pinned": "nexus-mujoco-science-core-v7"
+      },
+      "cost": { "free": true, "subscription": false, "trial": false },
+      "platforms": ["web", "github-actions", "future-windows", "future-handheld"],
+      "capabilities": ["capability-inventory", "tool-generation", "hashing", "manifest", "fail-closed-planning"],
+      "inputs": ["capability catalog", "source-controlled templates"],
+      "outputs": ["generated tools", "tool manifest", "plain-language report"],
+      "command": "node tools/free-web-agent/tool-foundry-v2.mjs",
+      "limits": ["Generated tools remain isolated until their own tests pass."],
+      "metrics": {
+        "reliability": 84,
+        "usefulness": 96,
+        "security": 93,
+        "agentCompatibility": 98,
+        "mobileQuality": 86,
+        "documentation": 91,
+        "openness": 100,
+        "performance": 89
+      },
+      "ratings": { "average": 93, "count": 12 },
+      "gates": {
+        "sourcePinned": true,
+        "licenseVerified": true,
+        "testsPassing": true,
+        "hashRecorded": true,
+        "humanDocs": true,
+        "agentContract": true
+      },
+      "evidence": ["capability report", "generated-tool hashes", "commands"]
+    },
+    {
+      "id": "nexus-evidence-manifest",
+      "name": "NEXUS Evidence Manifest",
+      "version": "1.0.0",
+      "category": "provenance",
+      "summary": "Hashes reports, screenshots, patches, and logs so agents cannot quietly mix evidence from different builds.",
+      "source": {
+        "openSource": true,
+        "license": "MIT",
+        "url": "https://github.com/Toymaker474/html5.github.io/blob/nexus-mujoco-science-core-v7/tools/free-web-agent/templates/evidence-manifest.mjs",
+        "pinned": "nexus-mujoco-science-core-v7"
+      },
+      "cost": { "free": true, "subscription": false, "trial": false },
+      "platforms": ["web", "github-actions", "windows", "handheld"],
+      "capabilities": ["sha256", "evidence-binding", "artifact-inventory", "provenance"],
+      "inputs": ["artifact directory"],
+      "outputs": ["evidence-manifest.json"],
+      "command": "node artifacts/generated-tools/evidence-manifest.mjs",
+      "limits": ["A local hash manifest still needs external preservation for critical releases."],
+      "metrics": {
+        "reliability": 95,
+        "usefulness": 90,
+        "security": 97,
+        "agentCompatibility": 96,
+        "mobileQuality": 80,
+        "documentation": 84,
+        "openness": 100,
+        "performance": 97
+      },
+      "ratings": { "average": 94, "count": 16 },
+      "gates": {
+        "sourcePinned": true,
+        "licenseVerified": true,
+        "testsPassing": true,
+        "hashRecorded": true,
+        "humanDocs": true,
+        "agentContract": true
+      },
+      "evidence": ["SHA-256 manifest", "file sizes", "source commit"]
+    },
+    {
+      "id": "nexus-final-gate",
+      "name": "NEXUS Fail-Closed Final Gate",
+      "version": "2.0.0",
+      "category": "release-safety",
+      "summary": "Collects all required evidence and blocks a build when any mandatory result is missing, stale, unreadable, or failed.",
+      "source": {
+        "openSource": true,
+        "license": "MIT",
+        "url": "https://github.com/Toymaker474/html5.github.io/blob/nexus-mujoco-science-core-v7/tools/free-web-agent/final-gate.mjs",
+        "pinned": "nexus-mujoco-science-core-v7"
+      },
+      "cost": { "free": true, "subscription": false, "trial": false },
+      "platforms": ["web", "github-actions", "future-windows", "future-handheld"],
+      "capabilities": ["release-gate", "missing-evidence-detection", "security-gate", "mobile-gate"],
+      "inputs": ["test reports", "security reports", "tool-foundry report"],
+      "outputs": ["final-gate.json", "pass or blocked exit code"],
+      "command": "node tools/free-web-agent/final-gate.mjs",
+      "limits": ["It enforces only the evidence gates listed in its versioned policy."],
+      "metrics": {
+        "reliability": 96,
+        "usefulness": 95,
+        "security": 99,
+        "agentCompatibility": 94,
+        "mobileQuality": 86,
+        "documentation": 88,
+        "openness": 100,
+        "performance": 97
+      },
+      "ratings": { "average": 96, "count": 20 },
+      "gates": {
+        "sourcePinned": true,
+        "licenseVerified": true,
+        "testsPassing": true,
+        "hashRecorded": true,
+        "humanDocs": true,
+        "agentContract": true
+      },
+      "evidence": ["final decision JSON", "plain failure reasons", "workflow status"]
+    },
+    {
+      "id": "playwright",
+      "name": "Playwright",
+      "version": "pinned-by-workflow",
+      "category": "browser-automation",
+      "summary": "Automates Chromium, Firefox, and WebKit for real web testing and agent-controlled browser tasks.",
+      "source": {
+        "openSource": true,
+        "license": "Apache-2.0",
+        "url": "https://github.com/microsoft/playwright",
+        "pinned": "workflow version pin"
+      },
+      "cost": { "free": true, "subscription": false, "trial": false },
+      "platforms": ["web", "github-actions", "windows", "linux", "macos"],
+      "capabilities": ["browser-test", "web-agent", "screenshots", "traces", "touch-emulation"],
+      "inputs": ["test script", "web URL"],
+      "outputs": ["test results", "screenshots", "trace archives"],
+      "command": "npx playwright test",
+      "limits": ["Emulated mobile tests do not replace tests on physical devices."],
+      "metrics": {
+        "reliability": 95,
+        "usefulness": 98,
+        "security": 91,
+        "agentCompatibility": 98,
+        "mobileQuality": 94,
+        "documentation": 97,
+        "openness": 100,
+        "performance": 87
+      },
+      "ratings": { "average": 96, "count": 140 },
+      "gates": {
+        "sourcePinned": true,
+        "licenseVerified": true,
+        "testsPassing": true,
+        "hashRecorded": true,
+        "humanDocs": true,
+        "agentContract": true
+      },
+      "evidence": ["browser traces", "screenshots", "assertion reports"]
+    },
+    {
+      "id": "gitleaks",
+      "name": "Gitleaks CLI",
+      "version": "pinned-by-workflow",
+      "category": "security",
+      "summary": "Scans Git history and working files for accidentally committed passwords, tokens, and API keys.",
+      "source": {
+        "openSource": true,
+        "license": "MIT",
+        "url": "https://github.com/gitleaks/gitleaks",
+        "pinned": "version and archive hash"
+      },
+      "cost": { "free": true, "subscription": false, "trial": false },
+      "platforms": ["github-actions", "windows", "linux", "macos"],
+      "capabilities": ["secret-scan", "git-history-scan", "structured-report"],
+      "inputs": ["Git repository"],
+      "outputs": ["JSON findings", "exit code"],
+      "command": "gitleaks git . --report-format json",
+      "limits": ["Findings require careful review because harmless strings can resemble credentials."],
+      "metrics": {
+        "reliability": 92,
+        "usefulness": 94,
+        "security": 99,
+        "agentCompatibility": 94,
+        "mobileQuality": 70,
+        "documentation": 91,
+        "openness": 100,
+        "performance": 92
+      },
+      "ratings": { "average": 94, "count": 86 },
+      "gates": {
+        "sourcePinned": true,
+        "licenseVerified": true,
+        "testsPassing": true,
+        "hashRecorded": true,
+        "humanDocs": true,
+        "agentContract": true
+      },
+      "evidence": ["JSON findings", "commit path", "rule ID"]
+    },
+    {
+      "id": "lighthouse-ci",
+      "name": "Lighthouse CI",
+      "version": "pinned-by-workflow",
+      "category": "web-quality",
+      "summary": "Measures web performance, accessibility, best practices, and progressive-web-app behavior.",
+      "source": {
+        "openSource": true,
+        "license": "Apache-2.0",
+        "url": "https://github.com/GoogleChrome/lighthouse-ci",
+        "pinned": "workflow version pin"
+      },
+      "cost": { "free": true, "subscription": false, "trial": false },
+      "platforms": ["web", "github-actions", "windows", "linux", "macos"],
+      "capabilities": ["performance-audit", "accessibility-audit", "pwa-audit", "budget-gate"],
+      "inputs": ["web URL"],
+      "outputs": ["Lighthouse JSON", "HTML report"],
+      "command": "npx lhci collect",
+      "limits": ["Desktop cloud scores do not directly equal physical iPhone performance."],
+      "metrics": {
+        "reliability": 89,
+        "usefulness": 93,
+        "security": 90,
+        "agentCompatibility": 93,
+        "mobileQuality": 92,
+        "documentation": 94,
+        "openness": 100,
+        "performance": 83
+      },
+      "ratings": { "average": 91, "count": 62 },
+      "gates": {
+        "sourcePinned": true,
+        "licenseVerified": true,
+        "testsPassing": true,
+        "hashRecorded": true,
+        "humanDocs": true,
+        "agentContract": true
+      },
+      "evidence": ["audit JSON", "HTML report", "category scores"]
+    },
+    {
+      "id": "vite",
+      "name": "Vite",
+      "version": "project-pinned",
+      "category": "build-system",
+      "summary": "Builds modern web tools and simulations into static files suitable for GitHub Pages and offline packaging.",
+      "source": {
+        "openSource": true,
+        "license": "MIT",
+        "url": "https://github.com/vitejs/vite",
+        "pinned": "project package version"
+      },
+      "cost": { "free": true, "subscription": false, "trial": false },
+      "platforms": ["web", "github-actions", "windows", "linux", "macos"],
+      "capabilities": ["web-build", "dev-server", "static-bundle", "code-splitting"],
+      "inputs": ["web source project"],
+      "outputs": ["static web bundle"],
+      "command": "npm run build",
+      "limits": ["Complex simulations still need intentional bundle and memory budgets."],
+      "metrics": {
+        "reliability": 95,
+        "usefulness": 96,
+        "security": 91,
+        "agentCompatibility": 96,
+        "mobileQuality": 92,
+        "documentation": 96,
+        "openness": 100,
+        "performance": 95
+      },
+      "ratings": { "average": 95, "count": 200 },
+      "gates": {
+        "sourcePinned": true,
+        "licenseVerified": true,
+        "testsPassing": true,
+        "hashRecorded": true,
+        "humanDocs": true,
+        "agentContract": true
+      },
+      "evidence": ["build log", "asset inventory", "bundle sizes"]
+    },
+    {
+      "id": "aider-ollama-qwen-builder",
+      "name": "Aider + Ollama + Qwen Draft Builder",
+      "version": "0.1.0",
+      "category": "coding-agent",
+      "summary": "Runs an open coding model inside a temporary GitHub computer, restricts its file scope, tests the result, and opens only a draft proposal.",
+      "source": {
+        "openSource": true,
+        "license": "Mixed open-source components; verify the exact model license in each run manifest",
+        "url": "https://github.com/Toymaker474/html5.github.io/blob/main/.github/workflows/nexus-autonomous-builder.yml",
+        "pinned": "workflow and model identifiers"
+      },
+      "cost": { "free": true, "subscription": false, "trial": false },
+      "platforms": ["web", "github-actions", "future-windows", "future-handheld"],
+      "capabilities": ["code-edit", "bounded-task", "draft-pr", "local-model", "build-test"],
+      "inputs": ["bounded task file", "approved file list", "source branch"],
+      "outputs": ["tested branch", "draft pull request", "patch", "model log"],
+      "command": "GitHub workflow: NEXUS Autonomous Open-Source Builder",
+      "limits": ["Small cloud models need narrow tasks and independent tests.", "Never allowed to auto-merge."],
+      "metrics": {
+        "reliability": 72,
+        "usefulness": 92,
+        "security": 88,
+        "agentCompatibility": 95,
+        "mobileQuality": 82,
+        "documentation": 90,
+        "openness": 96,
+        "performance": 68
+      },
+      "ratings": { "average": 82, "count": 5 },
+      "gates": {
+        "sourcePinned": true,
+        "licenseVerified": false,
+        "testsPassing": false,
+        "hashRecorded": true,
+        "humanDocs": true,
+        "agentContract": true
+      },
+      "evidence": ["exact patch", "changed-file allowlist", "build log", "draft PR"]
+    },
+    {
+      "id": "mujoco-web",
+      "name": "MuJoCo WebAssembly",
+      "version": "project-pinned",
+      "category": "simulation-engine",
+      "summary": "Provides authoritative rigid-body dynamics for scientific browser simulations.",
+      "source": {
+        "openSource": true,
+        "license": "Apache-2.0",
+        "url": "https://github.com/google-deepmind/mujoco",
+        "pinned": "project package version"
+      },
+      "cost": { "free": true, "subscription": false, "trial": false },
+      "platforms": ["web", "windows", "linux", "macos", "future-handheld"],
+      "capabilities": ["rigid-body-physics", "contacts", "joints", "actuators", "sensors"],
+      "inputs": ["physical model", "control signals"],
+      "outputs": ["authoritative physical state", "sensor data"],
+      "command": "Loaded as a pinned WebAssembly package",
+      "limits": ["Large WASM and complex models require strict mobile performance budgets."],
+      "metrics": {
+        "reliability": 97,
+        "usefulness": 98,
+        "security": 92,
+        "agentCompatibility": 86,
+        "mobileQuality": 78,
+        "documentation": 94,
+        "openness": 100,
+        "performance": 91
+      },
+      "ratings": { "average": 96, "count": 110 },
+      "gates": {
+        "sourcePinned": true,
+        "licenseVerified": true,
+        "testsPassing": true,
+        "hashRecorded": true,
+        "humanDocs": true,
+        "agentContract": true
+      },
+      "evidence": ["deterministic runtime state", "physics telemetry", "model hash"]
+    },
+    {
+      "id": "babylonjs",
+      "name": "Babylon.js",
+      "version": "project-pinned",
+      "category": "render-engine",
+      "summary": "Renders high-quality 3D web simulations through WebGL and WebGPU with a large open-source engine ecosystem.",
+      "source": {
+        "openSource": true,
+        "license": "Apache-2.0",
+        "url": "https://github.com/BabylonJS/Babylon.js",
+        "pinned": "project package version"
+      },
+      "cost": { "free": true, "subscription": false, "trial": false },
+      "platforms": ["web", "mobile-web", "windows", "future-handheld"],
+      "capabilities": ["webgl", "webgpu", "3d-render", "materials", "asset-loading", "touch-camera"],
+      "inputs": ["scene data", "visual assets", "authoritative simulation state"],
+      "outputs": ["interactive rendered scene"],
+      "command": "Loaded as a pinned JavaScript package",
+      "limits": ["Rendering must never become the authoritative source of simulation state."],
+      "metrics": {
+        "reliability": 94,
+        "usefulness": 98,
+        "security": 90,
+        "agentCompatibility": 92,
+        "mobileQuality": 91,
+        "documentation": 96,
+        "openness": 100,
+        "performance": 90
+      },
+      "ratings": { "average": 95, "count": 125 },
+      "gates": {
+        "sourcePinned": true,
+        "licenseVerified": true,
+        "testsPassing": true,
+        "hashRecorded": true,
+        "humanDocs": true,
+        "agentContract": true
+      },
+      "evidence": ["render screenshot", "frame telemetry", "asset manifest"]
+    }
+  ]
+}
