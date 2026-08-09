@@ -3,32 +3,37 @@
   "project": "GENESIS",
   "product": "GENESIS Foundation",
   "engineering_system": "GENESIS FORGE",
-  "phase": "simulation-vertical-slice-005-integrated",
+  "phase": "simulation-vertical-slice-006-integrated",
   "status": "IN_PROGRESS",
   "stable": {
-    "label": "matter-lab-0.5-integrated",
+    "label": "matter-lab-0.6-integrated",
     "verified": false,
-    "note": "Matter Lab 0.5 is integrated after a fully green pull-request CI run. Overall product remains unverified because the live GitHub.io deployment and real iPhone Safari have not been independently exercised."
+    "note": "Matter Lab 0.6 is integrated after a fully green pull-request CI run. Overall product remains unverified because the live GitHub.io deployment and real iPhone Safari have not been independently exercised."
   },
   "simulation": {
     "built": true,
     "status": "INTEGRATED_CI_PASS_LIVE_UNVERIFIED",
-    "vertical_slice": "Matter Lab 0.5",
-    "model": "genesis-matter-lj2d-v5",
-    "main_merge_commit": "1eaac182ff4559545091e60685e4b5d2e26aa007",
-    "pull_request": 54,
+    "vertical_slice": "Matter Lab 0.6",
+    "model": "genesis-matter-lj2d-v6",
+    "main_merge_commit": "a2100ab40e70da81101c00e2e0cdff44dfbf34e0",
+    "pull_request": 55,
     "ci": {
       "status": "PASS",
-      "workflow_run": 31310030817,
-      "tested_head": "18d53a147b5ece9bb38a24e11a03b6f6b3a1a462",
-      "simulation_test": "PASS genesis matter 0.5 multi-particle topology tests",
+      "workflow_run": 31310827285,
+      "tested_head": "2198f5889073c6ad5da9e11ac006afceead39f5d",
+      "simulation_test": "PASS genesis matter 0.6 cooperative self-assembly tests",
       "fixture_energy_drift_without_associations": 0.00014467353174091733,
-      "topology_fixture": {
-        "active_edges": 78,
-        "connected_components": 23,
+      "baseline_topology_fixture": {
         "largest_component_particles": 7,
-        "cycle_rank": 13,
-        "max_degree": 3
+        "cycle_rank": 13
+      },
+      "assembly_fixture": {
+        "assembly_created_edges": 51,
+        "closure_edges": 11,
+        "cooperative_edges": 40,
+        "largest_component_particles": 10,
+        "cycle_rank": 11,
+        "cycle_density": 0.12087912087912088
       },
       "reaction_regression_fixture": {
         "forward_events": 55,
@@ -49,7 +54,9 @@
       "toy graph valence limits",
       "connected-component, largest-component and cycle-rank diagnostics",
       "multi-edge transformed-state synchronization",
-      "visible chains and branched clusters through the association renderer",
+      "toy cooperative topology-driven self-assembly bias",
+      "tagged cooperative and closure assembly edges",
+      "live assembly-edge and cycle-density telemetry",
       "particle-count conservation invariant"
     ],
     "not_claimed": [
@@ -59,6 +66,8 @@
       "quantum chemistry",
       "real chemical bonds",
       "validated reaction chemistry",
+      "lipid membrane thermodynamics",
+      "validated molecular self-assembly",
       "cells",
       "evolution",
       "robots",
@@ -68,8 +77,8 @@
     "live_pages": {"status": "UNVERIFIED", "expected_path": "/sim/"},
     "iphone_safari": {"status": "UNVERIFIED"}
   },
-  "active_objective": "Turn the new graph topology into a more meaningful toy reaction network with explicit node/edge state categories and causal event history while preserving the playable 0.5 baseline.",
-  "next_gate": "Add the next reaction-network capability on an isolated Lab branch; preserve the 0.5 topology and regression fixtures and do not describe toy graph rules as real chemistry.",
+  "active_objective": "Turn coarse cooperative self-assembly into an inspectable compartment precursor: detect closed spatial loops, estimate enclosed regions, and distinguish mere graph cycles from persistent enclosure without claiming a membrane or cell.",
+  "next_gate": "Add a compartment-precursor detector on an isolated Lab branch, preserve the 0.6 assembly and regression fixtures, and require independent CI before promotion.",
   "invariants": [
     "ROADMAP != IMPLEMENTED != VERIFIED",
     "ChatGPT cannot self-certify its own changes",
@@ -81,6 +90,7 @@
     "CI PASS does not imply live deployment PASS or iPhone PASS",
     "Toy reaction events must not be described as validated chemistry",
     "Toy topology valence limits must not be described as chemical valence",
+    "Toy assembly bias must not be described as validated membrane self-assembly",
     "Particle state transformation must conserve particle count"
   ],
   "updated": "2026-08-09"
