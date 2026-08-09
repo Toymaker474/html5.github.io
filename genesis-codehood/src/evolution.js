@@ -1,95 +1,76 @@
 import { crossoverPrograms, mutateProgram, randomProgram, cloneProgram } from './vm.js';
-import { TASKS, VERIFY_CASES, evaluateProgram, SEED_PROGRAMS } from './tasks.js';
+import { TASKS, VERIFY_CASES, evaluateProgram, unlockedTaskNames } from './tasks.js';
+import { createBrain } from './brain.js';
 
-export const ROLES = Object.freeze(['BUILDER','CRITIC','TESTER','OPTIMIZER','ARCHITECT','SECURITY']);
-export const TASK_NAMES = Object.freeze(Object.keys(TASKS));
+export const ROLES=Object.freeze(['BUILDER','CRITIC','TESTER','OPTIMIZER','ARCHITECT','SECURITY']);
+export function emptyLibrary(){return {};}
+function pickTask(library,rng){const names=unlockedTaskNames(library);return names[(rng()*names.length)|0];}
 
-export function seededLibrary() {
-  const library = {};
-  for (const [task, code] of Object.entries(SEED_PROGRAMS)) {
-    const program = code.map(op => ({op,arg:0}));
-    const report = evaluateProgram(program, task);
-    library[task] = { task, program, report, author: 'SEED-EVOLUTION', version: 1, tick: 0 };
-  }
-  return library;
-}
-
-export function createAgent(id, rng = Math.random, parent = null, library = {}) {
-  const task = TASK_NAMES[(rng() * TASK_NAMES.length) | 0];
-  let program = randomProgram(rng);
-  if (parent) program = mutateProgram(parent.program, rng);
-  else if (library[task] && rng() < 0.42) program = mutateProgram(library[task].program, rng);
+export function createAgent(id,rng=Math.random,parent=null,library={}){
+  const task=parent&&rng()<.70?parent.task:pickTask(library,rng);
+  const parentProgram=parent?.bestProgram||parent?.program;
+  let program=parentProgram?mutateProgram(parentProgram,rng):randomProgram(rng,2,8);
+  if(!parent&&library[task]&&rng()<.18)program=crossoverPrograms(program,library[task].program,rng);
   return {
-    id,
-    label: `A-${String(id).padStart(5,'0')}`,
-    role: ROLES[(rng()*ROLES.length)|0],
-    task,
-    program,
-    generation: parent ? parent.generation + 1 : 0,
-    money: parent ? 40 : 20 + rng()*80,
-    energy: 65 + rng()*35,
-    skill: parent ? parent.skill*0.92 : 0,
-    age: 0,
-    alive: true,
-    x: rng(), y: rng(), tx: rng(), ty: rng(),
-    vx: 0, vy: 0,
-    risk: rng() < 0.035 ? 0.8 + rng()*0.8 : rng()*0.15,
-    lastJob: 0,
-    lastConflict: 0,
-    lineage: parent ? parent.id : null,
-    stats: { jobs:0, verified:0, critiques:0, conflicts:0 }
+    id,label:`A-${String(id).padStart(5,'0')}`,role:ROLES[(rng()*ROLES.length)|0],task,program,
+    bestProgram:cloneProgram(program),bestFitness:-Infinity,bestPassRate:0,
+    brain:createBrain(rng,parent?.brain||null),generation:parent?parent.generation+1:0,
+    money:parent?28:20+rng()*55,energy:55+rng()*40,skill:parent?parent.skill*.94:0,age:0,alive:true,
+    x:parent?parent.x:rng()*1200,y:parent?parent.y:rng()*800,tx:rng()*1200,ty:rng()*800,vx:0,vy:0,
+    lastJob:0,lastConflict:0,lineage:parent?parent.id:null,lastAction:'EXPLORE',actionTicks:0,
+    stats:{jobs:0,verified:0,critiques:0,conflicts:0,food:0,shelter:0,children:0,social:0}
   };
 }
 
-export function scoreCandidate(agent, library, rng = Math.random) {
-  const task = TASKS[agent.task];
-  const sample = [];
-  for (let i=0;i<24;i++) sample.push(VERIFY_CASES[(rng()*VERIFY_CASES.length)|0]);
-  const report = evaluateProgram(agent.program, agent.task, sample);
-  const correctness = report.passRate;
-  const efficiency = 1 / (1 + report.avgSteps * 0.025 + agent.program.length * 0.03);
-  const score = correctness * 1000 + efficiency * 100;
-  const pay = correctness > 0.60 ? (4 + correctness * task.reward * 0.22) : 0;
-  agent.money += pay;
-  agent.skill = Math.min(100, agent.skill + correctness * 0.65);
-  agent.stats.jobs += 1;
+export function retargetAgent(agent,library,rng=Math.random){
+  const names=unlockedTaskNames(library);
+  if(!names.includes(agent.task)||rng()<.08){
+    agent.task=names[(rng()*names.length)|0];
+    agent.program=randomProgram(rng,2,8);agent.bestProgram=cloneProgram(agent.program);agent.bestFitness=-Infinity;agent.bestPassRate=0;
+  }
+}
 
-  if (report.verified) {
-    const full = evaluateProgram(agent.program, agent.task, VERIFY_CASES);
-    if (full.verified) {
-      const prior = library[agent.task];
-      const better = !prior || agent.program.length < prior.program.length || full.avgSteps < prior.report.avgSteps;
-      if (better) {
-        library[agent.task] = {
-          task: agent.task,
-          program: cloneProgram(agent.program),
-          report: full,
-          author: agent.label,
-          version: (prior?.version ?? 0) + 1,
-          tick: 0
-        };
-      }
-      agent.money += task.reward;
-      agent.stats.verified += 1;
-      return { report: full, score, pay: pay + task.reward, shipped: true, improved: better };
+export function scoreCandidate(agent,library,rng=Math.random){
+  const task=TASKS[agent.task];const sample=[];
+  for(let i=0;i<24;i++)sample.push(VERIFY_CASES[(rng()*VERIFY_CASES.length)|0]);
+  const report=evaluateProgram(agent.program,agent.task,sample);
+  const correctness=report.passRate;
+  const fitness=correctness*1000-report.avgSteps*.35-agent.program.length*1.5;
+  const improvedPersonal=fitness>agent.bestFitness;
+  if(improvedPersonal){agent.bestFitness=fitness;agent.bestPassRate=correctness;agent.bestProgram=cloneProgram(agent.program);}
+  const pay=correctness>.50?(1.5+correctness*task.reward*.14):0;
+  agent.money+=pay;agent.skill=Math.min(100,agent.skill+correctness*.48);agent.stats.jobs++;
+
+  if(report.verified){
+    const full=evaluateProgram(agent.program,agent.task,VERIFY_CASES);
+    if(full.verified){
+      const prior=library[agent.task];
+      const better=!prior||agent.program.length<prior.program.length||full.avgSteps<prior.report.avgSteps;
+      if(better)library[agent.task]={task:agent.task,program:cloneProgram(agent.program),report:full,author:agent.label,version:(prior?.version??0)+1,tick:0};
+      agent.money+=task.reward;agent.stats.verified++;
+      agent.bestProgram=cloneProgram(agent.program);agent.bestPassRate=1;agent.bestFitness=Math.max(agent.bestFitness,1000-full.avgSteps*.35-agent.program.length*1.5);
+      agent.program=mutateProgram(agent.bestProgram,rng);
+      return{report:full,pay:pay+task.reward,shipped:true,improved:better,improvedPersonal};
     }
   }
 
-  if (report.passRate < 0.35 && library[agent.task] && rng() < 0.20) {
-    agent.program = crossoverPrograms(agent.program, library[agent.task].program, rng);
-  } else {
-    agent.program = mutateProgram(agent.program, rng);
-  }
-  return { report, score, pay, shipped: false, improved: false };
+  const base=agent.bestProgram?.length?agent.bestProgram:agent.program;
+  if(library[agent.task]&&rng()<.08)agent.program=crossoverPrograms(base,library[agent.task].program,rng);
+  else agent.program=mutateProgram(base,rng);
+  return{report,pay,shipped:false,improved:false,improvedPersonal};
 }
 
-export function critiqueAgent(critic, target) {
-  const full = evaluateProgram(target.program, target.task, VERIFY_CASES);
-  if (!full.verified) {
-    critic.money += 5;
-    critic.skill = Math.min(100, critic.skill + 0.18);
-    critic.stats.critiques += 1;
-    return full.firstFailure;
+export function socialLearn(a,b,rng=Math.random){
+  if(!b||!b.alive||a===b)return false;
+  if(a.task===b.task&&b.bestPassRate>a.bestPassRate&&rng()<.22){
+    a.program=crossoverPrograms(a.bestProgram,b.bestProgram||b.program,rng);a.stats.social++;return true;
   }
+  if(rng()<.06){a.brain=createBrain(rng,b.brain);a.stats.social++;return true;}
+  return false;
+}
+
+export function critiqueAgent(critic,target){
+  const full=evaluateProgram(target.bestProgram||target.program,target.task,VERIFY_CASES);
+  if(!full.verified){critic.money+=4;critic.skill=Math.min(100,critic.skill+.16);critic.stats.critiques++;return full.firstFailure;}
   return null;
 }
