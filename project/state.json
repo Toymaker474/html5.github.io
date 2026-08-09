@@ -3,17 +3,17 @@
   "project": "GENESIS",
   "product": "GENESIS Foundation",
   "engineering_system": "GENESIS FORGE",
-  "phase": "materials-lab-001-candidate",
+  "phase": "materials-lab-001-promotion-candidate",
   "status": "IN_PROGRESS",
   "stable": {
     "label": "matter-lab-0.6-integrated",
     "verified": false,
-    "note": "Matter Lab 0.6 remains the integrated baseline. The Materials Lab work is isolated on genesis-materials-0.1 and has not been promoted. Overall product remains unverified because live GitHub.io and real iPhone Safari have not been independently exercised."
+    "note": "Matter Lab 0.6 remains the integrated baseline and its regression suite passed unchanged in Materials Lab PR #56. Overall product remains unverified because live GitHub.io and real iPhone Safari have not been independently exercised."
   },
   "lab": {
     "branch": "genesis-materials-0.1",
     "candidate": "GENESIS Materials Lab 0.1",
-    "status": "WRITTEN_UNTESTED",
+    "status": "CI_PASS_PROMOTION_READY",
     "original_intent": "Make the graphics high quality and make sand actually read and behave like sand: very fine visible granular detail, piles, structures, wet sand, water, and a GPU path that can later grow toward lava, clouds and creatures.",
     "bounded_objective": "Prove one reusable high-detail material-sandbox architecture: deterministic coarse sand/water simulation truth in a Worker, moisture-dependent wet-sand cohesion, touch interaction, adaptive grid quality, WebGPU state-derived rendering and Canvas fallback, without regressing Matter Lab 0.6.",
     "acceptance_criteria": [
@@ -27,12 +27,52 @@
       "old Matter Lab 0.6 model regression test remains PASS",
       "full pull-request GitHub Actions run passes on the exact candidate head before merge"
     ],
+    "ci": {
+      "status": "PASS_ON_PREVIOUS_HEAD",
+      "pull_request": 56,
+      "workflow_run": 31313512227,
+      "tested_head": "371677df8298e1a5929d708ad678a8527102c655",
+      "matter_regression": "PASS genesis matter 0.6 cooperative self-assembly tests",
+      "materials_test": "PASS genesis materials 0.1 granular sand/water tests",
+      "materials_fixture": {
+        "replay_hash": 1695607716,
+        "sand_fall_center_y_before": 23.5,
+        "sand_fall_center_y_after": 2.875,
+        "water_center_y_before": 20.5,
+        "water_center_y_after": 2.2708333333333335,
+        "wet_sand_cells_in_wetting_fixture": 30,
+        "dry_fixture_height": 8,
+        "wet_fixture_height": 14
+      },
+      "note": "Homepage and Project Brain were updated after this run. A final CI run on the new exact head is still required before merge."
+    },
     "verification": {
       "implementation": "WRITTEN",
-      "ci": "NOT_YET_RUN",
+      "reference_model_tests": "PASS_ON_PREVIOUS_HEAD",
+      "matter_regression": "PASS_ON_PREVIOUS_HEAD",
+      "final_exact_head_ci": "PENDING",
       "live_pages": "NOT_YET_TESTED",
       "iphone_safari": "NOT_YET_TESTED",
       "webgpu_device": "NOT_YET_TESTED"
+    },
+    "promotion_comparison": {
+      "capabilities_gained": [
+        "separate playable granular Materials Lab",
+        "dry sand settling and pile/slump behavior in a coarse discrete model",
+        "explicit wet-sand moisture state and phenomenological cohesion",
+        "coarse water local-flow behavior and sand wetting",
+        "touch material painting and sandbox tools",
+        "adaptive grids from about 14k to 130k coarse cells",
+        "WebGPU state-derived material renderer",
+        "Canvas2D fallback renderer"
+      ],
+      "capabilities_changed": ["homepage gains a second experimental play entry and expanded preflight"],
+      "capabilities_lost": [],
+      "matter_lab_regression": "PASS_ON_PREVIOUS_HEAD",
+      "performance_change": "UNMEASURED_ON_TARGET_DEVICES",
+      "save_compatibility": "NO_SAVE_SCHEMA_EXISTS_FOR_MATERIALS_LAB_0.1; MATTER LAB FILES UNCHANGED",
+      "visual_change": "NEW_SEPARATE_MATERIALS_ROUTE; EXISTING_MATTER_ROUTE_UNCHANGED",
+      "scientific_model_change": "ADDS_SEPARATE_COARSE_GRANULAR/WATER PHENOMENOLOGICAL MODEL; DOES NOT REPLACE MATTER LAB MODEL"
     }
   },
   "simulation": {
@@ -52,27 +92,6 @@
       "assembly_fixture": {"assembly_created_edges": 51,"closure_edges": 11,"cooperative_edges": 40,"largest_component_particles": 10,"cycle_rank": 11,"cycle_density": 0.12087912087912088},
       "reaction_regression_fixture": {"forward_events": 55,"reverse_events": 55,"active_associations_after_stress": 0}
     },
-    "capabilities": [
-      "2D coarse-grained Lennard-Jones particle dynamics",
-      "velocity-Verlet integration",
-      "periodic minimum-image boundaries",
-      "touch/user impulse intervention",
-      "instantaneous radial distribution function g(r)",
-      "reversible association between unlike generic species",
-      "explicit forward and reverse toy reaction events",
-      "internal transformed particle state on reacted associations",
-      "bounded multi-particle association topology",
-      "toy graph valence limits",
-      "connected-component, largest-component and cycle-rank diagnostics",
-      "multi-edge transformed-state synchronization",
-      "toy cooperative topology-driven self-assembly bias",
-      "tagged cooperative and closure assembly edges",
-      "live assembly-edge and cycle-density telemetry",
-      "particle-count conservation invariant"
-    ],
-    "not_claimed": [
-      "literal atoms","chemical valence","real molecular graph chemistry","quantum chemistry","real chemical bonds","validated reaction chemistry","lipid membrane thermodynamics","validated molecular self-assembly","cells","evolution","robots","agents","complete GENESIS platform"
-    ],
     "live_pages": {"status": "UNVERIFIED", "expected_path": "/sim/"},
     "iphone_safari": {"status": "UNVERIFIED"}
   },
@@ -81,8 +100,8 @@
     {"idea":"volumetric atmosphere and clouds","status":"FUTURE_UNLOCK","prerequisites":["field representation","advection/transport model","GPU performance path","state-derived volumetric renderer"]},
     {"idea":"creatures interacting with materials","status":"FUTURE_UNLOCK","prerequisites":["persistent world/material substrate","life/development/control systems","causal body-environment coupling"]}
   ],
-  "active_objective": "Finish and independently test GENESIS Materials Lab 0.1 as a reusable sand/water visual-material candidate without changing Stable.",
-  "next_gate": "Wire the playable Materials Lab into CI, run both new materials fixtures and old Matter Lab 0.6 regressions on a pull request, inspect exact logs, repair only causal failures, and merge only on full PASS.",
+  "active_objective": "Run final PR CI on the exact Materials Lab 0.1 candidate including homepage and canonical-state updates, then promote only if the full run is green and the PR head remains unchanged.",
+  "next_gate": "Inspect final exact-head GitHub Actions logs for both Matter Lab and Materials Lab; merge PR #56 only on full PASS. Live Pages/WebGPU-device/iPhone verification remain later gates and cannot be inferred from CI.",
   "invariants": [
     "ROADMAP != IMPLEMENTED != VERIFIED",
     "ChatGPT cannot self-certify its own changes",
