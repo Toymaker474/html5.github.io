@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>GENESIS CORE // Rust WASM Molecular Engine</title>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020509;color:#eefcff;font-family:system-ui,-apple-system,Segoe UI,sans-serif}canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}.hud{position:fixed;top:max(8px,env(safe-area-inset-top));left:8px;right:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:8px 10px;border:1px solid rgba(160,230,255,.16);border-radius:14px;background:rgba(3,10,16,.72);backdrop-filter:blur(18px);z-index:5}.brand{font-size:12px;font-weight:900;letter-spacing:.08em;color:#71ffe2}.stat{font-size:11px;color:#9ab3bc}.stat b{color:#fff}.controls{position:fixed;left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;padding:10px;border:1px solid rgba(160,230,255,.16);border-radius:16px;background:rgba(3,10,16,.78);backdrop-filter:blur(18px);z-index:5}label{font-size:11px;color:#a8bdc5;display:grid;gap:4px}input[type=range]{width:100%}button{border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.08);color:white;border-radius:10px;padding:9px;font-weight:800}.status{grid-column:1/-1;font-size:11px;color:#9ab3bc}@media(max-width:650px){.controls{grid-template-columns:1fr 1fr}.status{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div class="hud"><span class="brand">GENESIS CORE // RUST WASM</span><span class="stat">Atoms <b id="atoms">0</b></span><span class="stat">Bonds <b id="bonds">0</b></span><span class="stat">FPS <b id="fps">0</b></span><span class="stat">Core <b id="core">BOOT</b></span></div>
+<div class="controls">
+<label>Temperature <span id="tempV">320 K</span><input id="temp" type="range" min="100" max="900" value="320"></label>
+<label>Simulation speed <span id="speedV">1.00×</span><input id="speed" type="range" min="0.1" max="6" value="1" step="0.1"></label>
+<button id="pulse">Energy pulse</button><button id="reset">Reset universe</button>
+<div class="status" id="status">Loading Rust/WebAssembly core…</div>
+</div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
