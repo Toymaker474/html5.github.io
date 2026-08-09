@@ -3,15 +3,15 @@
   "project": "GENESIS",
   "product": "GENESIS Foundation",
   "engineering_system": "GENESIS FORGE",
-  "phase": "forge-foundation-evidence",
+  "phase": "forge-fail-closed-recovery-drill",
   "status": "IN_PROGRESS",
   "stable": {
     "label": "none-yet",
     "verified": false,
-    "note": "Clean-room foundation exists. Shared browser/CI audit execution is implemented but must pass verification before becoming the first known-good checkpoint."
+    "note": "Clean-room foundation and shared audit contract exist. A controlled fail-closed candidate/recovery drill is now implemented; external workflow verification is still required before locking the first known-good checkpoint."
   },
-  "active_objective": "Prove one real FORGE execution path that consumes canonical state, runs deterministic checks, and emits hashed structured evidence.",
-  "next_gate": "Observe the GitHub Actions foundation receipt and verify the deployed FORGE page can run the same audit contract; then lock the first known-good checkpoint and add controlled failure/recovery.",
+  "active_objective": "Prove that FORGE rejects a deliberately broken candidate while the untouched baseline remains healthy and independently auditable.",
+  "next_gate": "Obtain a passing CI recovery receipt for the shared fail-closed drill; then lock the first known-good foundation checkpoint and add a real mutable Lab-vs-Stable experiment branch workflow.",
   "invariants": [
     "ROADMAP != IMPLEMENTED != VERIFIED",
     "ChatGPT cannot self-certify its own changes",
@@ -19,7 +19,9 @@
     "Prototype experiments do not become product without a productionization gate",
     "Tyler is not the build system or log courier",
     "No required paid tool or runtime AI dependency",
-    "A PASS status requires evidence produced by the acceptance contract"
+    "A PASS status requires evidence produced by the acceptance contract",
+    "A broken candidate must not contaminate the baseline",
+    "UNKNOWN must never silently become PASS"
   ],
   "archive_note": "Historical repo content was removed from active main. Emergency history remains on archive-pre-genesis-rebuild-2026-08-09 only.",
   "updated": "2026-08-09"
