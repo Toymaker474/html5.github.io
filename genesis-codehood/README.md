@@ -1,76 +1,66 @@
-# GENESIS // CODEHOOD ZERO
+# GENESIS // CODEHOOD FORTRESS
 
-A chunked browser-native evolutionary programming civilization. Thousands of tiny ASCII humanoid agents must survive a world with food scarcity, jobs, shelter, flooding, danger, reproduction, and abstract street conflict while evolving executable programs in a sandboxed VM.
+A browser-native evolutionary programming world. Tiny simulated people must survive, earn resources, reproduce, and discover executable programming modules through mutation, testing, selection, and social inheritance.
 
-## The important rule: zero solved programs
+## What this version is
 
-This build starts with **no solved programming genomes**. The simulation defines:
+- A readable 96×48 fortress-style ASCII world with roads, doors, homes, farms, workshops, learning labs, trees, food, high ground, and flood water.
+- Happy-face `☺` people instead of anonymous dots.
+- Chunked simulation for thousands of agents without all-to-all world scans.
+- An evolving survival-policy genome controlling forage/work/shelter/explore/rest/social/fight choices.
+- A separate executable program genome running in the sandboxed CodeVM.
+- Zero pre-solved program genomes.
+- Concrete project modules such as movement, collision, bounce physics, scoring, distance, and scaling.
+- Runnable projects that stay locked until every required module is independently evolved and verified.
 
-- a tiny instruction set,
-- deterministic programming objectives/tests,
-- survival action primitives,
-- environmental rules.
+## Real project ladder
 
-Agents evolve the instruction sequences that solve programming tasks and the numerical policy weights that choose survival behavior. A skill is only labeled learned after the evolved program passes all 96 deterministic verifier cases.
+1. **Happy Walker** — tiny movement game.
+2. **Coin Chase** — movement + collision + scoring.
+3. **Bounce Box** — movement + bounce physics.
+4. **Range Inspector** — small verified numeric tool.
+5. **Motion Lab** — simulation-oriented motion cartridge.
 
-That is not the same thing as unconstrained general intelligence: the world primitives and objectives are designed. But the successful program genomes, lineages, survival strategies, and artifacts are not scripted outcomes.
+When a project is unlocked, it executes the civilization's verified genomes at runtime. It is not a canned animation pretending an agent wrote code.
 
-## Chunked world
+## What “learned” means
 
-The logical world is 1200×800 units split into a 12×8 grid of **96 chunks**. The scheduler processes chunks in small batches and performs a complete occupancy rebuild at the end of each world sweep. This avoids global all-agent neighbor scans and makes larger populations practical in a browser.
+A capability is never marked learned because an agent says so or because a progress bar reached a threshold. The evolved program must pass **96/96 deterministic verifier cases** inside the CodeVM. Failed, crashing, looping, or partially correct genomes remain unverified.
 
-Each chunk tracks local population, food, jobs, shelter, danger, flood pressure, births/deaths, and programming attempts. The UI shows both boot progress and live chunk-sweep progress.
+## What this is NOT yet
 
-## Two evolving genomes per agent
+This is genetic program synthesis in a small executable language. It is **not yet an AI that has learned C, C++, Rust, JavaScript, or English syntax from scratch**. Calling CodeVM bytecode “C++ learning” would be fake.
 
-1. **Program genome** — instructions for the sandbox VM. Personal bests are retained, mutated, crossed over, tested, criticized, and inherited.
-2. **Survival brain** — 63 evolving weights mapping observations (hunger, flood, food, jobs, shelter, danger, crowding, poverty) to actions (forage, work, shelter, explore, rest, socialize, fight).
+The intended progression is:
 
-Programming success matters to survival because verified work earns simulated credits and successful lineages can afford reproduction.
+```text
+CodeVM execution semantics
+        ↓
+structured tiny C-like language
+        ↓
+variables / branches / loops / functions
+        ↓
+compile verified source to WebAssembly
+        ↓
+C
+        ↓
+C++ / Rust / JavaScript
+        ↓
+larger games, tools, and simulations
+```
 
-## Programming curriculum
-
-The zero-seed curriculum contains 12 tasks across five levels. New levels unlock only after the civilization verifies enough earlier skills. No solution program for these tasks is embedded in the runtime.
+Each stage should only unlock after executable evidence proves the prior stage.
 
 ## Safe self-execution
 
-Agent programs execute only inside `src/vm.js`. The VM has hard instruction, stack, register, numeric, jump, and divide-by-zero limits. It does not use `eval`, `new Function`, shell execution, or arbitrary browser/native code.
+Agent programs do not use `eval`, `new Function`, shell commands, or arbitrary native execution. The CodeVM enforces instruction, stack, register, numeric, jump, and divide-by-zero limits.
 
-## Run
-
-Static hosting is enough:
+## Verification
 
 ```bash
-python -m http.server 8080
-```
-
-Open `/genesis-codehood/`.
-
-## Verify
-
-```bash
+cd genesis-codehood
 npm test
 npm run check
 ```
 
-Tests validate the task verifiers, VM guardrails, chunk grid, occupancy rebuild, scheduler, and survival-brain shape.
-
-## Files
-
-```text
-genesis-codehood/
-├── index.html
-├── styles.css
-├── package.json
-├── README.md
-├── src/
-│   ├── vm.js
-│   ├── tasks.js
-│   ├── brain.js
-│   ├── world.js
-│   ├── evolution.js
-│   └── main.js
-└── tests/
-    ├── vm.test.mjs
-    └── world.test.mjs
-```
+Tests cover the 12 project-skill verifiers, VM safety budgets, chunk scheduler, survival-brain shape, runnable project cartridges, and ASCII renderer dimensions.
