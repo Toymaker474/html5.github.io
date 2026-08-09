@@ -1,19 +1,20 @@
-import { crossoverPrograms, mutateProgram, randomProgram, cloneProgram } from './vm.js';
 import { TASKS, VERIFY_CASES, evaluateProgram, unlockedTaskNames } from './tasks.js';
 import { createBrain } from './brain.js';
+import { cloneTinyC, compileTinyC, crossoverTinyC, mutateTinyC, randomTinyC } from './tinyc.js';
 
 export const ROLES=Object.freeze(['BUILDER','CRITIC','TESTER','OPTIMIZER','ARCHITECT','SECURITY']);
 export function emptyLibrary(){return {};}
 function pickTask(library,rng){const names=unlockedTaskNames(library);return names[(rng()*names.length)|0];}
+function compileAgent(agent){agent.program=compileTinyC(agent.ast);return agent.program;}
 
 export function createAgent(id,rng=Math.random,parent=null,library={}){
   const task=parent&&rng()<.70?parent.task:pickTask(library,rng);
-  const parentProgram=parent?.bestProgram||parent?.program;
-  let program=parentProgram?mutateProgram(parentProgram,rng):randomProgram(rng,2,8);
-  if(!parent&&library[task]&&rng()<.18)program=crossoverPrograms(program,library[task].program,rng);
+  let ast=parent?.bestAst?mutateTinyC(parent.bestAst,rng):randomTinyC(rng);
+  if(!parent&&library[task]?.ast&&rng()<.18)ast=crossoverTinyC(ast,library[task].ast,rng);
+  const program=compileTinyC(ast);
   return {
-    id,label:`A-${String(id).padStart(5,'0')}`,role:ROLES[(rng()*ROLES.length)|0],task,program,
-    bestProgram:cloneProgram(program),bestFitness:-Infinity,bestPassRate:0,
+    id,label:`A-${String(id).padStart(5,'0')}`,role:ROLES[(rng()*ROLES.length)|0],task,ast,program,
+    bestAst:cloneTinyC(ast),bestProgram:program.map(x=>({...x})),bestFitness:-Infinity,bestPassRate:0,
     brain:createBrain(rng,parent?.brain||null),generation:parent?parent.generation+1:0,
     money:parent?28:20+rng()*55,energy:55+rng()*40,skill:parent?parent.skill*.94:0,age:0,alive:true,
     x:parent?parent.x:rng()*1200,y:parent?parent.y:rng()*800,tx:rng()*1200,ty:rng()*800,vx:0,vy:0,
@@ -25,19 +26,22 @@ export function createAgent(id,rng=Math.random,parent=null,library={}){
 export function retargetAgent(agent,library,rng=Math.random){
   const names=unlockedTaskNames(library);
   if(!names.includes(agent.task)||rng()<.08){
-    agent.task=names[(rng()*names.length)|0];
-    agent.program=randomProgram(rng,2,8);agent.bestProgram=cloneProgram(agent.program);agent.bestFitness=-Infinity;agent.bestPassRate=0;
+    agent.task=names[(rng()*names.length)|0];agent.ast=randomTinyC(rng);compileAgent(agent);
+    agent.bestAst=cloneTinyC(agent.ast);agent.bestProgram=agent.program.map(x=>({...x}));agent.bestFitness=-Infinity;agent.bestPassRate=0;
   }
 }
 
 export function scoreCandidate(agent,library,rng=Math.random){
-  const task=TASKS[agent.task];const sample=[];
+  compileAgent(agent);
+  const task=TASKS[agent.task],sample=[];
   for(let i=0;i<24;i++)sample.push(VERIFY_CASES[(rng()*VERIFY_CASES.length)|0]);
   const report=evaluateProgram(agent.program,agent.task,sample);
   const correctness=report.passRate;
   const fitness=correctness*1000-report.avgSteps*.35-agent.program.length*1.5;
   const improvedPersonal=fitness>agent.bestFitness;
-  if(improvedPersonal){agent.bestFitness=fitness;agent.bestPassRate=correctness;agent.bestProgram=cloneProgram(agent.program);}
+  if(improvedPersonal){
+    agent.bestFitness=fitness;agent.bestPassRate=correctness;agent.bestAst=cloneTinyC(agent.ast);agent.bestProgram=agent.program.map(x=>({...x}));
+  }
   const pay=correctness>.50?(1.5+correctness*task.reward*.14):0;
   agent.money+=pay;agent.skill=Math.min(100,agent.skill+correctness*.48);agent.stats.jobs++;
 
@@ -46,24 +50,25 @@ export function scoreCandidate(agent,library,rng=Math.random){
     if(full.verified){
       const prior=library[agent.task];
       const better=!prior||agent.program.length<prior.program.length||full.avgSteps<prior.report.avgSteps;
-      if(better)library[agent.task]={task:agent.task,program:cloneProgram(agent.program),report:full,author:agent.label,version:(prior?.version??0)+1,tick:0};
+      if(better)library[agent.task]={task:agent.task,ast:cloneTinyC(agent.ast),program:agent.program.map(x=>({...x})),report:full,author:agent.label,version:(prior?.version??0)+1,tick:0};
       agent.money+=task.reward;agent.stats.verified++;
-      agent.bestProgram=cloneProgram(agent.program);agent.bestPassRate=1;agent.bestFitness=Math.max(agent.bestFitness,1000-full.avgSteps*.35-agent.program.length*1.5);
-      agent.program=mutateProgram(agent.bestProgram,rng);
+      agent.bestAst=cloneTinyC(agent.ast);agent.bestProgram=agent.program.map(x=>({...x}));agent.bestPassRate=1;agent.bestFitness=Math.max(agent.bestFitness,1000-full.avgSteps*.35-agent.program.length*1.5);
+      agent.ast=mutateTinyC(agent.bestAst,rng);compileAgent(agent);
       return{report:full,pay:pay+task.reward,shipped:true,improved:better,improvedPersonal};
     }
   }
 
-  const base=agent.bestProgram?.length?agent.bestProgram:agent.program;
-  if(library[agent.task]&&rng()<.08)agent.program=crossoverPrograms(base,library[agent.task].program,rng);
-  else agent.program=mutateProgram(base,rng);
+  const base=agent.bestAst||agent.ast;
+  if(library[agent.task]?.ast&&rng()<.08)agent.ast=crossoverTinyC(base,library[agent.task].ast,rng);
+  else agent.ast=mutateTinyC(base,rng);
+  compileAgent(agent);
   return{report,pay,shipped:false,improved:false,improvedPersonal};
 }
 
 export function socialLearn(a,b,rng=Math.random){
   if(!b||!b.alive||a===b)return false;
-  if(a.task===b.task&&b.bestPassRate>a.bestPassRate&&rng()<.22){
-    a.program=crossoverPrograms(a.bestProgram,b.bestProgram||b.program,rng);a.stats.social++;return true;
+  if(a.task===b.task&&b.bestPassRate>a.bestPassRate&&b.bestAst&&rng()<.22){
+    a.ast=crossoverTinyC(a.bestAst||a.ast,b.bestAst,rng);compileAgent(a);a.stats.social++;return true;
   }
   if(rng()<.06){a.brain=createBrain(rng,b.brain);a.stats.social++;return true;}
   return false;

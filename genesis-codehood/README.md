@@ -1,59 +1,69 @@
 # GENESIS // CODEHOOD FORTRESS
 
-A browser-native evolutionary programming world. Tiny simulated people must survive, earn resources, reproduce, and discover executable programming modules through mutation, testing, selection, and social inheritance.
+A browser-native evolutionary programming world. Tiny simulated people must survive, earn resources, reproduce, and discover executable programs through mutation, testing, selection, and social inheritance.
 
-## What this version is
+## What is real now
 
-- A readable 96×48 fortress-style ASCII world with roads, doors, homes, farms, workshops, learning labs, trees, food, high ground, and flood water.
+- A readable 96×48 fortress-style ASCII world with roads, doors, homes, farms, workshops, labs, trees, food, high ground, and flooding.
 - Happy-face `☺` people instead of anonymous dots.
 - Chunked simulation for thousands of agents without all-to-all world scans.
 - An evolving survival-policy genome controlling forage/work/shelter/explore/rest/social/fight choices.
-- A separate executable program genome running in the sandboxed CodeVM.
-- Zero pre-solved program genomes.
-- Concrete project modules such as movement, collision, bounce physics, scoring, distance, and scaling.
-- Runnable projects that stay locked until every required module is independently evolved and verified.
+- **TinyC source-code genomes** represented as structured syntax trees.
+- TinyC supports variables `a`/`b`, constants, `+`, `-`, `*`, `min`, `max`, equality, greater-than, absolute value, negation, and return expressions.
+- Each TinyC candidate is compiled into the sandboxed CodeVM and actually executed.
+- Zero solved programs are loaded.
+- A capability is learned only after the evolved source compiles and passes 96/96 deterministic verifier cases.
+- Runnable projects stay locked until every required evolved module is verified.
+
+## Example of what an agent can genuinely evolve
+
+```c
+int step_right(int a, int b) {
+  return (a + 1);
+}
+```
+
+The grammar and available operators are designed by us; that source solution is not preloaded. Mutation and crossover operate on the program tree, compilation produces VM instructions, and the verifier decides whether the behavior is correct.
 
 ## Real project ladder
 
 1. **Happy Walker** — tiny movement game.
 2. **Coin Chase** — movement + collision + scoring.
 3. **Bounce Box** — movement + bounce physics.
-4. **Range Inspector** — small verified numeric tool.
-5. **Motion Lab** — simulation-oriented motion cartridge.
+4. **Range Inspector** — small verified tool.
+5. **Motion Lab** — simulation-oriented cartridge.
 
-When a project is unlocked, it executes the civilization's verified genomes at runtime. It is not a canned animation pretending an agent wrote code.
-
-## What “learned” means
-
-A capability is never marked learned because an agent says so or because a progress bar reached a threshold. The evolved program must pass **96/96 deterministic verifier cases** inside the CodeVM. Failed, crashing, looping, or partially correct genomes remain unverified.
+When a project is unlocked, it calls the civilization's verified evolved TinyC modules at runtime.
 
 ## What this is NOT yet
 
-This is genetic program synthesis in a small executable language. It is **not yet an AI that has learned C, C++, Rust, JavaScript, or English syntax from scratch**. Calling CodeVM bytecode “C++ learning” would be fake.
+TinyC is intentionally small. It is not yet full C, C++, Rust, JavaScript, or an English-speaking language learner. It does not yet invent whole multi-file applications, APIs, classes, memory allocators, or arbitrary game architectures from scratch.
 
-The intended progression is:
+The next honest progression is:
 
 ```text
-CodeVM execution semantics
+TinyC expressions                     ← CURRENT
         ↓
-structured tiny C-like language
+statements + local variables
         ↓
-variables / branches / loops / functions
+if / loops / functions
         ↓
-compile verified source to WebAssembly
+arrays + structured memory
         ↓
-C
+compile source to WebAssembly
         ↓
-C++ / Rust / JavaScript
+C subset
         ↓
-larger games, tools, and simulations
+C++ / Rust / JavaScript targets
+        ↓
+multi-file games, tools, simulations
 ```
 
-Each stage should only unlock after executable evidence proves the prior stage.
+Each stage should unlock only after executable evidence proves the previous stage.
 
 ## Safe self-execution
 
-Agent programs do not use `eval`, `new Function`, shell commands, or arbitrary native execution. The CodeVM enforces instruction, stack, register, numeric, jump, and divide-by-zero limits.
+Generated code does not use `eval`, `new Function`, shell commands, or arbitrary native execution. TinyC compiles into CodeVM, which enforces instruction, stack, register, numeric, jump, and divide-by-zero limits.
 
 ## Verification
 
@@ -63,4 +73,4 @@ npm test
 npm run check
 ```
 
-Tests cover the 12 project-skill verifiers, VM safety budgets, chunk scheduler, survival-brain shape, runnable project cartridges, and ASCII renderer dimensions.
+Tests cover TinyC AST generation/mutation/crossover/compilation, all 12 project-skill verifiers, VM safety budgets, chunk scheduling, survival-brain shape, runnable project cartridges, and ASCII renderer dimensions.
