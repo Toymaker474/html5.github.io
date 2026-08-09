@@ -5,8 +5,17 @@ export const OPS = Object.freeze([
   'LOAD','STORE','JMP','JZ','JNZ','HALT'
 ]);
 
+// Only these instructions are available to newborn/evolving programs.
+// Higher-level arithmetic opcodes remain executable for backwards compatibility,
+// but evolution cannot randomly receive MUL/MIN/MAX/ABS/DIV as a solved shortcut.
+export const EVOLVABLE_OPS = Object.freeze([
+  'PUSH_A','PUSH_B','PUSH_0','PUSH_1',
+  'ADD','SUB','DUP','SWAP','GT','LT','EQ',
+  'LOAD','STORE','JMP','JZ','JNZ','HALT'
+]);
+
 export const DEFAULT_LIMITS = Object.freeze({
-  maxInstructions: 96,
+  maxInstructions: 128,
   maxStack: 32,
   registerCount: 4,
   maxAbsValue: 1e9
@@ -102,10 +111,10 @@ export function runProgram(program, input = {}, limits = DEFAULT_LIMITS) {
 }
 
 export function randomInstruction(rng = Math.random) {
-  const op = OPS[(rng() * OPS.length) | 0];
+  const op = EVOLVABLE_OPS[(rng() * EVOLVABLE_OPS.length) | 0];
   let arg = 0;
   if (op === 'LOAD' || op === 'STORE') arg = (rng() * 4) | 0;
-  else if (BRANCH_OPS.has(op)) arg = ((rng() * 9) | 0) - 4 || 1;
+  else if (BRANCH_OPS.has(op)) arg = ((rng() * 11) | 0) - 5 || 1;
   return { op, arg };
 }
 
@@ -114,7 +123,7 @@ export function randomProgram(rng = Math.random, min = 2, max = 10) {
   return Array.from({ length: n }, () => randomInstruction(rng));
 }
 
-export function mutateProgram(program, rng = Math.random, maxLength = 24) {
+export function mutateProgram(program, rng = Math.random, maxLength = 32) {
   const out = cloneProgram(program);
   const r = rng();
   if (!out.length) return randomProgram(rng, 2, 6);
@@ -131,7 +140,7 @@ export function mutateProgram(program, rng = Math.random, maxLength = 24) {
   return out;
 }
 
-export function crossoverPrograms(a, b, rng = Math.random, maxLength = 24) {
+export function crossoverPrograms(a, b, rng = Math.random, maxLength = 32) {
   if (!a.length) return cloneProgram(b).slice(0, maxLength);
   if (!b.length) return cloneProgram(a).slice(0, maxLength);
   const x = (rng() * (a.length + 1)) | 0;
