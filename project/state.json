@@ -3,23 +3,35 @@
   "project": "GENESIS",
   "product": "GENESIS Foundation",
   "engineering_system": "GENESIS FORGE",
-  "phase": "simulation-vertical-slice-001",
+  "phase": "simulation-vertical-slice-001-integrated",
   "status": "IN_PROGRESS",
   "stable": {
-    "label": "main-clean-foundation",
+    "label": "matter-lab-0.1-integrated",
     "verified": false,
-    "note": "Main remains the clean foundation. The simulation exists only as a Lab candidate until independent CI and live deployment tests support promotion."
-  },
-  "lab": {
-    "branch": "genesis-lab",
-    "experiment": "matter-vslice-001",
-    "status": "CANDIDATE"
+    "note": "Matter Lab 0.1 is integrated into main after a fully green pull-request CI run. The product is NOT globally verified because the live GitHub.io deployment and real iPhone Safari have not been independently exercised from this environment."
   },
   "simulation": {
     "built": true,
-    "status": "LAB_CANDIDATE",
+    "status": "INTEGRATED_CI_PASS_LIVE_UNVERIFIED",
     "vertical_slice": "Matter Lab 0.1",
     "model": "genesis-matter-lj2d-v1",
+    "main_merge_commit": "4d8e8d96be4d5a8a7936c127eefb7a285dcd3d4a",
+    "pull_request": 50,
+    "ci": {
+      "status": "PASS",
+      "workflow_run": 31308575937,
+      "tested_head": "27896c94d55e7ba1597f89c357ae6f3701b022f9",
+      "simulation_test": "PASS genesis matter model tests"
+    },
+    "live_pages": {
+      "status": "UNVERIFIED",
+      "expected_path": "/sim/",
+      "note": "Public-site fetch could not be performed from the current execution environment because DNS/web-safe-open access was unavailable. This is not a PASS or a FAIL for the deployed page."
+    },
+    "iphone_safari": {
+      "status": "UNVERIFIED",
+      "note": "No real iPhone/Safari device run has been performed."
+    },
     "claims": [
       "2D classical coarse-grained particle dynamics",
       "Lennard-Jones 12-6 pair interactions",
@@ -39,8 +51,8 @@
       "complete GENESIS platform"
     ]
   },
-  "active_objective": "Get independent GitHub Actions evidence for the first actual simulation vertical slice, then promote only if it passes and can be exercised from the live GitHub.io deployment.",
-  "next_gate": "Open a pull request, observe the real CI run and logs, then merge only on PASS. After merge, test the public /sim/ page and separately test real iPhone Safari before calling the vertical slice device-verified.",
+  "active_objective": "Exercise Matter Lab 0.1 from the live GitHub.io deployment, then test it on a real iPhone/Safari. After those gates, deepen the simulation instead of renaming this slice.",
+  "next_gate": "Verify the public /sim/ deployment and real iPhone Safari separately. Do not set stable.verified true until the required product gates actually pass.",
   "invariants": [
     "ROADMAP != IMPLEMENTED != VERIFIED",
     "ChatGPT cannot self-certify its own changes",
@@ -50,9 +62,9 @@
     "No required paid tool or runtime AI dependency",
     "A PASS status requires evidence produced outside the code-under-test when practical",
     "UNKNOWN must never silently become PASS",
-    "Lab changes cannot become Stable without an explicit promotion gate",
     "Infrastructure must not be described as simulation capability",
-    "The Matter Lab must not be described as atoms, chemistry, life, robotics, or agents"
+    "The Matter Lab must not be described as atoms, chemistry, life, robotics, or agents",
+    "CI PASS does not imply live deployment PASS or iPhone PASS"
   ],
   "updated": "2026-08-09"
 }
