@@ -1,63 +1,61 @@
-# GENESIS // CODEHOOD
+# GENESIS // CODEHOOD ZERO
 
-A browser-native evolutionary programming civilization. Thousands of tiny simulated humanoid agents compete for simulated credits by writing, testing, criticizing, optimizing, and shipping **real executable programs** inside a sandboxed virtual machine.
+A chunked browser-native evolutionary programming civilization. Thousands of tiny ASCII humanoid agents must survive a world with food scarcity, jobs, shelter, flooding, danger, reproduction, and abstract street conflict while evolving executable programs in a sandboxed VM.
 
-This project intentionally does **not** use a language-model API and does **not** fake code execution. Agent genomes are executable VM programs. Their rewards come from deterministic execution results.
+## The important rule: zero solved programs
 
-## What is real in this version
+This build starts with **no solved programming genomes**. The simulation defines:
 
-- ASCII/terminal-style humanoid city visualization.
-- Builders, critics, testers, optimizers, architects, and security agents.
-- Mutation, crossover, lineages, economic rewards, and inheritance.
-- Flooding that changes movement, energy use, and economic survival.
-- Abstract/non-graphic street conflict and simulated murder events.
-- A persistent civilization skill library.
-- Program artifacts created by successful agents.
-- An in-app program console that executes selected agent/artifact programs.
-- Deterministic verification tests plus runtime/instruction limits.
-- Browser local-save and JSON state export.
+- a tiny instruction set,
+- deterministic programming objectives/tests,
+- survival action primitives,
+- environmental rules.
 
-## Safe self-execution model
+Agents evolve the instruction sequences that solve programming tasks and the numerical policy weights that choose survival behavior. A skill is only labeled learned after the evolved program passes all 96 deterministic verifier cases.
 
-GENESIS does **not** run arbitrary JavaScript, shell commands, native machine code, `eval()`, or `new Function()`.
+That is not the same thing as unconstrained general intelligence: the world primitives and objectives are designed. But the successful program genomes, lineages, survival strategies, and artifacts are not scripted outcomes.
 
-Agent programs run in `src/vm.js`, a deliberately tiny stack VM. The VM enforces:
+## Chunked world
 
-- instruction budget,
-- stack-depth limit,
-- finite numeric values,
-- bounded registers,
-- checked jumps,
-- divide-by-zero failure,
-- deterministic test harnesses.
+The logical world is 1200×800 units split into a 12×8 grid of **96 chunks**. The scheduler processes chunks in small batches and performs a complete occupancy rebuild at the end of each world sweep. This avoids global all-agent neighbor scans and makes larger populations practical in a browser.
 
-That means an evolved program can crash **inside the VM** without crashing the webpage or gaining access to browser APIs.
+Each chunk tracks local population, food, jobs, shelter, danger, flood pressure, births/deaths, and programming attempts. The UI shows both boot progress and live chunk-sweep progress.
+
+## Two evolving genomes per agent
+
+1. **Program genome** — instructions for the sandbox VM. Personal bests are retained, mutated, crossed over, tested, criticized, and inherited.
+2. **Survival brain** — 63 evolving weights mapping observations (hunger, flood, food, jobs, shelter, danger, crowding, poverty) to actions (forage, work, shelter, explore, rest, socialize, fight).
+
+Programming success matters to survival because verified work earns simulated credits and successful lineages can afford reproduction.
+
+## Programming curriculum
+
+The zero-seed curriculum contains 12 tasks across five levels. New levels unlock only after the civilization verifies enough earlier skills. No solution program for these tasks is embedded in the runtime.
+
+## Safe self-execution
+
+Agent programs execute only inside `src/vm.js`. The VM has hard instruction, stack, register, numeric, jump, and divide-by-zero limits. It does not use `eval`, `new Function`, shell execution, or arbitrary browser/native code.
 
 ## Run
 
-No build step is required. Serve this directory with any static web server or through GitHub Pages.
-
-For a local server:
+Static hosting is enough:
 
 ```bash
 python -m http.server 8080
 ```
 
-Then open `/genesis-codehood/`.
+Open `/genesis-codehood/`.
 
-## Tests
-
-Node 20+:
+## Verify
 
 ```bash
-cd genesis-codehood
 npm test
 npm run check
 ```
 
-The test suite verifies every embedded seed program across 96 deterministic input pairs and confirms that infinite loops are terminated by the VM instruction budget.
+Tests validate the task verifiers, VM guardrails, chunk grid, occupancy rebuild, scheduler, and survival-brain shape.
 
-## Project structure
+## Files
 
 ```text
 genesis-codehood/
@@ -66,18 +64,13 @@ genesis-codehood/
 ├── package.json
 ├── README.md
 ├── src/
-│   ├── vm.js          # sandboxed executable instruction machine
-│   ├── tasks.js       # curricula + deterministic verification
-│   ├── evolution.js   # genomes, agents, mutation, crossover, critics
-│   └── main.js        # world simulation + UI + persistence
+│   ├── vm.js
+│   ├── tasks.js
+│   ├── brain.js
+│   ├── world.js
+│   ├── evolution.js
+│   └── main.js
 └── tests/
-    └── vm.test.mjs
+    ├── vm.test.mjs
+    └── world.test.mjs
 ```
-
-## Next architecture milestone
-
-The next performance step is to move the VM/evolution hot loop to C++ and compile it to WebAssembly while leaving the UI in JavaScript. The VM contract should remain the security boundary so evolved programs never become arbitrary native code.
-
-## Design rule
-
-A capability is not considered learned because an agent says it learned it. It must execute and pass the verifier.
