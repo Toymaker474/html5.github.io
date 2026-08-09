@@ -44,14 +44,19 @@ fn tonemap(c:vec3f)->vec3f{
     let normal=normalize(vec3f((l-r)*0.72,(d-u)*0.58,1.35));
     let light=normalize(vec3f(-0.48,0.62,0.92));let ndl=max(dot(normal,light),0.0);
     let jitter=(vec2f(hash21(cell+7.1),hash21(cell+19.7))-.5)*.18;
-    let grain=length(local-(vec2f(.5)+jitter));let grainBody=smoothstep(.76,.22,grain);
+    let grain=length(local-(vec2f(.5)+jitter));
+    let grainBody=1.0-smoothstep(.22,.76,grain);
+    let micro=hash21(floor(gpos*vec2f(5.0,5.0))+cell*9.3);
     let fleck=hash21(floor(gpos*vec2f(3.0,3.0))+cell*4.7);
     var dry=mix(vec3f(.31,.155,.045),vec3f(.96,.68,.25),.25+.72*rnd);
-    dry*=.84+.30*fleck;let wetBase=mix(dry,vec3f(.19,.105,.035),.72);
+    dry*=.81+.24*fleck+.08*micro;
+    let wetBase=mix(dry,vec3f(.19,.105,.035),.72);
     let base=mix(dry,wetBase,wet);
     let cavity=1.0-.09*(l+r+u);let diffuse=.22+.88*ndl;
-    let spec=pow(max(dot(normal,normalize(light+vec3f(0.0,0.0,1.0))),0.0),mix(26.0,92.0,wet))*mix(.035,.32,wet);
-    let rim=.78+.22*grainBody;color=base*diffuse*cavity*rim+spec*vec3f(1.0,.83,.58);
+    let halfv=normalize(light+vec3f(0.0,0.0,1.0));
+    let spec=pow(max(dot(normal,halfv),0.0),mix(26.0,92.0,wet))*mix(.035,.32,wet);
+    let rim=.76+.24*grainBody;
+    color=base*diffuse*cavity*rim+spec*vec3f(1.0,.83,.58);
   }else if(mat==2u){
     let wave=sin(f32(gx)*.37+params.time*1.7)+sin(f32(gy)*.29-params.time*1.2)+sin((f32(gx+gy))*.13+params.time*.8);
     let edge=select(0.0,1.0,matAt(gx,gy+1)!=2u);
