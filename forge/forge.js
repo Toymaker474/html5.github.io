@@ -1,29 +1,15 @@
 const q=id=>document.getElementById(id);
-let lastReceipt=null;
+let lastReceipt=null,lastDrill=null;
 const REQUIRED=GenesisAudit.REQUIRED;
-function set(id,state,detail=''){const el=q(id);el.textContent=detail?`${state} · ${detail}`:state;el.className='status '+(state==='PASS'?'pass':state==='FAIL'?'fail':'unknown')}
+function set(id,state,detail=''){const el=q(id);if(!el)return;el.textContent=detail?`${state} · ${detail}`:state;el.className='status '+(state==='PASS'?'pass':state==='FAIL'?'fail':'unknown')}
 async function reachable(path){try{const r=await fetch('../'+path+'?audit='+Date.now(),{cache:'no-store'});return r.ok}catch{return false}}
-async function runAudit(){
- q('run').disabled=true;q('run').textContent='Running…';set('s1','RUNNING');set('s2','WAITING');set('s3','WAITING');set('s4','WAITING');
- const files={};for(const path of REQUIRED)files[path]=await reachable(path);
- let state=null;try{const r=await fetch('../project/state.json?audit='+Date.now(),{cache:'no-store'});if(r.ok)state=await r.json()}catch{}
- const result=GenesisAudit.audit({state,files});
- set('s1',files['project/state.json']?'PASS':'FAIL');
- set('s2',result.status,`${result.summary.passed}/${result.summary.total}`);
- try{
-  lastReceipt=await GenesisAudit.receipt(result,{environment:navigator.userAgent,source:location.href});
-  localStorage.setItem('genesis-forge:last-foundation-receipt',JSON.stringify(lastReceipt));
-  set('s3',result.status,lastReceipt.evidence_sha256.slice(0,12));
- }catch(err){lastReceipt={...result,receipt_error:String(err)};set('s3','FAIL','receipt hash unavailable')}
- set('s4',result.status==='PASS'?'READY':'BLOCKED',result.status==='PASS'?'next increment unlocked':'repair foundation first');
- q('report').textContent=JSON.stringify(lastReceipt,null,2);
- q('run').disabled=false;q('run').textContent='Run real foundation audit';
- refreshLast();
-}
-function refreshLast(){let saved=null;try{saved=JSON.parse(localStorage.getItem('genesis-forge:last-foundation-receipt')||'null')}catch{}
- q('last').textContent=saved?`${saved.status} · ${saved.generated_at}\n${saved.evidence_sha256||'no hash'}\n${saved.summary?.passed||0}/${saved.summary?.total||0} checks`:'No local receipt yet.';
-}
-q('run').onclick=runAudit;
-q('copy').onclick=async()=>{if(!lastReceipt)await runAudit();const text=JSON.stringify(lastReceipt,null,2);try{await navigator.clipboard.writeText(text);q('copy').textContent='Copied receipt';setTimeout(()=>q('copy').textContent='Copy evidence receipt',1200)}catch{q('report').textContent=text+'\n\nClipboard unavailable; select text manually.'}};
-q('clear').onclick=()=>{localStorage.removeItem('genesis-forge:last-foundation-receipt');lastReceipt=null;q('report').textContent='Receipt cleared. Run the audit again.';refreshLast()};
+async function loadInputs(){const files={};for(const path of REQUIRED)files[path]=await reachable(path);let state=null;try{const r=await fetch('../project/state.json?audit='+Date.now(),{cache:'no-store'});if(r.ok)state=await r.json()}catch{}return{state,files}}
+async function saveReceipt(key,result,source){const rec=await GenesisAudit.receipt(result,{environment:navigator.userAgent,source});localStorage.setItem(key,JSON.stringify(rec));return rec}
+async function runAudit(){q('run').disabled=true;q('run').textContent='Running…';set('s1','RUNNING');set('s2','WAITING');set('s3','WAITING');set('s4','WAITING');const input=await loadInputs();const result=GenesisAudit.audit(input);set('s1',input.files['project/state.json']?'PASS':'FAIL');set('s2',result.status,`${result.summary.passed}/${result.summary.total}`);try{lastReceipt=await saveReceipt('genesis-forge:last-foundation-receipt',result,location.href+'#foundation');set('s3',result.status,lastReceipt.evidence_sha256.slice(0,12))}catch(err){lastReceipt={...result,receipt_error:String(err)};set('s3','FAIL','receipt hash unavailable')}set('s4',result.status==='PASS'?'READY':'BLOCKED',result.status==='PASS'?'failure drill unlocked':'repair foundation first');q('report').textContent=JSON.stringify(lastReceipt,null,2);q('run').disabled=false;q('run').textContent='Run foundation audit';refreshLast()}
+async function runDrill(){q('drill').disabled=true;q('drill').textContent='Injecting controlled failure…';set('s5','RUNNING');set('s6','WAITING');const input=await loadInputs();const drill=GenesisAudit.failureDrill(input);try{lastDrill=await saveReceipt('genesis-forge:last-recovery-receipt',drill,location.href+'#fail-closed-drill');set('s5',drill.candidate_status==='FAIL'?'PASS':'FAIL',`candidate=${drill.candidate_status}`);set('s6',drill.status,drill.stable_preserved?'stable preserved':'preservation failed');q('report').textContent=JSON.stringify(lastDrill,null,2)}catch(err){set('s5','FAIL');set('s6','FAIL','receipt error');q('report').textContent=String(err)}q('drill').disabled=false;q('drill').textContent='Run controlled failure + recovery drill';refreshLast()}
+function readLocal(key){try{return JSON.parse(localStorage.getItem(key)||'null')}catch{return null}}
+function refreshLast(){const a=readLocal('genesis-forge:last-foundation-receipt'),d=readLocal('genesis-forge:last-recovery-receipt');q('last').textContent=[a?`FOUNDATION ${a.status} · ${a.generated_at}\n${a.evidence_sha256||'no hash'}`:'FOUNDATION no receipt',d?`RECOVERY ${d.status} · ${d.generated_at}\n${d.evidence_sha256||'no hash'}`:'RECOVERY no receipt'].join('\n\n')}
+q('run').onclick=runAudit;q('drill').onclick=runDrill;
+q('copy').onclick=async()=>{const obj=lastDrill||lastReceipt||readLocal('genesis-forge:last-recovery-receipt')||readLocal('genesis-forge:last-foundation-receipt');if(!obj){await runAudit();return}const text=JSON.stringify(obj,null,2);try{await navigator.clipboard.writeText(text);q('copy').textContent='Copied receipt';setTimeout(()=>q('copy').textContent='Copy latest evidence',1200)}catch{q('report').textContent=text+'\n\nClipboard unavailable; select text manually.'}};
+q('clear').onclick=()=>{localStorage.removeItem('genesis-forge:last-foundation-receipt');localStorage.removeItem('genesis-forge:last-recovery-receipt');lastReceipt=lastDrill=null;q('report').textContent='Local receipts cleared. Canonical project files were not changed.';refreshLast()};
 refreshLast();
