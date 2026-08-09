@@ -1,7 +1,17 @@
 const assert=require('node:assert/strict');
+const fs=require('node:fs');
 const {TerrainWorld,MODEL}=require('./model.js');
 assert.equal(MODEL.id,'genesis-materials-heightfield3d-v1');
 const near=(a,b,t=1e-3)=>Math.abs(a-b)<=t;
+
+// Runtime black-screen regression contract: WebGPU and Canvas2D must never fight over one canvas.
+const appSource=fs.readFileSync('./materials3d/app.js','utf8');
+assert.match(appSource,/document\.createElement\('canvas'\)/,'runtime must create a dedicated fallback canvas');
+assert.match(appSource,/fallbackView/,'runtime must name/use the dedicated fallback canvas');
+assert.match(appSource,/GenesisCanvas3DMaterialsRenderer\(fallbackCanvas/,'Canvas fallback must render on the fallback canvas, not the WebGPU canvas');
+assert.match(appSource,/pushErrorScope\('validation'\)/,'WebGPU acceptance must use a validation error scope');
+assert.match(appSource,/onSubmittedWorkDone\(\)/,'WebGPU validation probe must wait for submitted GPU work');
+assert.match(appSource,/uncapturederror/,'runtime must listen for uncaptured GPU validation/runtime errors');
 
 // Fixed seed + same steps must replay identically.
 const a=new TerrainWorld({width:56,height:56,seed:123456,cohesion:1});
@@ -38,5 +48,5 @@ const dh=dryC.maxSandHeight(),wh=wetC.maxSandHeight();
 assert.ok(wh>dh+.18,`wet pile should retain more height: dry=${dh} wet=${wh}`);
 assert.ok(wetC.totals().wetCells>0,'wet pile must preserve explicit wetness state');
 
-console.log(JSON.stringify({model:MODEL.id,replayHash:a.hash(),mass:{sand0:m0.sand,sand1:m1.sand,water0:m0.water,water1:m1.water},dryRelax:{before:dryBefore,after:dryAfter},waterSpread:{before:waterCells0,after:waterCells1},cohesion:{dryHeight:dh,wetHeight:wh,wetCells:wetC.totals().wetCells}}));
-console.log('PASS genesis materials 0.2 3D heightfield tests');
+console.log(JSON.stringify({model:MODEL.id,replayHash:a.hash(),mass:{sand0:m0.sand,sand1:m1.sand,water0:m0.water,water1:m1.water},dryRelax:{before:dryBefore,after:dryAfter},waterSpread:{before:waterCells0,after:waterCells1},cohesion:{dryHeight:dh,wetHeight:wh,wetCells:wetC.totals().wetCells},blackScreenFailoverContract:'PASS'}));
+console.log('PASS genesis materials 0.2 3D heightfield + black-screen failover tests');
