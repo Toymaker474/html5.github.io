@@ -15,7 +15,8 @@ function fixture(e){
   e.genesis_init(32,24,32,123456,72);e.genesis_seed_scene();for(let i=0;i<80;i++)e.genesis_step(1);assert.equal(e.genesis_hash()>>>0,out.hash);
   return out;
 }
-const committed=Buffer.from(fs.readFileSync(new URL('./solver.wasm.b64',import.meta.url),'utf8').trim(),'base64');
+const committedPath=new URL('./solver.v1.wasm.b64',import.meta.url);
+const committed=Buffer.from(fs.readFileSync(committedPath,'utf8').trim(),'base64');
 const compiledPath=process.argv[2]||null;
 let compiled=null,compiledResult=null;
 if(compiledPath){
@@ -24,14 +25,8 @@ if(compiledPath){
   compiledResult=fixture(await instantiateBytes(compiled,'FRESH_COMPILED_WASM'));
   console.log('PASS fresh C++ -> WebAssembly instantiate + semantic fixture');
 }
-let committedResult=null;
-try{
-  console.log(JSON.stringify({committedBrowserBytes:committed.byteLength,committedBrowserSha256:crypto.createHash('sha256').update(committed).digest('hex')}));
-  committedResult=fixture(await instantiateBytes(committed,'COMMITTED_BROWSER_WASM'));
-}catch(err){
-  if(compiled){console.error('FRESH_WASM_B64_BEGIN');console.error(compiled.toString('base64'));console.error('FRESH_WASM_B64_END');}
-  throw err;
-}
-if(compiledResult)assert.deepEqual(compiledResult,committedResult,'committed browser WASM and freshly compiled C++ WASM must agree on reference fixture');
+console.log(JSON.stringify({committedBrowserFile:'solver.v1.wasm.b64',committedBrowserBytes:committed.byteLength,committedBrowserSha256:crypto.createHash('sha256').update(committed).digest('hex')}));
+const committedResult=fixture(await instantiateBytes(committed,'COMMITTED_BROWSER_WASM'));
+if(compiledResult)assert.deepEqual(compiledResult,committedResult,'versioned browser WASM and freshly compiled C++ WASM must agree on reference fixture');
 console.log(JSON.stringify({model:'genesis-materials-volume3d-cpp-v1',committedWasmBytes:committed.byteLength,committedResult,compiledResult}));
-console.log('PASS genesis materials 0.3 committed + compiled WebAssembly tests');
+console.log('PASS genesis materials 0.3 versioned browser + compiled WebAssembly tests');
