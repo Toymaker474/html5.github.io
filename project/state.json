@@ -3,54 +3,44 @@
   "project": "GENESIS",
   "product": "GENESIS Foundation",
   "engineering_system": "GENESIS FORGE",
-  "phase": "simulation-vertical-slice-002-integrated",
+  "phase": "simulation-vertical-slice-003-candidate",
   "status": "IN_PROGRESS",
   "stable": {
     "label": "matter-lab-0.2-integrated",
     "verified": false,
-    "note": "Matter Lab 0.2 is integrated into main after a fully green PR CI run. The overall product remains unverified because live GitHub.io and real iPhone Safari have not been independently exercised."
+    "note": "Matter Lab 0.2 remains the integrated baseline. Overall product remains unverified because live GitHub.io and real iPhone Safari have not been independently exercised."
+  },
+  "lab": {
+    "branch": "genesis-matter-0.3",
+    "experiment": "reversible-association-003",
+    "status": "CANDIDATE"
   },
   "simulation": {
     "built": true,
-    "status": "INTEGRATED_CI_PASS_LIVE_UNVERIFIED",
-    "vertical_slice": "Matter Lab 0.2",
-    "model": "genesis-matter-lj2d-v2",
-    "main_merge_commit": "1d1d19a67c96bcf5ba3952d13d1a6aa25458bd79",
-    "pull_request": 51,
-    "ci": {
-      "status": "PASS",
-      "workflow_run": 31308810363,
-      "tested_head": "aee2fc1e1058a0e0afcf3c7d5306aeaaede23422",
-      "simulation_test": "PASS genesis matter 0.2 model tests",
-      "fixture_energy_drift": 0.00014574206365967045,
-      "fixture_rdf_peak": {"r": 0.04359375, "g": 2.0111187159451753}
-    },
-    "capabilities": [
-      "2D coarse-grained Lennard-Jones particle dynamics",
-      "velocity-Verlet integration",
-      "periodic minimum-image boundaries",
-      "energy, temperature, pressure and invariant telemetry",
-      "touch/user impulse intervention",
-      "instantaneous radial distribution function g(r)",
-      "live g(r) visualization and peak telemetry",
-      "low-temperature quench control"
+    "candidate": "Matter Lab 0.3",
+    "model": "genesis-matter-lj2d-v3",
+    "added_capabilities": [
+      "seeded reversible pair association between unlike generic species",
+      "association formation and stochastic dissociation kinetics in reduced units",
+      "harmonic physical interaction for active associations",
+      "active association visualization",
+      "association on/off controls",
+      "formation, breakage and lifetime telemetry"
     ],
     "not_claimed": [
       "literal atoms",
       "quantum chemistry",
-      "chemical reactions",
-      "thermodynamic phase-transition proof",
+      "real chemical bonds",
+      "validated reaction chemistry",
       "cells",
       "evolution",
       "robots",
       "agents",
       "complete GENESIS platform"
-    ],
-    "live_pages": {"status": "UNVERIFIED", "expected_path": "/sim/"},
-    "iphone_safari": {"status": "UNVERIFIED"}
+    ]
   },
-  "active_objective": "Deepen the actual simulation from generic particle structure toward explicitly modeled reversible associations while preserving scientific scope and CI evidence.",
-  "next_gate": "Specify and implement a reversible association experiment as a separate model layer with explicit kinetics and diagnostics; do not call it chemistry until its rules and limitations are documented and tested.",
+  "active_objective": "Independently test the Matter Lab 0.3 reversible-association model in GitHub Actions and merge only if the complete PR workflow passes.",
+  "next_gate": "Open PR from genesis-matter-0.3 to main, inspect actual simulation-test output and full workflow conclusion, repair any failure, and merge only on full PASS.",
   "invariants": [
     "ROADMAP != IMPLEMENTED != VERIFIED",
     "ChatGPT cannot self-certify its own changes",
@@ -61,7 +51,7 @@
     "UNKNOWN must never silently become PASS",
     "Infrastructure must not be described as simulation capability",
     "CI PASS does not imply live deployment PASS or iPhone PASS",
-    "g(r) structure is not automatically a phase-transition claim"
+    "Toy reversible associations must not be described as real chemistry or chemical bonds"
   ],
   "updated": "2026-08-09"
 }
