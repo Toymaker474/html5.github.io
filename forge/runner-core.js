@@ -1,0 +1,14 @@
+(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;root.GenesisRunner=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
+'use strict';
+const JOBS={
+  'deterministic-kernel':{id:'deterministic-kernel',version:1,iterations:100000,seed:0x12345678,expected_final:0x91e5f9c5,expected_sum:0x6e912514},
+  'expected-failure':{id:'expected-failure',version:1,reason:'Controlled runner failure fixture'}
+};
+function u32(n){return n>>>0}
+function xorshift32(x){x=u32(x);x=u32(x^(x<<13));x=u32(x^(x>>>17));x=u32(x^(x<<5));return x}
+function runKernel(spec=JOBS['deterministic-kernel']){const started=Date.now();let x=u32(spec.seed),sum=0;for(let i=0;i<spec.iterations;i++){x=xorshift32(x);sum=u32(sum+x)}const pass=x===u32(spec.expected_final)&&sum===u32(spec.expected_sum);return{schema:1,kind:'GENESIS_FORGE_JOB_RESULT',job_id:spec.id,job_version:spec.version,status:pass?'PASS':'FAIL',started_at_ms:started,finished_at_ms:Date.now(),elapsed_ms:Date.now()-started,metrics:{iterations:spec.iterations,final_u32:x,sum_u32:sum},expected:{final_u32:u32(spec.expected_final),sum_u32:u32(spec.expected_sum)},checks:[{id:'kernel.final',pass:x===u32(spec.expected_final),actual:x,expected:u32(spec.expected_final)},{id:'kernel.sum',pass:sum===u32(spec.expected_sum),actual:sum,expected:u32(spec.expected_sum)}]}}
+function runExpectedFailure(spec=JOBS['expected-failure']){const now=Date.now();return{schema:1,kind:'GENESIS_FORGE_JOB_RESULT',job_id:spec.id,job_version:spec.version,status:'FAIL',started_at_ms:now,finished_at_ms:now,elapsed_ms:0,error:{code:'CONTROLLED_FAILURE',message:spec.reason},checks:[{id:'fixture.must_fail',pass:false,actual:'FAIL',expected:'FAIL'}]}}
+function run(spec){if(!spec||typeof spec.id!=='string')return{schema:1,kind:'GENESIS_FORGE_JOB_RESULT',job_id:'UNKNOWN',status:'FAIL',error:{code:'INVALID_JOB',message:'Missing job id'}};if(spec.id==='deterministic-kernel')return runKernel({...JOBS['deterministic-kernel'],...spec});if(spec.id==='expected-failure')return runExpectedFailure({...JOBS['expected-failure'],...spec});return{schema:1,kind:'GENESIS_FORGE_JOB_RESULT',job_id:spec.id,status:'FAIL',error:{code:'UNKNOWN_JOB',message:'Job is not registered'}}}
+function validate(result){const checks=[{id:'result.schema',pass:result?.schema===1},{id:'result.kind',pass:result?.kind==='GENESIS_FORGE_JOB_RESULT'},{id:'result.job',pass:typeof result?.job_id==='string'&&result.job_id.length>0},{id:'result.status',pass:['PASS','FAIL','CANCELLED','TIMEOUT'].includes(result?.status)}];return{status:checks.every(c=>c.pass)?'PASS':'FAIL',checks}}
+return{JOBS,xorshift32,runKernel,runExpectedFailure,run,validate};
+});
