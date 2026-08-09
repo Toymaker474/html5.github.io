@@ -17,50 +17,45 @@ jobs:
           test -f forge/index.html
           test -f forge/forge.js
           test -f forge/audit-core.js
-          test -f forge/promotion-core.js || [ "$GITHUB_REF_NAME" = "genesis-lab" ]
+          test -f forge/runner-core.js
+          test -f forge/runner-worker.js
           test -f project/state.json
           python -m json.tool project/state.json >/dev/null
           node --check forge/audit-core.js
           node --check forge/forge.js
+          node --check forge/runner-core.js
+          node --check forge/runner-worker.js
           if [ -f forge/promotion-core.js ]; then node --check forge/promotion-core.js; fi
           ! grep -R -E "living-bodies|pennyspawn|voin|genesis-glx3|fracture-wilds|nexus-glass-science-cube" --exclude-dir=.git .
       - name: Execute shared FORGE foundation audit
         run: |
           node <<'NODE'
-          const fs=require('node:fs');
-          const path=require('node:path');
-          const audit=require('./forge/audit-core.js');
-          const state=JSON.parse(fs.readFileSync('project/state.json','utf8'));
-          const files={};
+          const fs=require('node:fs'),path=require('node:path'),audit=require('./forge/audit-core.js');
+          const state=JSON.parse(fs.readFileSync('project/state.json','utf8')),files={};
           for(const p of audit.REQUIRED) files[p]=fs.existsSync(path.resolve(p));
-          const input={state,files};
-          const result=audit.audit(input);
-          audit.receipt(result,{environment:`github-actions node ${process.version}`,source:process.env.GITHUB_SHA||'unknown'})
-            .then(receipt=>{
-              fs.writeFileSync('foundation-receipt.json',JSON.stringify(receipt,null,2)+'\n');
-              console.log(JSON.stringify(receipt,null,2));
-              if(receipt.status!=='PASS') process.exit(1);
-            }).catch(err=>{console.error(err);process.exit(1)});
+          const result=audit.audit({state,files});
+          audit.receipt(result,{environment:`github-actions node ${process.version}`,source:process.env.GITHUB_SHA||'unknown'}).then(receipt=>{fs.writeFileSync('foundation-receipt.json',JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt,null,2));if(receipt.status!=='PASS')process.exit(1)}).catch(err=>{console.error(err);process.exit(1)});
           NODE
       - name: Execute controlled fail-closed recovery drill
         run: |
           node <<'NODE'
-          const fs=require('node:fs');
-          const path=require('node:path');
-          const audit=require('./forge/audit-core.js');
-          const state=JSON.parse(fs.readFileSync('project/state.json','utf8'));
-          const files={};
+          const fs=require('node:fs'),path=require('node:path'),audit=require('./forge/audit-core.js');
+          const state=JSON.parse(fs.readFileSync('project/state.json','utf8')),files={};
           for(const p of audit.REQUIRED) files[p]=fs.existsSync(path.resolve(p));
           const drill=audit.failureDrill({state,files});
-          audit.receipt(drill,{environment:`github-actions node ${process.version}`,source:(process.env.GITHUB_SHA||'unknown')+'#fail-closed-drill'})
-            .then(receipt=>{
-              fs.writeFileSync('recovery-receipt.json',JSON.stringify(receipt,null,2)+'\n');
-              console.log(JSON.stringify(receipt,null,2));
-              if(receipt.status!=='PASS') process.exit(1);
-              if(receipt.candidate_status!=='FAIL') process.exit(2);
-              if(receipt.recovered_status!=='PASS') process.exit(3);
-              if(receipt.stable_preserved!==true) process.exit(4);
-            }).catch(err=>{console.error(err);process.exit(1)});
+          audit.receipt(drill,{environment:`github-actions node ${process.version}`,source:(process.env.GITHUB_SHA||'unknown')+'#fail-closed-drill'}).then(receipt=>{fs.writeFileSync('recovery-receipt.json',JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt,null,2));if(receipt.status!=='PASS'||receipt.candidate_status!=='FAIL'||receipt.recovered_status!=='PASS'||receipt.stable_preserved!==true)process.exit(1)}).catch(err=>{console.error(err);process.exit(1)});
+          NODE
+      - name: Execute deterministic FORGE job runner contract
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs'),crypto=require('node:crypto'),runner=require('./forge/runner-core.js');
+          const good=runner.run(runner.JOBS['deterministic-kernel']);
+          const bad=runner.run(runner.JOBS['expected-failure']);
+          const result={schema:1,kind:'GENESIS_FORGE_RUNNER_DRILL',status:(good.status==='PASS'&&bad.status==='FAIL'&&runner.validate(good).status==='PASS'&&runner.validate(bad).status==='PASS')?'PASS':'FAIL',good_job:good,bad_job:bad};
+          const receipt={...result,commit:process.env.GITHUB_SHA,generated_at:new Date().toISOString()};
+          receipt.evidence_sha256=crypto.createHash('sha256').update(JSON.stringify(receipt)).digest('hex');
+          fs.writeFileSync('runner-receipt.json',JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt,null,2));
+          if(receipt.status!=='PASS'||good.metrics.final_u32!==2447768005||good.metrics.sum_u32!==1855005972)process.exit(1);
           NODE
       - name: Verify real Stable vs Lab isolation
         if: github.ref_name == 'main'
@@ -70,16 +65,13 @@ jobs:
           git fetch origin genesis-lab:refs/remotes/origin/genesis-lab
           git show origin/genesis-lab:lab/experiment.json > lab-manifest.json
           node <<'NODE'
-          const fs=require('node:fs');
-          const crypto=require('node:crypto');
-          const gate=require('./forge/promotion-core.js');
+          const fs=require('node:fs'),crypto=require('node:crypto'),gate=require('./forge/promotion-core.js');
           const lab=JSON.parse(fs.readFileSync('lab-manifest.json','utf8'));
           const result=gate.evaluate({main_has_experiment:fs.existsSync('lab/experiment.json'),lab_manifest:lab});
           const receipt={...result,main_sha:process.env.GITHUB_SHA,lab_sha:require('child_process').execSync('git rev-parse origin/genesis-lab').toString().trim(),generated_at:new Date().toISOString()};
           receipt.evidence_sha256=crypto.createHash('sha256').update(JSON.stringify(receipt)).digest('hex');
-          fs.writeFileSync('promotion-receipt.json',JSON.stringify(receipt,null,2)+'\n');
-          console.log(JSON.stringify(receipt,null,2));
-          if(receipt.status!=='PASS'||receipt.promotion_allowed!==true||receipt.stable_contaminated!==false) process.exit(1);
+          fs.writeFileSync('promotion-receipt.json',JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt,null,2));
+          if(receipt.status!=='PASS'||receipt.promotion_allowed!==true||receipt.stable_contaminated!==false)process.exit(1);
           NODE
       - name: Preserve foundation evidence
         if: always()
@@ -89,5 +81,6 @@ jobs:
           path: |
             foundation-receipt.json
             recovery-receipt.json
+            runner-receipt.json
             promotion-receipt.json
           if-no-files-found: ignore
