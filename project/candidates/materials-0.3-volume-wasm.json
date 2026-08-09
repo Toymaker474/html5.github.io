@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "candidate": "GENESIS Materials 0.3 — Volumetric C++ / WebAssembly",
+  "branch": "genesis-materials-0.3-volume-wasm",
+  "status": "WRITTEN_LOCAL_NATIVE_AND_WASM_TEST_PASS_CI_PENDING",
+  "original_intent": "Make it more 3D, cooler, logical evolution, no 2D, high quality realistic C++ WebAssembly.",
+  "bounded_objective": "Replace the heightfield restriction in a separate Lab with a genuine x/y/z coarse material volume executed by C++ WebAssembly and rendered as state-derived perspective WebGPU geometry.",
+  "stable_preserved": "Materials 0.2 remains independently available at /materials3d/ and is not rewritten by this candidate.",
+  "representation": {
+    "dimensions": "x × y × z",
+    "materials": ["empty", "sand", "water", "rock"],
+    "fields": ["sand moisture", "water-carried sediment"],
+    "browser_solver": "WebAssembly compiled from volume3d/solver.cpp",
+    "renderer": "WebGPU instanced volumetric surfaces + state-derived sand micro-grain presentation"
+  },
+  "rules": ["3D gravity", "diagonal granular settling", "wet cohesion", "3D water fall/spread", "wetting", "erosion into water-carried sediment", "sediment deposition"],
+  "acceptance": [
+    "native C++ fixture passes",
+    "fresh C++ to WebAssembly compilation passes",
+    "committed browser WASM fixture passes",
+    "freshly compiled and committed WASM produce identical reference results",
+    "sand-equivalent mass is conserved during internal stepping including erosion/deposition",
+    "water voxel count is conserved during internal stepping",
+    "fixed seed replay is deterministic",
+    "erosion and deposition both occur in the reference fixture",
+    "all older GENESIS simulation suites remain green",
+    "renderer/app/worker JavaScript syntax passes",
+    "candidate stays off the primary homepage until promotion"
+  ],
+  "local_evidence": {
+    "native_test": "PASS genesis materials 0.3 native C++ volumetric tests",
+    "reference_hash": 301791802,
+    "sand_units": 1118940,
+    "water_voxels": 155,
+    "erosion_events": 3,
+    "deposition_events": 2,
+    "committed_wasm_bytes": 9884,
+    "wasm_semantic_test": "PASS genesis materials 0.3 committed + compiled WebAssembly tests"
+  },
+  "not_claimed": ["literal grains", "DEM", "Navier-Stokes", "SPH", "MPM", "FLIP", "validated soil mechanics", "Unreal Engine quality", "global illumination", "biological evolution", "creatures", "live WebGPU verification", "iPhone verification", "finished GENESIS"]
+}
