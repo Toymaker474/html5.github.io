@@ -2,6 +2,8 @@ name: GENESIS Foundation
 on:
   push:
     branches: [main, genesis-lab]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 jobs:
   verify:
@@ -57,6 +59,19 @@ jobs:
           fs.writeFileSync('runner-receipt.json',JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt,null,2));
           if(receipt.status!=='PASS'||good.metrics.final_u32!==2447768005||good.metrics.sum_u32!==1855005972)process.exit(1);
           NODE
+      - name: Test GENESIS simulation candidate when present
+        run: |
+          set -euo pipefail
+          if [ -f sim/model.js ]; then
+            test -f sim/index.html
+            test -f sim/sim.js
+            test -f sim/model.test.js
+            node --check sim/model.js
+            node --check sim/sim.js
+            node sim/model.test.js | tee simulation-test.txt
+          else
+            printf 'simulation candidate absent on this ref\n' > simulation-test.txt
+          fi
       - name: Verify real Stable vs Lab isolation
         if: github.ref_name == 'main'
         run: |
@@ -83,4 +98,5 @@ jobs:
             recovery-receipt.json
             runner-receipt.json
             promotion-receipt.json
+            simulation-test.txt
           if-no-files-found: ignore
