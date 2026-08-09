@@ -1,0 +1,29 @@
+name: GENESIS Codehood Verify
+
+on:
+  push:
+    paths:
+      - 'genesis-codehood/**'
+      - '.github/workflows/genesis-codehood.yml'
+  pull_request:
+    paths:
+      - 'genesis-codehood/**'
+      - '.github/workflows/genesis-codehood.yml'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: genesis-codehood
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run deterministic VM tests
+        run: npm test
+      - name: Syntax check modules
+        run: npm run check
