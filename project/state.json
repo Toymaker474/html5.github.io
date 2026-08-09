@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "project": "GENESIS",
+  "product": "GENESIS Foundation",
+  "engineering_system": "GENESIS FORGE",
+  "phase": "forge-bootstrap-cleanroom",
+  "status": "IN_PROGRESS",
+  "stable": {
+    "label": "none-yet",
+    "verified": false,
+    "note": "Active main was intentionally wiped and rebuilt from a minimal clean foundation. No product release is verified yet."
+  },
+  "active_objective": "Prove a tiny persistent FORGE foundation before adding simulation complexity.",
+  "next_gate": "Add one real build/test execution path that produces structured evidence and can fail without damaging a known-good state.",
+  "invariants": [
+    "ROADMAP != IMPLEMENTED != VERIFIED",
+    "ChatGPT cannot self-certify its own changes",
+    "No critical project fact may live only in chat memory",
+    "Prototype experiments do not become product without a productionization gate",
+    "Tyler is not the build system or log courier",
+    "No required paid tool or runtime AI dependency"
+  ],
+  "archive_note": "Historical repo content was removed from active main. Emergency history remains on archive-pre-genesis-rebuild-2026-08-09 only.",
+  "updated": "2026-08-09"
+}

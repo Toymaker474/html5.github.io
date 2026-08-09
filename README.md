@@ -1,14 +1,13 @@
 # GENESIS
 
-GENESIS is the active product. FORGE is its fail-closed visual engineering system.
+Clean-room rebuild.
 
-This `main` branch was intentionally cleaned on 2026-08-09. Superseded games, demos, experiments, and old prototype workflows were removed from active main after creating the recovery branch `archive-pre-genesis-rebuild-2026-08-09`.
+Active `main` intentionally contains only the new GENESIS/FORGE foundation. Historical prototypes, games, demos, and superseded workflows are not part of the active product tree.
 
-## Status
+## Current truth
 
-- Product: **GENESIS Foundation**
-- Engineering system: **GENESIS FORGE**
-- Current phase: **FORGE Foundation / Product Brain bootstrap**
-- Rule: **ROADMAP != IMPLEMENTED != VERIFIED**
+- GENESIS simulation: **not built yet**
+- FORGE foundation shell: **implemented, not yet externally verified**
+- Product release: **none**
 
-Open `index.html` for the product status and `genesis-forge/` for FORGE.
+The next milestone is one real executable build/test node with structured evidence and safe failure handling.

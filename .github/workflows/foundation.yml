@@ -1,0 +1,27 @@
+name: GENESIS Foundation
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify clean foundation
+        run: |
+          set -euo pipefail
+          test -f index.html
+          test -f forge/index.html
+          test -f forge/forge.js
+          test -f project/state.json
+          python -m json.tool project/state.json >/dev/null
+          node --check forge/forge.js
+          ! grep -R -E "living-bodies|pennyspawn|voin|genesis-glx3|fracture-wilds|nexus-glass-science-cube" --exclude-dir=.git .
+      - name: Foundation receipt
+        run: |
+          printf 'commit=%s\nstatus=foundation-static-check-pass\n' "$GITHUB_SHA" > foundation-receipt.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: foundation-receipt
+          path: foundation-receipt.txt
