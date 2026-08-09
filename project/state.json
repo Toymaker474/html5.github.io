@@ -3,24 +3,34 @@
   "project": "GENESIS",
   "product": "GENESIS Foundation",
   "engineering_system": "GENESIS FORGE",
-  "phase": "simulation-vertical-slice-002-candidate",
+  "phase": "simulation-vertical-slice-002-integrated",
   "status": "IN_PROGRESS",
   "stable": {
-    "label": "matter-lab-0.1-integrated",
+    "label": "matter-lab-0.2-integrated",
     "verified": false,
-    "note": "Matter Lab 0.1 remains the integrated baseline. 0.2 is isolated on a candidate branch until PR CI passes. Live GitHub.io and real iPhone Safari remain separately unverified."
-  },
-  "lab": {
-    "branch": "genesis-matter-0.2",
-    "experiment": "matter-structure-002",
-    "status": "CANDIDATE"
+    "note": "Matter Lab 0.2 is integrated into main after a fully green PR CI run. The overall product remains unverified because live GitHub.io and real iPhone Safari have not been independently exercised."
   },
   "simulation": {
     "built": true,
-    "candidate": "Matter Lab 0.2",
+    "status": "INTEGRATED_CI_PASS_LIVE_UNVERIFIED",
+    "vertical_slice": "Matter Lab 0.2",
     "model": "genesis-matter-lj2d-v2",
-    "added_capabilities": [
+    "main_merge_commit": "1d1d19a67c96bcf5ba3952d13d1a6aa25458bd79",
+    "pull_request": 51,
+    "ci": {
+      "status": "PASS",
+      "workflow_run": 31308810363,
+      "tested_head": "aee2fc1e1058a0e0afcf3c7d5306aeaaede23422",
+      "simulation_test": "PASS genesis matter 0.2 model tests",
+      "fixture_energy_drift": 0.00014574206365967045,
+      "fixture_rdf_peak": {"r": 0.04359375, "g": 2.0111187159451753}
+    },
+    "capabilities": [
+      "2D coarse-grained Lennard-Jones particle dynamics",
+      "velocity-Verlet integration",
       "periodic minimum-image boundaries",
+      "energy, temperature, pressure and invariant telemetry",
+      "touch/user impulse intervention",
       "instantaneous radial distribution function g(r)",
       "live g(r) visualization and peak telemetry",
       "low-temperature quench control"
@@ -35,10 +45,12 @@
       "robots",
       "agents",
       "complete GENESIS platform"
-    ]
+    ],
+    "live_pages": {"status": "UNVERIFIED", "expected_path": "/sim/"},
+    "iphone_safari": {"status": "UNVERIFIED"}
   },
-  "active_objective": "Independently test Matter Lab 0.2 periodic dynamics and structure diagnostics in GitHub Actions, then promote only on a fully green PR run.",
-  "next_gate": "Open a PR from genesis-matter-0.2 to main, inspect the actual workflow result and logs, repair failures if any, and merge only after the entire workflow passes.",
+  "active_objective": "Deepen the actual simulation from generic particle structure toward explicitly modeled reversible associations while preserving scientific scope and CI evidence.",
+  "next_gate": "Specify and implement a reversible association experiment as a separate model layer with explicit kinetics and diagnostics; do not call it chemistry until its rules and limitations are documented and tested.",
   "invariants": [
     "ROADMAP != IMPLEMENTED != VERIFIED",
     "ChatGPT cannot self-certify its own changes",
