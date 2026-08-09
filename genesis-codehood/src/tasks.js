@@ -30,15 +30,25 @@ export const VERIFY_CASES=makeCaseSet();
 export function evaluateProgram(program,taskName,cases=VERIFY_CASES){
   const task=TASKS[taskName];
   if(!task)throw new Error(`Unknown task ${taskName}`);
-  let passed=0,totalSteps=0,firstFailure=null;
+  let passed=0,totalSteps=0,totalError=0,firstFailure=null;
   for(const [a,b] of cases){
     const result=runProgram(program,{a,b});
     totalSteps+=result.steps;
     const expected=task.fn(a,b);
-    if(result.ok&&result.value===expected)passed++;
-    else if(!firstFailure)firstFailure={a,b,expected,got:result.value,error:result.error};
+    if(result.ok&&result.value===expected){
+      passed++;
+    }else{
+      const err=result.ok&&Number.isFinite(result.value)?Math.abs(result.value-expected):100;
+      totalError+=Math.min(100,err);
+      if(!firstFailure)firstFailure={a,b,expected,got:result.value,error:result.error};
+    }
   }
-  return {task:taskName,passed,total:cases.length,passRate:passed/cases.length,verified:passed===cases.length,totalSteps,avgSteps:totalSteps/cases.length,firstFailure};
+  const meanError=totalError/cases.length;
+  return {
+    task:taskName,passed,total:cases.length,passRate:passed/cases.length,
+    verified:passed===cases.length,totalSteps,avgSteps:totalSteps/cases.length,
+    meanError,errorQuality:1/(1+meanError),firstFailure
+  };
 }
 
 export function unlockedTaskNames(library={}){
