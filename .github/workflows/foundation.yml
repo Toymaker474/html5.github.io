@@ -28,7 +28,7 @@ jobs:
           node --check forge/runner-core.js
           node --check forge/runner-worker.js
           if [ -f forge/promotion-core.js ]; then node --check forge/promotion-core.js; fi
-          ! grep -R -E "living-bodies|pennyspawn|voin|genesis-glx3|fracture-wilds|nexus-glass-science-cube" --exclude-dir=.git .
+          ! grep -R -E "living-bodies|pennyspawn|voin|genesis-glx3|fracture-wilds|nexus-glass-science-cube" --exclude-dir=.git --exclude-dir=.github .
       - name: Execute shared FORGE foundation audit
         run: |
           node <<'NODE'
