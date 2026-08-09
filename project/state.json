@@ -3,20 +3,44 @@
   "project": "GENESIS",
   "product": "GENESIS Foundation",
   "engineering_system": "GENESIS FORGE",
-  "phase": "forge-executable-job-runner",
+  "phase": "simulation-vertical-slice-001",
   "status": "IN_PROGRESS",
   "stable": {
     "label": "main-clean-foundation",
     "verified": false,
-    "note": "Stable remains unpromoted until execution, branch-isolation, and recovery evidence are observed from CI and live deployment."
+    "note": "Main remains the clean foundation. The simulation exists only as a Lab candidate until independent CI and live deployment tests support promotion."
   },
   "lab": {
     "branch": "genesis-lab",
-    "experiment": "lab-isolation-001",
+    "experiment": "matter-vslice-001",
     "status": "CANDIDATE"
   },
-  "active_objective": "Prove FORGE can execute isolated deterministic jobs with time budgets, preserve structured results, and distinguish successful jobs from deliberate failures.",
-  "next_gate": "Observe a passing runner receipt in CI and verify the live GitHub Pages FORGE 0.5 job runner; then add cancellable queued jobs and persistent execution history.",
+  "simulation": {
+    "built": true,
+    "status": "LAB_CANDIDATE",
+    "vertical_slice": "Matter Lab 0.1",
+    "model": "genesis-matter-lj2d-v1",
+    "claims": [
+      "2D classical coarse-grained particle dynamics",
+      "Lennard-Jones 12-6 pair interactions",
+      "velocity-Verlet integration",
+      "deterministic seeded initialization on the same JavaScript numerical path",
+      "energy and invariant telemetry",
+      "touch/user impulse intervention"
+    ],
+    "not_claimed": [
+      "literal atoms",
+      "quantum chemistry",
+      "chemical reactions",
+      "cells",
+      "evolution",
+      "robots",
+      "agents",
+      "complete GENESIS platform"
+    ]
+  },
+  "active_objective": "Get independent GitHub Actions evidence for the first actual simulation vertical slice, then promote only if it passes and can be exercised from the live GitHub.io deployment.",
+  "next_gate": "Open a pull request, observe the real CI run and logs, then merge only on PASS. After merge, test the public /sim/ page and separately test real iPhone Safari before calling the vertical slice device-verified.",
   "invariants": [
     "ROADMAP != IMPLEMENTED != VERIFIED",
     "ChatGPT cannot self-certify its own changes",
@@ -24,12 +48,11 @@
     "Prototype experiments do not become product without a productionization gate",
     "Tyler is not the build system or log courier",
     "No required paid tool or runtime AI dependency",
-    "A PASS status requires evidence produced by the acceptance contract",
-    "A broken candidate must not contaminate the baseline",
+    "A PASS status requires evidence produced outside the code-under-test when practical",
     "UNKNOWN must never silently become PASS",
     "Lab changes cannot become Stable without an explicit promotion gate",
-    "A failed or timed-out job cannot be reported as successful"
+    "Infrastructure must not be described as simulation capability",
+    "The Matter Lab must not be described as atoms, chemistry, life, robotics, or agents"
   ],
-  "archive_note": "Historical repo content remains outside active main on archive-pre-genesis-rebuild-2026-08-09.",
   "updated": "2026-08-09"
 }
