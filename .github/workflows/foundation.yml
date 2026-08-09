@@ -20,7 +20,7 @@ jobs:
           node --check forge/audit-core.js
           node --check forge/forge.js
           ! grep -R -E "living-bodies|pennyspawn|voin|genesis-glx3|fracture-wilds|nexus-glass-science-cube" --exclude-dir=.git .
-      - name: Execute shared FORGE audit contract
+      - name: Execute shared FORGE foundation audit
         run: |
           node <<'NODE'
           const fs=require('node:fs');
@@ -29,7 +29,8 @@ jobs:
           const state=JSON.parse(fs.readFileSync('project/state.json','utf8'));
           const files={};
           for(const p of audit.REQUIRED) files[p]=fs.existsSync(path.resolve(p));
-          const result=audit.audit({state,files});
+          const input={state,files};
+          const result=audit.audit(input);
           audit.receipt(result,{environment:`github-actions node ${process.version}`,source:process.env.GITHUB_SHA||'unknown'})
             .then(receipt=>{
               fs.writeFileSync('foundation-receipt.json',JSON.stringify(receipt,null,2)+'\n');
@@ -37,8 +38,30 @@ jobs:
               if(receipt.status!=='PASS') process.exit(1);
             }).catch(err=>{console.error(err);process.exit(1)});
           NODE
+      - name: Execute controlled fail-closed recovery drill
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs');
+          const path=require('node:path');
+          const audit=require('./forge/audit-core.js');
+          const state=JSON.parse(fs.readFileSync('project/state.json','utf8'));
+          const files={};
+          for(const p of audit.REQUIRED) files[p]=fs.existsSync(path.resolve(p));
+          const drill=audit.failureDrill({state,files});
+          audit.receipt(drill,{environment:`github-actions node ${process.version}`,source:(process.env.GITHUB_SHA||'unknown')+'#fail-closed-drill'})
+            .then(receipt=>{
+              fs.writeFileSync('recovery-receipt.json',JSON.stringify(receipt,null,2)+'\n');
+              console.log(JSON.stringify(receipt,null,2));
+              if(receipt.status!=='PASS') process.exit(1);
+              if(receipt.candidate_status!=='FAIL') process.exit(2);
+              if(receipt.recovered_status!=='PASS') process.exit(3);
+              if(receipt.stable_preserved!==true) process.exit(4);
+            }).catch(err=>{console.error(err);process.exit(1)});
+          NODE
       - name: Preserve foundation evidence
         uses: actions/upload-artifact@v4
         with:
-          name: foundation-receipt
-          path: foundation-receipt.json
+          name: genesis-foundation-evidence
+          path: |
+            foundation-receipt.json
+            recovery-receipt.json
