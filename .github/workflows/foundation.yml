@@ -8,20 +8,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Verify clean foundation
+      - name: Syntax and clean-room checks
         run: |
           set -euo pipefail
           test -f index.html
           test -f forge/index.html
           test -f forge/forge.js
+          test -f forge/audit-core.js
           test -f project/state.json
           python -m json.tool project/state.json >/dev/null
+          node --check forge/audit-core.js
           node --check forge/forge.js
           ! grep -R -E "living-bodies|pennyspawn|voin|genesis-glx3|fracture-wilds|nexus-glass-science-cube" --exclude-dir=.git .
-      - name: Foundation receipt
+      - name: Execute shared FORGE audit contract
         run: |
-          printf 'commit=%s\nstatus=foundation-static-check-pass\n' "$GITHUB_SHA" > foundation-receipt.txt
-      - uses: actions/upload-artifact@v4
+          node <<'NODE'
+          const fs=require('node:fs');
+          const path=require('node:path');
+          const audit=require('./forge/audit-core.js');
+          const state=JSON.parse(fs.readFileSync('project/state.json','utf8'));
+          const files={};
+          for(const p of audit.REQUIRED) files[p]=fs.existsSync(path.resolve(p));
+          const result=audit.audit({state,files});
+          audit.receipt(result,{environment:`github-actions node ${process.version}`,source:process.env.GITHUB_SHA||'unknown'})
+            .then(receipt=>{
+              fs.writeFileSync('foundation-receipt.json',JSON.stringify(receipt,null,2)+'\n');
+              console.log(JSON.stringify(receipt,null,2));
+              if(receipt.status!=='PASS') process.exit(1);
+            }).catch(err=>{console.error(err);process.exit(1)});
+          NODE
+      - name: Preserve foundation evidence
+        uses: actions/upload-artifact@v4
         with:
           name: foundation-receipt
-          path: foundation-receipt.txt
+          path: foundation-receipt.json
