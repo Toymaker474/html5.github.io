@@ -3,63 +3,46 @@
   "project": "GENESIS",
   "product": "GENESIS Foundation",
   "engineering_system": "GENESIS FORGE",
-  "phase": "simulation-vertical-slice-004-integrated",
+  "phase": "simulation-vertical-slice-005-candidate",
   "status": "IN_PROGRESS",
   "stable": {
     "label": "matter-lab-0.4-integrated",
     "verified": false,
-    "note": "Matter Lab 0.4 is integrated after a fully green pull-request CI run. Overall product remains unverified because the live GitHub.io deployment and real iPhone Safari have not been independently exercised."
+    "note": "Matter Lab 0.4 remains the integrated baseline. 0.5 is isolated on genesis-matter-0.5 until full PR CI passes. Live GitHub.io and real iPhone Safari remain separately unverified."
+  },
+  "lab": {
+    "branch": "genesis-matter-0.5",
+    "experiment": "bounded-multiparticle-topology-005",
+    "status": "CANDIDATE"
   },
   "simulation": {
     "built": true,
-    "status": "INTEGRATED_CI_PASS_LIVE_UNVERIFIED",
-    "vertical_slice": "Matter Lab 0.4",
-    "model": "genesis-matter-lj2d-v4",
-    "main_merge_commit": "9d7a538ab84fd4f0ea1fe8789f5acef954ce84ad",
-    "pull_request": 53,
-    "ci": {
-      "status": "PASS",
-      "workflow_run": 31309809080,
-      "tested_head": "2869823c7a153dcd2188409340377774cce05ac7",
-      "simulation_test": "PASS genesis matter 0.4 reaction-event tests",
-      "fixture_energy_drift_without_associations": 0.00014467353174091733,
-      "reaction_fixture": {
-        "associations_formed": 28,
-        "forward_events": 28,
-        "reverse_events": 28,
-        "activated_particles_after_complete_stress_path": 0
-      }
-    },
-    "capabilities": [
-      "2D coarse-grained Lennard-Jones particle dynamics",
-      "velocity-Verlet integration",
-      "periodic minimum-image boundaries",
-      "touch/user impulse intervention",
-      "instantaneous radial distribution function g(r)",
-      "reversible pair association between unlike generic species",
-      "explicit forward and reverse toy reaction events",
-      "internal transformed particle state on reacted associations",
-      "reaction event history",
-      "particle-count conservation invariant",
-      "transformed pair state changes coarse-grained pair interaction"
+    "candidate": "Matter Lab 0.5",
+    "model": "genesis-matter-lj2d-v5",
+    "added_capabilities": [
+      "bounded multi-particle association topology",
+      "toy species valence limits used only as graph constraints",
+      "connected-component diagnostics",
+      "largest-component telemetry",
+      "cycle-rank diagnostics",
+      "multi-edge transformed-state synchronization",
+      "visible chains and branched clusters through the existing association renderer"
     ],
     "not_claimed": [
       "literal atoms",
-      "quantum chemistry",
+      "chemical valence",
+      "real molecular graph chemistry",
       "real chemical bonds",
       "validated reaction chemistry",
-      "real activation energies",
       "cells",
       "evolution",
       "robots",
       "agents",
       "complete GENESIS platform"
-    ],
-    "live_pages": {"status": "UNVERIFIED", "expected_path": "/sim/"},
-    "iphone_safari": {"status": "UNVERIFIED"}
+    ]
   },
-  "active_objective": "Move from single reacted pairs toward explicit multi-particle topology and simple reaction-network bookkeeping while keeping the playable baseline intact and the model claims honest.",
-  "next_gate": "Add a tested multi-particle topology layer or small reaction network as the next isolated Lab increment; do not call the toy event model real chemistry.",
+  "active_objective": "Independently test that Matter Lab 0.5 forms structures larger than pairs while preserving bounded topology, deterministic behavior, particle-count conservation and the 0.4 reaction-event path.",
+  "next_gate": "Open a PR from genesis-matter-0.5 to main, inspect the entire GitHub Actions run and simulation test, repair failures without rewriting the stable 0.4 core, and merge only on full PASS.",
   "invariants": [
     "ROADMAP != IMPLEMENTED != VERIFIED",
     "ChatGPT cannot self-certify its own changes",
@@ -70,6 +53,7 @@
     "Infrastructure must not be described as simulation capability",
     "CI PASS does not imply live deployment PASS or iPhone PASS",
     "Toy reaction events must not be described as validated chemistry",
+    "Toy topology valence limits must not be described as chemical valence",
     "Particle state transformation must conserve particle count"
   ],
   "updated": "2026-08-09"
