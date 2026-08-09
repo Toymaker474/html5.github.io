@@ -3,82 +3,200 @@
   "project": "GENESIS",
   "product": "GENESIS Foundation",
   "engineering_system": "GENESIS FORGE",
-  "phase": "materials-lab-002-3d-integrated",
+  "phase": "materials-lab-003-volumetric-wasm-integrated",
   "status": "IN_PROGRESS",
-  "canonical_directive": {"path":"project/CANONICAL_MASTER_DIRECTIVE.md","status":"IN_REPO"},
+  "canonical_directive": {
+    "path": "project/CANONICAL_MASTER_DIRECTIVE.md",
+    "status": "IN_REPO"
+  },
   "stable": {
-    "label": "genesis-foundation-materials-0.2-integrated",
+    "label": "genesis-foundation-materials-0.3-integrated",
     "verified": false,
-    "note": "Matter Lab 0.6, Materials Lab 0.1 and Materials Lab 0.2 3D are integrated on main through CI-green pull requests. Overall product remains unverified because the deployed 0.2 WebGPU shader, real WebGPU runtime, target-device frame behavior and real iPhone Safari have not yet been independently exercised."
+    "note": "Matter Lab 0.6, Materials 0.1, Materials 0.2 and the Materials 0.3 true-volume C++/WebAssembly candidate are integrated through CI-green pull requests. Overall product remains unverified because the deployed /volume3d/ WebGPU runtime, sustained target-device performance and real iPhone Safari behavior have not yet been independently exercised."
   },
   "matter_lab": {
-    "status":"INTEGRATED_CI_PASS_LIVE_UNVERIFIED","vertical_slice":"Matter Lab 0.6","model":"genesis-matter-lj2d-v6","main_merge_commit":"a2100ab40e70da81101c00e2e0cdff44dfbf34e0","pull_request":55,
-    "ci":{"status":"PASS","workflow_run":31310827285,"tested_head":"2198f5889073c6ad5da9e11ac006afceead39f5d","simulation_test":"PASS genesis matter 0.6 cooperative self-assembly tests"}
-  },
-  "materials_lab": {
-    "status":"INTEGRATED_CI_PASS_LIVE_UNVERIFIED","vertical_slice":"Materials Lab 0.1","model":"genesis-materials-granular2d-v1","main_merge_commit":"1c56bd53f115174cca55a88efb7721a71a24e79e","pull_request":56,
-    "ci":{"status":"PASS","workflow_run":31313512227,"tested_head":"371677df8298e1a5929d708ad678a8527102c655","simulation_test":"PASS genesis materials 0.1 granular sand/water tests","replay_hash":1695607716},
-    "live_pages":{"status":"UNVERIFIED","expected_path":"/materials/"},"webgpu_runtime":{"status":"UNVERIFIED"},"iphone_safari":{"status":"UNVERIFIED"}
-  },
-  "materials3d_lab": {
     "status": "INTEGRATED_CI_PASS_LIVE_UNVERIFIED",
-    "vertical_slice": "Materials Lab 0.2 — Cinematic 3D World",
-    "model": "genesis-materials-heightfield3d-v1",
-    "main_merge_commit": "0ff60bf42086242af0396d4f0cc9f10c12e25c14",
-    "pull_request": 59,
-    "original_feedback": "It looks the same. It is not 3D and it does not look amazing or like Unreal Engine.",
-    "experiential_failure": "Materials Lab 0.1 used a fullscreen-triangle screen-space renderer, so better shading could not create actual perspective/depth/3D world structure.",
-    "representation": "2.5D x/z heightfield storing rock elevation, sand depth, water depth and moisture, rendered as real 3D geometry.",
+    "vertical_slice": "Matter Lab 0.6",
+    "model": "genesis-matter-lj2d-v6",
+    "main_merge_commit": "a2100ab40e70da81101c00e2e0cdff44dfbf34e0",
+    "pull_request": 55,
     "ci": {
       "status": "PASS",
-      "workflow_run": 31314568156,
-      "tested_head": "e61102eaabf7b4eccb2c97fddc372f66493450c2",
-      "simulation_test": "PASS genesis materials 0.2 3D heightfield tests",
-      "replay_hash": 1214435419,
-      "mass_fixture": {"sand_before":97.34284842014313,"sand_after":97.3428484313481,"water_before":18.214848399162292,"water_after":18.214848493487807},
-      "dry_relax_fixture": {"height_before":2.4000000953674316,"height_after":1.6730093955993652},
-      "water_spread_fixture": {"cells_before":13,"cells_after":178},
-      "wet_cohesion_fixture": {"dry_height":1.7133209705352783,"wet_height":2.5,"wet_cells":49}
+      "workflow_run": 31310827285,
+      "tested_head": "2198f5889073c6ad5da9e11ac006afceead39f5d",
+      "simulation_test": "PASS genesis matter 0.6 cooperative self-assembly tests"
+    }
+  },
+  "materials_lab": {
+    "status": "INTEGRATED_CI_PASS_LIVE_UNVERIFIED",
+    "vertical_slice": "Materials Lab 0.1",
+    "model": "genesis-materials-granular2d-v1",
+    "main_merge_commit": "1c56bd53f115174cca55a88efb7721a71a24e79e",
+    "pull_request": 56,
+    "ci": {
+      "status": "PASS",
+      "workflow_run": 31313512227,
+      "tested_head": "371677df8298e1a5929d708ad678a8527102c655",
+      "simulation_test": "PASS genesis materials 0.1 granular sand/water tests",
+      "replay_hash": 1695607716
     },
+    "live_pages": {"status": "UNVERIFIED", "expected_path": "/materials/"},
+    "webgpu_runtime": {"status": "UNVERIFIED"},
+    "iphone_safari": {"status": "UNVERIFIED"}
+  },
+  "materials3d_lab": {
+    "status": "INTEGRATED_CI_PASS_LIVE_FAILURE_OBSERVED_REPAIRED_UNRETESTED",
+    "vertical_slice": "Materials Lab 0.2 — Cinematic 3D World",
+    "model": "genesis-materials-heightfield3d-v1",
+    "representation": "2.5D x/z heightfield rendered as perspective 3D geometry",
+    "main_merge_commit": "0ff60bf42086242af0396d4f0cc9f10c12e25c14",
+    "pull_request": 59,
+    "live_failure": {
+      "observed": "black screen",
+      "repair_pull_request": 61,
+      "repair_merge_commit": "0123826000638146079b14fd6a7d7920a100efa5",
+      "cache_checkpoint_pull_request": 62,
+      "cache_checkpoint_merge_commit": "800d7bdce3b52955eac3fcd1828254fc8011ce88",
+      "post_repair_live_status": "UNVERIFIED"
+    },
+    "not_claimed": ["volumetric 3D sand physics", "Unreal Engine", "validated soil mechanics", "finished GENESIS"]
+  },
+  "volume3d_lab": {
+    "status": "INTEGRATED_CI_PASS_LIVE_UNVERIFIED",
+    "vertical_slice": "Materials Lab 0.3 — Volumetric C++ / WebAssembly",
+    "model": "genesis-materials-volume3d-cpp-v1",
+    "representation": "Genuine x/y/z coarse voxel volume; not a heightfield",
+    "solver": {
+      "language": "C++17",
+      "browser_runtime": "WebAssembly",
+      "source": "volume3d/solver.cpp",
+      "active_browser_payload": "volume3d/solver.v1.wasm.b64",
+      "model_version": "0x00030001",
+      "max_capacity": "64x40x64 coarse voxels",
+      "browser_presets": ["32x24x32", "40x28x40", "48x32x48"]
+    },
+    "implemented_rules": [
+      "3D gravity",
+      "diagonal granular settling",
+      "phenomenological wet-sand cohesion",
+      "3D water fall and spread",
+      "wetting and moisture decay",
+      "erosion into water-carried sediment",
+      "sediment deposition"
+    ],
     "rendering": [
-      "perspective orbit camera",
+      "WebGPU perspective orbit camera",
       "depth24plus depth buffer",
-      "triangulated rock+sand terrain geometry",
-      "separate transparent water surface geometry",
-      "directional sun lighting",
-      "procedural sky and sun disk",
-      "distance atmospheric haze approximation",
-      "wet-sand darkening/specular response",
-      "state-derived camera-facing micro-grain sprites",
-      "animated water normal perturbation and Fresnel-like reflection",
-      "ACES-style tonemapping approximation"
+      "state-derived exposed voxel surfaces",
+      "transparent water surfaces",
+      "state-derived sand micro-grain presentation",
+      "directional lighting",
+      "procedural sky and atmospheric haze",
+      "wet-sand response",
+      "water Fresnel-like response",
+      "3D ray-picked material placement and carving"
+    ],
+    "main_merge_commit": "73f46716b181cdd20b12e8af862bb973214df03a",
+    "pull_request": 63,
+    "ci": {
+      "status": "PASS",
+      "workflow_run": 31317257384,
+      "job": 93254400397,
+      "tested_head": "45e1059b0aca71ab33b8f97571da483b51b54ce3",
+      "native_test": "PASS genesis materials 0.3 native C++ volumetric tests",
+      "wasm_test": "PASS genesis materials 0.3 versioned browser + compiled WebAssembly tests",
+      "fresh_wasm_bytes": 10599,
+      "browser_wasm_bytes": 10599,
+      "wasm_sha256": "b91392208308a1753bfc2aba71a47ef031ab015eff0b65a81e5d68eabd48d1e0",
+      "fixture": {
+        "hash": 301791802,
+        "sand_equivalent_units": 1118940,
+        "water_voxels": 155,
+        "erosion_events": 3,
+        "deposition_events": 2,
+        "invariant": "PASS"
+      },
+      "older_regressions": "PASS"
+    },
+    "failures_learned": [
+      {
+        "record": "project/failures/2026-08-09-volume3d-freestanding-wasm-memset.md",
+        "cause": "Freestanding wasm32 link required explicit memory primitives after LLVM optimized clearing loops to memset",
+        "repair": "Provide tiny freestanding memset/memcpy and keep compile regression in CI"
+      },
+      {
+        "record": "project/failures/2026-08-09-volume3d-ci-wasm-instantiate.md",
+        "cause": "Initial committed browser WASM payload was malformed/truncated while fresh CI-compiled WASM was valid",
+        "repair": "Use versioned solver.v1.wasm.b64 generated from the verified 10,599-byte CI module and compare semantics/hash in CI"
+      }
     ],
     "verification": {
-      "reference_model_tests": "PASS",
+      "native_cpp": "PASS",
+      "fresh_cpp_to_wasm_compile": "PASS",
+      "fresh_wasm_instantiate_and_fixture": "PASS",
+      "browser_wasm_semantics": "PASS",
+      "browser_wasm_matches_ci_sha256": "PASS",
       "older_regressions": "PASS",
-      "browser_js_syntax": "PASS",
+      "renderer_js_syntax": "PASS",
       "renderer_structure_static_gate": "PASS",
-      "webgpu_shader_compile": "UNVERIFIED",
+      "webgpu_shader_compile_on_live_browser": "UNVERIFIED",
       "live_pages": "UNVERIFIED",
+      "expected_path": "/volume3d/",
       "iphone_safari": "UNVERIFIED",
-      "performance": "UNMEASURED",
-      "experiential_unreal_quality": "UNVERIFIED"
+      "sustained_performance": "UNMEASURED",
+      "experiential_unreal_quality": "UNVERIFIED",
+      "biological_evolution": "NOT_BUILT"
     },
-    "not_claimed": ["per-grain DEM","volumetric 3D sand physics","Navier-Stokes/SPH/MPM/FLIP","validated soil mechanics","literal micron grains","Unreal Engine","ray-traced global illumination","GPU-compute simulation physics","lava","clouds","creatures","finished GENESIS"]
+    "not_claimed": [
+      "literal individual grains",
+      "discrete element method",
+      "Navier-Stokes CFD",
+      "SPH",
+      "MPM",
+      "FLIP",
+      "validated soil mechanics",
+      "photoreal Unreal Engine quality",
+      "ray-traced global illumination",
+      "biological evolution",
+      "creatures",
+      "finished GENESIS"
+    ]
   },
-  "checkpoint": {
-    "branch":"genesis-materials-0.2-checkpoint",
-    "purpose":"Make Materials 0.2 the primary homepage launch and record its merged CI evidence without changing simulation or renderer code.",
-    "status":"WRITTEN_CI_PENDING"
+  "primary_launch_checkpoint": {
+    "route": "/volume3d/",
+    "pull_request": 64,
+    "tested_head": "aa5ac1746b03795e070b8cd41f6b6d1af6a54fa9",
+    "workflow_run": 31317401301,
+    "job": 93254756179,
+    "ci_status": "PASS",
+    "merge_commit": "8d30649a09496db8c610cb766187da559edebe30",
+    "changed_scope": "homepage only",
+    "older_slices_preserved": true
   },
   "idea_harbor": [
-    {"idea":"thermally driven lava / molten material","status":"FUTURE_UNLOCK","prerequisites":["validated material-state architecture","thermal field","phase/state transition model","GPU/reference comparison"]},
-    {"idea":"volumetric atmosphere and clouds","status":"FUTURE_UNLOCK","prerequisites":["field representation","advection/transport model","GPU performance path","state-derived volumetric renderer"]},
-    {"idea":"creatures interacting with materials","status":"FUTURE_UNLOCK","prerequisites":["persistent world/material substrate","life/development/control systems","causal body-environment coupling"]},
-    {"idea":"simulate all matter across reality","status":"DREAM_TARGET","prerequisites":["adaptive multiresolution architecture","model families per scale","cross-scale state/causality","device-aware workload director"]}
+    {
+      "idea": "thermally driven lava / molten material",
+      "status": "FUTURE_UNLOCK",
+      "prerequisites": ["thermal field", "phase/state transition model", "GPU/reference comparison", "runtime-healthy volumetric substrate"]
+    },
+    {
+      "idea": "volumetric atmosphere and clouds",
+      "status": "FUTURE_UNLOCK",
+      "prerequisites": ["field representation", "advection/transport model", "GPU performance path", "state-derived volumetric renderer"]
+    },
+    {
+      "idea": "logical biological evolution and creatures",
+      "status": "FUTURE_UNLOCK",
+      "prerequisites": ["runtime-healthy persistent 3D environment", "chemistry/self-assembly progression", "heredity/variation/selection", "causal body-environment coupling"]
+    },
+    {
+      "idea": "simulate all matter across reality",
+      "status": "DREAM_TARGET",
+      "prerequisites": ["adaptive multiresolution architecture", "model families per scale", "cross-scale state/causality", "device-aware workload director"]
+    }
   ],
-  "active_objective": "Productize the 0.2 visual jump honestly: make /materials3d/ the primary GENESIS launch, rerun all preserved regression suites on the homepage/state checkpoint, then independently exercise the deployed WebGPU renderer on target hardware before adding another major graphics or simulation subsystem.",
-  "next_gate": "Open and inspect the 0.2 checkpoint PR. Merge only if Matter 0.6, Materials 0.1 and Materials 0.2 all pass on the exact checkpoint head. After merge, verify the deployed /materials3d/ route and renderer backend; do not infer WebGPU/iPhone/Unreal-quality success from CI.",
+  "active_objective": "Independently exercise the deployed /volume3d/ C++/WebAssembly + WebGPU route, capture actual runtime backend/errors and performance, and repair any live failure before adding another major graphics, material or biological subsystem.",
+  "next_gate": "Live/runtime validation of /volume3d/: confirm the versioned WebAssembly payload loads, WebGPU shader/pipelines compile and render non-black state, interaction works, and capture target-device performance. Do not infer live WebGPU, iPhone, photorealism or evolution success from CI.",
   "invariants": [
     "ROADMAP != IMPLEMENTED != VERIFIED",
     "ChatGPT cannot self-certify its own changes",
@@ -88,12 +206,14 @@
     "UNKNOWN must never silently become PASS",
     "CI PASS does not imply live deployment PASS or iPhone PASS",
     "Rendering consumes simulation state and must not secretly become simulation logic",
-    "Visible grain sprites must not be described as independently simulated grains",
-    "2.5D heightfield geometry must not be described as volumetric 3D granular physics",
-    "Phenomenological wet cohesion must not be described as validated capillary/geotechnical physics",
-    "Water heightfield flow must not be described as Navier-Stokes/SPH/MPM/FLIP",
-    "Matter Lab 0.6 and Materials Lab 0.1 remain independently available",
-    "Unreal-quality is an experiential target, not a verification status"
+    "Materials 0.3 is genuine x/y/z coarse volume state and must not be described as a heightfield",
+    "A coarse voxel must not be described as a literal individual sand grain",
+    "State-derived grain presentation must not be described as extra simulated particles",
+    "Phenomenological wet cohesion must not be described as validated capillary or geotechnical physics",
+    "Volumetric water cell rules must not be described as Navier-Stokes/SPH/MPM/FLIP",
+    "Biological evolution is not built and must not be faked with predefined creatures",
+    "Unreal-quality is an experiential target, not a verification status",
+    "Matter Lab 0.6, Materials 0.1 and Materials 0.2 remain independently available"
   ],
   "updated": "2026-08-09"
 }
