@@ -3,45 +3,63 @@
   "project": "GENESIS",
   "product": "GENESIS Foundation",
   "engineering_system": "GENESIS FORGE",
-  "phase": "simulation-vertical-slice-004-candidate",
+  "phase": "simulation-vertical-slice-004-integrated",
   "status": "IN_PROGRESS",
   "stable": {
-    "label": "matter-lab-0.3-integrated",
+    "label": "matter-lab-0.4-integrated",
     "verified": false,
-    "note": "Matter Lab 0.3 remains the integrated baseline. 0.4 is isolated on a candidate branch until full PR CI passes. Live GitHub.io and real iPhone Safari remain separately unverified."
-  },
-  "lab": {
-    "branch": "genesis-matter-0.4",
-    "experiment": "reaction-event-bookkeeping-004",
-    "status": "CANDIDATE"
+    "note": "Matter Lab 0.4 is integrated after a fully green pull-request CI run. Overall product remains unverified because the live GitHub.io deployment and real iPhone Safari have not been independently exercised."
   },
   "simulation": {
     "built": true,
-    "candidate": "Matter Lab 0.4",
+    "status": "INTEGRATED_CI_PASS_LIVE_UNVERIFIED",
+    "vertical_slice": "Matter Lab 0.4",
     "model": "genesis-matter-lj2d-v4",
-    "added_capabilities": [
+    "main_merge_commit": "9d7a538ab84fd4f0ea1fe8789f5acef954ce84ad",
+    "pull_request": 53,
+    "ci": {
+      "status": "PASS",
+      "workflow_run": 31309809080,
+      "tested_head": "2869823c7a153dcd2188409340377774cce05ac7",
+      "simulation_test": "PASS genesis matter 0.4 reaction-event tests",
+      "fixture_energy_drift_without_associations": 0.00014467353174091733,
+      "reaction_fixture": {
+        "associations_formed": 28,
+        "forward_events": 28,
+        "reverse_events": 28,
+        "activated_particles_after_complete_stress_path": 0
+      }
+    },
+    "capabilities": [
+      "2D coarse-grained Lennard-Jones particle dynamics",
+      "velocity-Verlet integration",
+      "periodic minimum-image boundaries",
+      "touch/user impulse intervention",
+      "instantaneous radial distribution function g(r)",
+      "reversible pair association between unlike generic species",
       "explicit forward and reverse toy reaction events",
-      "internal transformed state on reacted associated particles",
-      "reaction event history with pair, species, step and reduced time",
-      "particle-count conservation invariant across state transformations",
-      "reaction-rate control and transformed-state visualization",
-      "reacted associations alter the coarse-grained pair interaction"
+      "internal transformed particle state on reacted associations",
+      "reaction event history",
+      "particle-count conservation invariant",
+      "transformed pair state changes coarse-grained pair interaction"
     ],
     "not_claimed": [
       "literal atoms",
       "quantum chemistry",
       "real chemical bonds",
       "validated reaction chemistry",
-      "real activation energy",
+      "real activation energies",
       "cells",
       "evolution",
       "robots",
       "agents",
       "complete GENESIS platform"
-    ]
+    ],
+    "live_pages": {"status": "UNVERIFIED", "expected_path": "/sim/"},
+    "iphone_safari": {"status": "UNVERIFIED"}
   },
-  "active_objective": "Independently test Matter Lab 0.4 reaction-event bookkeeping, transformed state, conservation invariants and reversible event path in GitHub Actions.",
-  "next_gate": "Open PR from genesis-matter-0.4 to main, inspect the actual simulation test and entire workflow, repair any failure, and merge only on full PASS.",
+  "active_objective": "Move from single reacted pairs toward explicit multi-particle topology and simple reaction-network bookkeeping while keeping the playable baseline intact and the model claims honest.",
+  "next_gate": "Add a tested multi-particle topology layer or small reaction network as the next isolated Lab increment; do not call the toy event model real chemistry.",
   "invariants": [
     "ROADMAP != IMPLEMENTED != VERIFIED",
     "ChatGPT cannot self-certify its own changes",
