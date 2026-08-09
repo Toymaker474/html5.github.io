@@ -1,10 +1,10 @@
 {
-  "name": "genesis-codehood",
-  "version": "0.2.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "test": "node tests/vm.test.mjs",
-    "check": "node --check src/vm.js && node --check src/tasks.js && node --check src/evolution.js && node --check src/main.js"
+  "name":"genesis-codehood",
+  "version":"0.3.0",
+  "private":true,
+  "type":"module",
+  "scripts":{
+    "test":"node tests/vm.test.mjs && node tests/world.test.mjs",
+    "check":"node --check src/vm.js && node --check src/tasks.js && node --check src/brain.js && node --check src/world.js && node --check src/evolution.js && node --check src/main.js"
   }
 }
