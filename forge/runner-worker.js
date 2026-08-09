@@ -1,0 +1,2 @@
+importScripts('./runner-core.js');
+self.onmessage=e=>{const msg=e.data||{};if(msg.type!=='RUN')return;const job_id=msg.job?.id||'UNKNOWN';try{const result=GenesisRunner.run(msg.job);self.postMessage({type:'RESULT',request_id:msg.request_id,job_id,result})}catch(err){self.postMessage({type:'RESULT',request_id:msg.request_id,job_id,result:{schema:1,kind:'GENESIS_FORGE_JOB_RESULT',job_id,status:'FAIL',error:{code:'WORKER_EXCEPTION',message:String(err&&err.stack||err)}}})}};
