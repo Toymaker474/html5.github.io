@@ -3,73 +3,56 @@
   "project": "GENESIS",
   "product": "GENESIS Foundation",
   "engineering_system": "GENESIS FORGE",
-  "phase": "simulation-vertical-slice-003-integrated",
+  "phase": "simulation-vertical-slice-004-candidate",
   "status": "IN_PROGRESS",
   "stable": {
     "label": "matter-lab-0.3-integrated",
     "verified": false,
-    "note": "Matter Lab 0.3 is integrated after a fully green pull-request CI run. Overall product remains unverified because the live GitHub.io deployment and real iPhone Safari have not been independently exercised."
+    "note": "Matter Lab 0.3 remains the integrated baseline. 0.4 is isolated on a candidate branch until full PR CI passes. Live GitHub.io and real iPhone Safari remain separately unverified."
+  },
+  "lab": {
+    "branch": "genesis-matter-0.4",
+    "experiment": "reaction-event-bookkeeping-004",
+    "status": "CANDIDATE"
   },
   "simulation": {
     "built": true,
-    "status": "INTEGRATED_CI_PASS_LIVE_UNVERIFIED",
-    "vertical_slice": "Matter Lab 0.3",
-    "model": "genesis-matter-lj2d-v3",
-    "main_merge_commit": "86c290e1ee4c3387073e931d0ca656a7683382f9",
-    "pull_request": 52,
-    "ci": {
-      "status": "PASS",
-      "workflow_run": 31309543497,
-      "tested_head": "8dc93c41385ffcc84645381c2a51ab871e518547",
-      "simulation_test": "PASS genesis matter 0.3 reversible association tests",
-      "fixture_energy_drift_without_associations": 0.00014574206365967045,
-      "association_fixture": {
-        "formed": 31,
-        "active_after_formation_fixture": 29,
-        "broken_after_high_off_rate_stress": 31,
-        "mean_broken_lifetime_reduced_units": 0.4281270967742107
-      }
-    },
-    "capabilities": [
-      "2D coarse-grained Lennard-Jones particle dynamics",
-      "velocity-Verlet integration",
-      "periodic minimum-image boundaries",
-      "energy, temperature, pressure and invariant telemetry",
-      "touch/user impulse intervention",
-      "instantaneous radial distribution function g(r)",
-      "low-temperature quench control",
-      "seeded reversible pair association between unlike generic species",
-      "harmonic physical interaction for active associations",
-      "association on/off kinetic controls",
-      "formation, breakage and lifetime telemetry"
+    "candidate": "Matter Lab 0.4",
+    "model": "genesis-matter-lj2d-v4",
+    "added_capabilities": [
+      "explicit forward and reverse toy reaction events",
+      "internal transformed state on reacted associated particles",
+      "reaction event history with pair, species, step and reduced time",
+      "particle-count conservation invariant across state transformations",
+      "reaction-rate control and transformed-state visualization",
+      "reacted associations alter the coarse-grained pair interaction"
     ],
     "not_claimed": [
       "literal atoms",
       "quantum chemistry",
       "real chemical bonds",
       "validated reaction chemistry",
+      "real activation energy",
       "cells",
       "evolution",
       "robots",
       "agents",
       "complete GENESIS platform"
-    ],
-    "live_pages": {"status": "UNVERIFIED", "expected_path": "/sim/"},
-    "iphone_safari": {"status": "UNVERIFIED"}
+    ]
   },
-  "active_objective": "Make Matter Lab increasingly interesting to play while moving from generic pair association toward explicit reaction-network bookkeeping and multi-particle structures without pretending toy kinetics are real chemistry.",
-  "next_gate": "Add explicit reaction-event accounting and species-state transformation as a separate tested Lab increment, while preserving the current playable 0.3 baseline.",
+  "active_objective": "Independently test Matter Lab 0.4 reaction-event bookkeeping, transformed state, conservation invariants and reversible event path in GitHub Actions.",
+  "next_gate": "Open PR from genesis-matter-0.4 to main, inspect the actual simulation test and entire workflow, repair any failure, and merge only on full PASS.",
   "invariants": [
     "ROADMAP != IMPLEMENTED != VERIFIED",
     "ChatGPT cannot self-certify its own changes",
     "No critical project fact may live only in chat memory",
     "Prototype experiments do not become product without a productionization gate",
     "Tyler is not the build system or log courier",
-    "No required paid tool or runtime AI dependency",
     "UNKNOWN must never silently become PASS",
     "Infrastructure must not be described as simulation capability",
     "CI PASS does not imply live deployment PASS or iPhone PASS",
-    "Toy reversible associations must not be described as real chemistry or chemical bonds"
+    "Toy reaction events must not be described as validated chemistry",
+    "Particle state transformation must conserve particle count"
   ],
   "updated": "2026-08-09"
 }
