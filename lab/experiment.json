@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "kind": "GENESIS_LAB_EXPERIMENT",
+  "id": "matter-vslice-001",
+  "title": "GENESIS Matter Lab vertical slice 0.1",
+  "status": "CANDIDATE",
+  "base_branch": "main",
+  "lab_branch": "genesis-lab",
+  "changes": [
+    "Add a real 2D coarse-grained Lennard-Jones particle simulation",
+    "Add touch controls for temperature, attraction, pause/reset/seed and physical impulses",
+    "Add explicit model/non-claim documentation",
+    "Add deterministic numerical tests for seed reproducibility, invariants, energy drift and intervention response"
+  ],
+  "acceptance": {
+    "main_must_not_have_lab_experiment": true,
+    "lab_must_have_manifest": true,
+    "candidate_must_name_main_as_base": true,
+    "candidate_status_must_be_candidate": true,
+    "simulation_tests_must_pass_in_ci": true,
+    "no_claim_of_atoms_chemistry_life": true
+  }
+}
