@@ -1,6 +1,6 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;root.GenesisAudit=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
 'use strict';
-const REQUIRED=['index.html','forge/index.html','forge/forge.js','forge/audit-core.js','project/state.json'];
+const REQUIRED=['index.html','forge/index.html','forge/forge.js','forge/audit-core.js','forge/promotion-core.js','forge/runner-core.js','forge/runner-worker.js','project/state.json'];
 function checkState(state){return[
   {id:'state.schema',label:'Project schema is 1',pass:state?.schema===1,actual:state?.schema},
   {id:'state.project',label:'Project is GENESIS',pass:state?.project==='GENESIS',actual:state?.project},
@@ -9,31 +9,10 @@ function checkState(state){return[
   {id:'state.objective',label:'Active objective exists',pass:typeof state?.active_objective==='string'&&state.active_objective.length>0,actual:state?.active_objective},
   {id:'state.next',label:'Next gate exists',pass:typeof state?.next_gate==='string'&&state.next_gate.length>0,actual:state?.next_gate}
 ];}
-function audit(input){const state=input?.state||null;const files=input?.files||{};const checks=[];
- for(const path of REQUIRED)checks.push({id:'file:'+path,label:path+' reachable',pass:files[path]===true,actual:files[path]===true?'present':'missing'});
- checks.push(...checkState(state));
- const pass=checks.every(c=>c.pass===true);
- return {schema:1,kind:'GENESIS_FORGE_FOUNDATION_AUDIT',status:pass?'PASS':'FAIL',checks,summary:{passed:checks.filter(c=>c.pass).length,total:checks.length},project:state?.project||'UNKNOWN',phase:state?.phase||'UNKNOWN',stable_verified:state?.stable?.verified===true,active_objective:state?.active_objective||'UNKNOWN',next_gate:state?.next_gate||'UNKNOWN'};
-}
-function failureDrill(input){
- const baseline=audit(input);
- const brokenFiles={...(input?.files||{})};
- const injected='forge/audit-core.js';
- brokenFiles[injected]=false;
- const candidate=audit({state:input?.state||null,files:brokenFiles});
- const recovered=audit(input);
- const pass=baseline.status==='PASS'&&candidate.status==='FAIL'&&recovered.status==='PASS';
- return {schema:1,kind:'GENESIS_FORGE_FAIL_CLOSED_DRILL',status:pass?'PASS':'FAIL',injected_failure:{type:'missing-required-file',target:injected},baseline_status:baseline.status,candidate_status:candidate.status,recovered_status:recovered.status,stable_preserved:recovered.status===baseline.status&&recovered.summary.passed===baseline.summary.passed,checks:[
-  {id:'drill.baseline',label:'Baseline starts healthy',pass:baseline.status==='PASS',actual:baseline.status},
-  {id:'drill.reject',label:'Injected broken candidate is rejected',pass:candidate.status==='FAIL',actual:candidate.status},
-  {id:'drill.recover',label:'Untouched baseline still passes after failure',pass:recovered.status==='PASS',actual:recovered.status},
-  {id:'drill.preserve',label:'Baseline evidence count is preserved',pass:recovered.summary.passed===baseline.summary.passed,actual:`${recovered.summary.passed}/${baseline.summary.passed}`}
- ],baseline,candidate,recovered};
-}
-function stableStringify(value){if(value===null||typeof value!=='object')return JSON.stringify(value);if(Array.isArray(value))return '['+value.map(stableStringify).join(',')+']';return '{'+Object.keys(value).sort().map(k=>JSON.stringify(k)+':'+stableStringify(value[k])).join(',')+'}';}
-async function sha256(text){if(typeof crypto!=='undefined'&&crypto.subtle){const bytes=new TextEncoder().encode(text);const digest=await crypto.subtle.digest('SHA-256',bytes);return Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');}
- if(typeof require==='function'){const c=require('node:crypto');return c.createHash('sha256').update(text).digest('hex');}
- throw new Error('SHA-256 unavailable');}
-async function receipt(result,meta={}){const body={...result,generated_at:new Date().toISOString(),environment:meta.environment||'unknown',source:meta.source||'unknown'};body.evidence_sha256=await sha256(stableStringify(body));return body;}
-return {REQUIRED,audit,failureDrill,checkState,stableStringify,sha256,receipt};
+function audit(input){const state=input?.state||null;const files=input?.files||{};const checks=[];for(const path of REQUIRED)checks.push({id:'file:'+path,label:path+' reachable',pass:files[path]===true,actual:files[path]===true?'present':'missing'});checks.push(...checkState(state));const pass=checks.every(c=>c.pass===true);return{schema:1,kind:'GENESIS_FORGE_FOUNDATION_AUDIT',status:pass?'PASS':'FAIL',checks,summary:{passed:checks.filter(c=>c.pass).length,total:checks.length},project:state?.project||'UNKNOWN',phase:state?.phase||'UNKNOWN',stable_verified:state?.stable?.verified===true,active_objective:state?.active_objective||'UNKNOWN',next_gate:state?.next_gate||'UNKNOWN'}}
+function failureDrill(input){const baseline=audit(input);const brokenFiles={...(input?.files||{})};const injected='forge/audit-core.js';brokenFiles[injected]=false;const candidate=audit({state:input?.state||null,files:brokenFiles});const recovered=audit(input);const pass=baseline.status==='PASS'&&candidate.status==='FAIL'&&recovered.status==='PASS';return{schema:1,kind:'GENESIS_FORGE_FAIL_CLOSED_DRILL',status:pass?'PASS':'FAIL',injected_failure:{type:'missing-required-file',target:injected},baseline_status:baseline.status,candidate_status:candidate.status,recovered_status:recovered.status,stable_preserved:recovered.status===baseline.status&&recovered.summary.passed===baseline.summary.passed,checks:[{id:'drill.baseline',label:'Baseline starts healthy',pass:baseline.status==='PASS',actual:baseline.status},{id:'drill.reject',label:'Injected broken candidate is rejected',pass:candidate.status==='FAIL',actual:candidate.status},{id:'drill.recover',label:'Untouched baseline still passes after failure',pass:recovered.status==='PASS',actual:recovered.status},{id:'drill.preserve',label:'Baseline evidence count is preserved',pass:recovered.summary.passed===baseline.summary.passed,actual:`${recovered.summary.passed}/${baseline.summary.passed}`}],baseline,candidate,recovered}}
+function stableStringify(value){if(value===null||typeof value!=='object')return JSON.stringify(value);if(Array.isArray(value))return '['+value.map(stableStringify).join(',')+']';return '{'+Object.keys(value).sort().map(k=>JSON.stringify(k)+':'+stableStringify(value[k])).join(',')+'}'}
+async function sha256(text){if(typeof crypto!=='undefined'&&crypto.subtle){const bytes=new TextEncoder().encode(text);const digest=await crypto.subtle.digest('SHA-256',bytes);return Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('')}if(typeof require==='function'){const c=require('node:crypto');return c.createHash('sha256').update(text).digest('hex')}throw new Error('SHA-256 unavailable')}
+async function receipt(result,meta={}){const body={...result,generated_at:new Date().toISOString(),environment:meta.environment||'unknown',source:meta.source||'unknown'};body.evidence_sha256=await sha256(stableStringify(body));return body}
+return{REQUIRED,audit,failureDrill,checkState,stableStringify,sha256,receipt};
 });
