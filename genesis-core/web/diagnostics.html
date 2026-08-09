@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>GENESIS CORE // Diagnostics</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}html,body{margin:0;background:#03070c;color:#eaffff;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}body{padding:16px}h1{font:800 18px system-ui;margin:0 0 12px;color:#7fffe1}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}.card{border:1px solid #23404b;background:#071018;border-radius:14px;padding:12px}.pass{color:#72ffb3}.fail{color:#ff718a}.warn{color:#ffd86b}.metric{display:flex;justify-content:space-between;gap:12px;padding:3px 0;color:#9bb7c2}.metric b{color:#fff}pre{white-space:pre-wrap;word-break:break-word;background:#020508;border:1px solid #1c313a;border-radius:12px;padding:12px;min-height:120px}button{border:1px solid #35515c;border-radius:10px;background:#0b1821;color:#fff;padding:9px 12px;font-weight:800;margin:4px 5px 8px 0}</style>
+</head>
+<body>
+<h1>GENESIS CORE // AUTOMATED DIAGNOSTIC LAB</h1>
+<p id="headline">Booting compiled Rust/WASM and stress-testing the molecular engine…</p>
+<button id="run">Run full diagnostic</button><button id="stress">Run 10k-step stress test</button>
+<div class="grid">
+<div class="card"><b>Runtime</b><div id="runtime"></div></div>
+<div class="card"><b>Numerical health</b><div id="health"></div></div>
+<div class="card"><b>Chemistry</b><div id="chem"></div></div>
+<div class="card"><b>Performance</b><div id="perf"></div></div>
+</div>
+<h3>Diagnostic log</h3><pre id="log"></pre>
+<script type="module">
+import init,{Genesis} from './pkg/genesis_core.js';
+const $=id=>document.getElementById(id);const log=[];const write=(m,c='')=>{log.push(m);$('log').textContent=log.join('\n');if(c) $('headline').className=c};
+const row=(name,value,klass='')=>`<div class="metric"><span>${name}</span><b class="${klass}">${value}</b></div>`;
+let sim;
+window.addEventListener('error',e=>write(`[WINDOW ERROR] ${e.message}\n${e.error?.stack||''}`,'fail'));
+window.addEventListener('unhandledrejection',e=>write(`[PROMISE REJECTION] ${e.reason?.stack||e.reason}`,'fail'));
+async function boot(){await init();sim=new Genesis(720,1170,760,0x52a91f31);$('runtime').innerHTML=row('WASM','loaded','pass')+row('Atoms',sim.atom_count())+row('Bonds',sim.bond_count());write('[PASS] Rust/WASM module loaded and Genesis constructed.');}
+function inspectArrays(){const p=sim.positions(),v=sim.velocities(),t=sim.atom_types(),b=sim.bond_pairs();let nonFinite=0,maxSpeed=0,outBounds=0;for(let i=0;i<p.length;i++)if(!Number.isFinite(p[i]))nonFinite++;for(let i=0;i<v.length;i+=2){const s=Math.hypot(v[i],v[i+1]);if(!Number.isFinite(s))nonFinite++;maxSpeed=Math.max(maxSpeed,s)}for(let i=0;i<p.length;i+=2)if(p[i]<-.01||p[i]>1170.01||p[i+1]<-.01||p[i+1]>760.01)outBounds++;let badBond=0;for(let i=0;i<b.length;i+=2)if(b[i]>=t.length||b[i+1]>=t.length||b[i]===b[i+1])badBond++;return{p,v,t,b,nonFinite,maxSpeed,outBounds,badBond};}
+async function run(steps=1500){log.length=0;write(`[RUN] ${steps} fixed diagnostic steps`);if(!sim)await boot();const start=performance.now();let peak=0;for(let i=0;i<steps;i++){sim.step(1/120);if((i&63)===0){const h=inspectArrays();peak=Math.max(peak,h.maxSpeed);if(h.nonFinite)throw new Error(`Non-finite simulation value detected at step ${i}`);if(h.badBond)throw new Error(`Invalid bond index detected at step ${i}`)}}const elapsed=performance.now()-start;const h=inspectArrays();const moleculeCount=typeof sim.molecule_count==='function'?sim.molecule_count():'n/a';const largest=typeof sim.largest_molecule==='function'?sim.largest_molecule():'n/a';$('health').innerHTML=row('Finite values',h.nonFinite===0?'PASS':'FAIL',h.nonFinite===0?'pass':'fail')+row('Out of bounds',h.outBounds,h.outBounds===0?'pass':'warn')+row('Bad bonds',h.badBond,h.badBond===0?'pass':'fail')+row('Peak speed',peak.toFixed(2));$('chem').innerHTML=row('Atoms',sim.atom_count())+row('Bonds',sim.bond_count())+row('Molecules',moleculeCount)+row('Largest graph',largest)+row('Formed',typeof sim.bonds_formed==='function'?sim.bonds_formed():'n/a')+row('Broken',typeof sim.bonds_broken==='function'?sim.bonds_broken():'n/a');$('perf').innerHTML=row('Steps',steps)+row('Elapsed',elapsed.toFixed(1)+' ms')+row('Steps/sec',Math.round(steps/(elapsed/1000)))+row('ms/step',(elapsed/steps).toFixed(3));$('runtime').innerHTML=row('WASM','healthy','pass')+row('Atoms',sim.atom_count())+row('Typed-array bytes',(h.p.byteLength+h.v.byteLength+h.t.byteLength+h.b.byteLength).toLocaleString());write(`[PASS] ${steps} steps completed in ${elapsed.toFixed(1)} ms with no non-finite values or invalid bond indices.`,'pass');window.GENESIS_DIAGNOSTIC_PASS=true;}
+$('run').onclick=()=>run(1500).catch(e=>{write('[FAIL] '+(e.stack||e),'fail');window.GENESIS_DIAGNOSTIC_PASS=false});$('stress').onclick=()=>run(10000).catch(e=>{write('[FAIL] '+(e.stack||e),'fail');window.GENESIS_DIAGNOSTIC_PASS=false});
+boot().then(()=>run(1500)).catch(e=>{write('[BOOT FAIL] '+(e.stack||e),'fail');window.GENESIS_DIAGNOSTIC_PASS=false});
+</script>
+</body>
+</html>
