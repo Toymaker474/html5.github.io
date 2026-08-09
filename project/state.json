@@ -3,47 +3,33 @@
   "project": "GENESIS",
   "product": "GENESIS Foundation",
   "engineering_system": "GENESIS FORGE",
-  "phase": "simulation-vertical-slice-001-integrated",
+  "phase": "simulation-vertical-slice-002-candidate",
   "status": "IN_PROGRESS",
   "stable": {
     "label": "matter-lab-0.1-integrated",
     "verified": false,
-    "note": "Matter Lab 0.1 is integrated into main after a fully green pull-request CI run. The product is NOT globally verified because the live GitHub.io deployment and real iPhone Safari have not been independently exercised from this environment."
+    "note": "Matter Lab 0.1 remains the integrated baseline. 0.2 is isolated on a candidate branch until PR CI passes. Live GitHub.io and real iPhone Safari remain separately unverified."
+  },
+  "lab": {
+    "branch": "genesis-matter-0.2",
+    "experiment": "matter-structure-002",
+    "status": "CANDIDATE"
   },
   "simulation": {
     "built": true,
-    "status": "INTEGRATED_CI_PASS_LIVE_UNVERIFIED",
-    "vertical_slice": "Matter Lab 0.1",
-    "model": "genesis-matter-lj2d-v1",
-    "main_merge_commit": "4d8e8d96be4d5a8a7936c127eefb7a285dcd3d4a",
-    "pull_request": 50,
-    "ci": {
-      "status": "PASS",
-      "workflow_run": 31308575937,
-      "tested_head": "27896c94d55e7ba1597f89c357ae6f3701b022f9",
-      "simulation_test": "PASS genesis matter model tests"
-    },
-    "live_pages": {
-      "status": "UNVERIFIED",
-      "expected_path": "/sim/",
-      "note": "Public-site fetch could not be performed from the current execution environment because DNS/web-safe-open access was unavailable. This is not a PASS or a FAIL for the deployed page."
-    },
-    "iphone_safari": {
-      "status": "UNVERIFIED",
-      "note": "No real iPhone/Safari device run has been performed."
-    },
-    "claims": [
-      "2D classical coarse-grained particle dynamics",
-      "Lennard-Jones 12-6 pair interactions",
-      "velocity-Verlet integration",
-      "deterministic seeded initialization on the same JavaScript numerical path",
-      "energy and invariant telemetry",
-      "touch/user impulse intervention"
+    "candidate": "Matter Lab 0.2",
+    "model": "genesis-matter-lj2d-v2",
+    "added_capabilities": [
+      "periodic minimum-image boundaries",
+      "instantaneous radial distribution function g(r)",
+      "live g(r) visualization and peak telemetry",
+      "low-temperature quench control"
     ],
     "not_claimed": [
       "literal atoms",
       "quantum chemistry",
       "chemical reactions",
+      "thermodynamic phase-transition proof",
       "cells",
       "evolution",
       "robots",
@@ -51,8 +37,8 @@
       "complete GENESIS platform"
     ]
   },
-  "active_objective": "Exercise Matter Lab 0.1 from the live GitHub.io deployment, then test it on a real iPhone/Safari. After those gates, deepen the simulation instead of renaming this slice.",
-  "next_gate": "Verify the public /sim/ deployment and real iPhone Safari separately. Do not set stable.verified true until the required product gates actually pass.",
+  "active_objective": "Independently test Matter Lab 0.2 periodic dynamics and structure diagnostics in GitHub Actions, then promote only on a fully green PR run.",
+  "next_gate": "Open a PR from genesis-matter-0.2 to main, inspect the actual workflow result and logs, repair failures if any, and merge only after the entire workflow passes.",
   "invariants": [
     "ROADMAP != IMPLEMENTED != VERIFIED",
     "ChatGPT cannot self-certify its own changes",
@@ -60,11 +46,10 @@
     "Prototype experiments do not become product without a productionization gate",
     "Tyler is not the build system or log courier",
     "No required paid tool or runtime AI dependency",
-    "A PASS status requires evidence produced outside the code-under-test when practical",
     "UNKNOWN must never silently become PASS",
     "Infrastructure must not be described as simulation capability",
-    "The Matter Lab must not be described as atoms, chemistry, life, robotics, or agents",
-    "CI PASS does not imply live deployment PASS or iPhone PASS"
+    "CI PASS does not imply live deployment PASS or iPhone PASS",
+    "g(r) structure is not automatically a phase-transition claim"
   ],
   "updated": "2026-08-09"
 }
