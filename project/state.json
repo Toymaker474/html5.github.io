@@ -3,12 +3,37 @@
   "project": "GENESIS",
   "product": "GENESIS Foundation",
   "engineering_system": "GENESIS FORGE",
-  "phase": "simulation-vertical-slice-006-integrated",
+  "phase": "materials-lab-001-candidate",
   "status": "IN_PROGRESS",
   "stable": {
     "label": "matter-lab-0.6-integrated",
     "verified": false,
-    "note": "Matter Lab 0.6 is integrated after a fully green pull-request CI run. Overall product remains unverified because the live GitHub.io deployment and real iPhone Safari have not been independently exercised."
+    "note": "Matter Lab 0.6 remains the integrated baseline. The Materials Lab work is isolated on genesis-materials-0.1 and has not been promoted. Overall product remains unverified because live GitHub.io and real iPhone Safari have not been independently exercised."
+  },
+  "lab": {
+    "branch": "genesis-materials-0.1",
+    "candidate": "GENESIS Materials Lab 0.1",
+    "status": "WRITTEN_UNTESTED",
+    "original_intent": "Make the graphics high quality and make sand actually read and behave like sand: very fine visible granular detail, piles, structures, wet sand, water, and a GPU path that can later grow toward lava, clouds and creatures.",
+    "bounded_objective": "Prove one reusable high-detail material-sandbox architecture: deterministic coarse sand/water simulation truth in a Worker, moisture-dependent wet-sand cohesion, touch interaction, adaptive grid quality, WebGPU state-derived rendering and Canvas fallback, without regressing Matter Lab 0.6.",
+    "acceptance_criteria": [
+      "same-seed CPU material fixture reproduces the same state hash",
+      "suspended sand falls and stepping conserves sand/rock counts",
+      "water descends and stepping conserves water count",
+      "water contact produces explicit wet-sand moisture state",
+      "wet cohesive sand retains a taller fixture than equivalent dry sand",
+      "material/moisture invariants remain PASS",
+      "Materials Lab browser assets pass syntax/static checks",
+      "old Matter Lab 0.6 model regression test remains PASS",
+      "full pull-request GitHub Actions run passes on the exact candidate head before merge"
+    ],
+    "verification": {
+      "implementation": "WRITTEN",
+      "ci": "NOT_YET_RUN",
+      "live_pages": "NOT_YET_TESTED",
+      "iphone_safari": "NOT_YET_TESTED",
+      "webgpu_device": "NOT_YET_TESTED"
+    }
   },
   "simulation": {
     "built": true,
@@ -23,23 +48,9 @@
       "tested_head": "2198f5889073c6ad5da9e11ac006afceead39f5d",
       "simulation_test": "PASS genesis matter 0.6 cooperative self-assembly tests",
       "fixture_energy_drift_without_associations": 0.00014467353174091733,
-      "baseline_topology_fixture": {
-        "largest_component_particles": 7,
-        "cycle_rank": 13
-      },
-      "assembly_fixture": {
-        "assembly_created_edges": 51,
-        "closure_edges": 11,
-        "cooperative_edges": 40,
-        "largest_component_particles": 10,
-        "cycle_rank": 11,
-        "cycle_density": 0.12087912087912088
-      },
-      "reaction_regression_fixture": {
-        "forward_events": 55,
-        "reverse_events": 55,
-        "active_associations_after_stress": 0
-      }
+      "baseline_topology_fixture": {"largest_component_particles": 7,"cycle_rank": 13},
+      "assembly_fixture": {"assembly_created_edges": 51,"closure_edges": 11,"cooperative_edges": 40,"largest_component_particles": 10,"cycle_rank": 11,"cycle_density": 0.12087912087912088},
+      "reaction_regression_fixture": {"forward_events": 55,"reverse_events": 55,"active_associations_after_stress": 0}
     },
     "capabilities": [
       "2D coarse-grained Lennard-Jones particle dynamics",
@@ -60,25 +71,18 @@
       "particle-count conservation invariant"
     ],
     "not_claimed": [
-      "literal atoms",
-      "chemical valence",
-      "real molecular graph chemistry",
-      "quantum chemistry",
-      "real chemical bonds",
-      "validated reaction chemistry",
-      "lipid membrane thermodynamics",
-      "validated molecular self-assembly",
-      "cells",
-      "evolution",
-      "robots",
-      "agents",
-      "complete GENESIS platform"
+      "literal atoms","chemical valence","real molecular graph chemistry","quantum chemistry","real chemical bonds","validated reaction chemistry","lipid membrane thermodynamics","validated molecular self-assembly","cells","evolution","robots","agents","complete GENESIS platform"
     ],
     "live_pages": {"status": "UNVERIFIED", "expected_path": "/sim/"},
     "iphone_safari": {"status": "UNVERIFIED"}
   },
-  "active_objective": "Turn coarse cooperative self-assembly into an inspectable compartment precursor: detect closed spatial loops, estimate enclosed regions, and distinguish mere graph cycles from persistent enclosure without claiming a membrane or cell.",
-  "next_gate": "Add a compartment-precursor detector on an isolated Lab branch, preserve the 0.6 assembly and regression fixtures, and require independent CI before promotion.",
+  "idea_harbor": [
+    {"idea":"thermally driven lava / molten material","status":"FUTURE_UNLOCK","prerequisites":["validated material-state architecture","thermal field","phase/state transition model","GPU/reference comparison"]},
+    {"idea":"volumetric atmosphere and clouds","status":"FUTURE_UNLOCK","prerequisites":["field representation","advection/transport model","GPU performance path","state-derived volumetric renderer"]},
+    {"idea":"creatures interacting with materials","status":"FUTURE_UNLOCK","prerequisites":["persistent world/material substrate","life/development/control systems","causal body-environment coupling"]}
+  ],
+  "active_objective": "Finish and independently test GENESIS Materials Lab 0.1 as a reusable sand/water visual-material candidate without changing Stable.",
+  "next_gate": "Wire the playable Materials Lab into CI, run both new materials fixtures and old Matter Lab 0.6 regressions on a pull request, inspect exact logs, repair only causal failures, and merge only on full PASS.",
   "invariants": [
     "ROADMAP != IMPLEMENTED != VERIFIED",
     "ChatGPT cannot self-certify its own changes",
@@ -88,10 +92,12 @@
     "UNKNOWN must never silently become PASS",
     "Infrastructure must not be described as simulation capability",
     "CI PASS does not imply live deployment PASS or iPhone PASS",
-    "Toy reaction events must not be described as validated chemistry",
-    "Toy topology valence limits must not be described as chemical valence",
-    "Toy assembly bias must not be described as validated membrane self-assembly",
-    "Particle state transformation must conserve particle count"
+    "Rendering consumes simulation state and must not secretly become simulation logic",
+    "WebGPU rendering does not imply GPU-compute physics",
+    "Coarse sand cells must not be described as literal micron-scale grains",
+    "Toy moisture cohesion must not be described as validated capillary/geotechnical physics",
+    "Water local-move rules must not be described as Navier-Stokes or SPH",
+    "Matter Lab 0.6 remains recoverable while Materials Lab is experimental"
   ],
   "updated": "2026-08-09"
 }

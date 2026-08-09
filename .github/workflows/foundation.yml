@@ -59,7 +59,7 @@ jobs:
           fs.writeFileSync('runner-receipt.json',JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt,null,2));
           if(receipt.status!=='PASS'||good.metrics.final_u32!==2447768005||good.metrics.sum_u32!==1855005972)process.exit(1);
           NODE
-      - name: Test GENESIS simulation candidate when present
+      - name: Test GENESIS matter simulation when present
         run: |
           set -euo pipefail
           if [ -f sim/model.js ]; then
@@ -70,7 +70,27 @@ jobs:
             node --check sim/sim.js
             node sim/model.test.js | tee simulation-test.txt
           else
-            printf 'simulation candidate absent on this ref\n' > simulation-test.txt
+            printf 'matter simulation absent on this ref\n' > simulation-test.txt
+          fi
+      - name: Test GENESIS materials candidate when present
+        run: |
+          set -euo pipefail
+          if [ -f materials/model.js ]; then
+            test -f materials/index.html
+            test -f materials/app.js
+            test -f materials/worker.js
+            test -f materials/renderer-webgpu.js
+            test -f materials/renderer-canvas.js
+            test -f materials/MODEL.md
+            node --check materials/model.js
+            node --check materials/model.test.js
+            node --check materials/worker.js
+            node --check materials/app.js
+            node --check materials/renderer-webgpu.js
+            node --check materials/renderer-canvas.js
+            node materials/model.test.js | tee materials-test.txt
+          else
+            printf 'materials candidate absent on this ref\n' > materials-test.txt
           fi
       - name: Verify real Stable vs Lab isolation
         if: github.ref_name == 'main'
@@ -99,4 +119,5 @@ jobs:
             runner-receipt.json
             promotion-receipt.json
             simulation-test.txt
+            materials-test.txt
           if-no-files-found: ignore
