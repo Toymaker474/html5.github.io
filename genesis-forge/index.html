@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>GENESIS FORGE // Visual Science Builder</title>
+<link rel="stylesheet" href="./forge.css">
+</head>
+<body>
+<div id="app">
+  <header class="topbar glass">
+    <div class="brand"><b>GENESIS FORGE</b><span>VISUAL SCIENCE BUILDER</span></div>
+    <div class="topActions">
+      <button id="runAudit">AUDIT</button>
+      <button id="makePacket">CHATGPT PACKET</button>
+      <button id="exportGraph">EXPORT</button>
+      <label class="fileBtn">IMPORT<input id="importGraph" type="file" accept="application/json"></label>
+    </div>
+  </header>
+
+  <aside class="palette glass" id="palette">
+    <div class="panelTitle">NODE LIBRARY</div>
+    <button data-add="idea">✦ Idea / Goal</button>
+    <button data-add="spec">▦ Specification</button>
+    <button data-add="science">⚛ Science Model</button>
+    <button data-add="rust">🦀 Rust Module</button>
+    <button data-add="wgsl">⚡ WGSL / GPU</button>
+    <button data-add="test">✓ Test Gate</button>
+    <button data-add="benchmark">◴ Benchmark</button>
+    <button data-add="visual">◉ Visual QA</button>
+    <button data-add="device">⌁ Device QA</button>
+    <button data-add="debug">⚠ Debugger</button>
+    <button data-add="repair">⟲ Repair Gate</button>
+    <button data-add="release">◆ Release</button>
+    <div class="panelTitle spaced">PIPELINES</div>
+    <button data-preset="feature">Feature Forge</button>
+    <button data-preset="science">Science Validation</button>
+    <button data-preset="debug">Crash → Repair</button>
+    <button data-preset="release">Full Release Gate</button>
+  </aside>
+
+  <main id="viewport">
+    <div id="world">
+      <svg id="wires"></svg>
+      <div id="nodes"></div>
+    </div>
+    <div class="hint glass">Drag empty space to pan • pinch/wheel to zoom • drag nodes • tap ports to connect</div>
+  </main>
+
+  <aside class="inspector glass" id="inspector">
+    <div class="panelTitle">INSPECTOR</div>
+    <div id="inspectorEmpty">Select a node.</div>
+    <div id="inspectorBody" hidden>
+      <label>Title<input id="nodeTitle"></label>
+      <label>Type<input id="nodeType" readonly></label>
+      <label>Status<select id="nodeStatus"><option>planned</option><option>working</option><option>blocked</option><option>passed</option><option>failed</option></select></label>
+      <label>Purpose<textarea id="nodePurpose" rows="4"></textarea></label>
+      <label>Acceptance<textarea id="nodeAcceptance" rows="5"></textarea></label>
+      <label>Evidence<textarea id="nodeEvidence" rows="4"></textarea></label>
+      <div class="row2"><button id="duplicateNode">Duplicate</button><button id="deleteNode" class="danger">Delete</button></div>
+    </div>
+    <div class="panelTitle spaced">LIVE AUDIT</div>
+    <div id="audit" class="audit">Not run yet.</div>
+  </aside>
+
+  <footer class="dock glass">
+    <button id="fitGraph">FIT</button>
+    <button id="zoomOut">−</button>
+    <span id="zoomLabel">100%</span>
+    <button id="zoomIn">＋</button>
+    <button id="saveGraph">SAVE</button>
+    <button id="clearGraph" class="danger">CLEAR</button>
+  </footer>
+</div>
+<script type="module" src="./forge.js"></script>
+</body>
+</html>
