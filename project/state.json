@@ -3,15 +3,20 @@
   "project": "GENESIS",
   "product": "GENESIS Foundation",
   "engineering_system": "GENESIS FORGE",
-  "phase": "forge-fail-closed-recovery-drill",
+  "phase": "forge-stable-lab-isolation",
   "status": "IN_PROGRESS",
   "stable": {
-    "label": "none-yet",
+    "label": "main-clean-foundation",
     "verified": false,
-    "note": "Clean-room foundation and shared audit contract exist. A controlled fail-closed candidate/recovery drill is now implemented; external workflow verification is still required before locking the first known-good checkpoint."
+    "note": "Stable remains unpromoted until branch isolation and promotion gates produce evidence."
   },
-  "active_objective": "Prove that FORGE rejects a deliberately broken candidate while the untouched baseline remains healthy and independently auditable.",
-  "next_gate": "Obtain a passing CI recovery receipt for the shared fail-closed drill; then lock the first known-good foundation checkpoint and add a real mutable Lab-vs-Stable experiment branch workflow.",
+  "lab": {
+    "branch": "genesis-lab",
+    "experiment": "lab-isolation-001",
+    "status": "CANDIDATE"
+  },
+  "active_objective": "Prove a real Lab branch can diverge while main remains clean, then require an explicit promotion gate before Stable changes.",
+  "next_gate": "Get a passing branch-isolation receipt from CI and verify the live GitHub Pages FORGE can see Stable as clean and the Lab candidate as isolated.",
   "invariants": [
     "ROADMAP != IMPLEMENTED != VERIFIED",
     "ChatGPT cannot self-certify its own changes",
@@ -21,8 +26,9 @@
     "No required paid tool or runtime AI dependency",
     "A PASS status requires evidence produced by the acceptance contract",
     "A broken candidate must not contaminate the baseline",
-    "UNKNOWN must never silently become PASS"
+    "UNKNOWN must never silently become PASS",
+    "Lab changes cannot become Stable without an explicit promotion gate"
   ],
-  "archive_note": "Historical repo content was removed from active main. Emergency history remains on archive-pre-genesis-rebuild-2026-08-09 only.",
+  "archive_note": "Historical repo content remains outside active main on archive-pre-genesis-rebuild-2026-08-09.",
   "updated": "2026-08-09"
 }
