@@ -3,7 +3,7 @@
   "project": "GENESIS",
   "product": "GENESIS Foundation",
   "engineering_system": "GENESIS FORGE",
-  "phase": "materials-lab-001-integrated",
+  "phase": "materials-lab-002-3d-candidate",
   "status": "IN_PROGRESS",
   "canonical_directive": {
     "path": "project/CANONICAL_MASTER_DIRECTIVE.md",
@@ -12,7 +12,7 @@
   "stable": {
     "label": "genesis-foundation-materials-0.1-integrated",
     "verified": false,
-    "note": "Matter Lab 0.6 and Materials Lab 0.1 are both integrated on main after fully green pull-request CI. Overall product remains unverified because live GitHub.io runtime behavior, a real WebGPU device run, and real iPhone Safari have not yet been independently exercised."
+    "note": "Matter Lab 0.6 and Materials Lab 0.1 remain the integrated main baseline. Materials Lab 0.2 cinematic 3D is isolated on genesis-materials-0.2-3d and is not promoted. Overall product remains unverified because live GitHub.io runtime behavior, real WebGPU execution, and real iPhone Safari are not independently verified."
   },
   "matter_lab": {
     "status": "INTEGRATED_CI_PASS_LIVE_UNVERIFIED",
@@ -20,12 +20,7 @@
     "model": "genesis-matter-lj2d-v6",
     "main_merge_commit": "a2100ab40e70da81101c00e2e0cdff44dfbf34e0",
     "pull_request": 55,
-    "ci": {
-      "status": "PASS",
-      "workflow_run": 31310827285,
-      "tested_head": "2198f5889073c6ad5da9e11ac006afceead39f5d",
-      "simulation_test": "PASS genesis matter 0.6 cooperative self-assembly tests"
-    }
+    "ci": {"status":"PASS","workflow_run":31310827285,"tested_head":"2198f5889073c6ad5da9e11ac006afceead39f5d","simulation_test":"PASS genesis matter 0.6 cooperative self-assembly tests"}
   },
   "materials_lab": {
     "status": "INTEGRATED_CI_PASS_LIVE_UNVERIFIED",
@@ -39,46 +34,59 @@
       "tested_head": "371677df8298e1a5929d708ad678a8527102c655",
       "simulation_test": "PASS genesis materials 0.1 granular sand/water tests",
       "replay_hash": 1695607716,
-      "sand_fall_fixture": {"center_y_before": 23.5, "center_y_after": 2.875},
-      "water_fall_fixture": {"center_y_before": 20.5, "center_y_after": 2.2708333333333335},
-      "wetting_fixture": {"wet_sand_cells": 30},
-      "cohesion_fixture": {"dry_height": 8, "wet_height": 14}
+      "sand_fall_fixture": {"center_y_before":23.5,"center_y_after":2.875},
+      "water_fall_fixture": {"center_y_before":20.5,"center_y_after":2.2708333333333335},
+      "wetting_fixture": {"wet_sand_cells":30},
+      "cohesion_fixture": {"dry_height":8,"wet_height":14}
     },
-    "architecture": [
-      "deterministic CPU reference model",
-      "simulation Worker separated from UI/rendering",
-      "WebGPU state-derived renderer using read-only packed material state",
-      "Canvas2D fallback",
-      "touch-first material painting UI",
-      "quality presets from approximately 14k to 130k coarse cells"
-    ],
-    "capabilities": [
-      "gravity-driven coarse sand settling and pile formation",
-      "coarse water descent and lateral spreading",
-      "water-to-sand moisture transfer",
-      "moisture-dependent phenomenological cohesion",
-      "dry sand, wet sand, water, rock and erase tools",
-      "procedural WebGPU sand roughness and micro-detail",
+    "live_pages": {"status":"UNVERIFIED","expected_path":"/materials/"},
+    "webgpu_runtime": {"status":"UNVERIFIED"},
+    "iphone_safari": {"status":"UNVERIFIED"}
+  },
+  "materials3d_lab": {
+    "branch": "genesis-materials-0.2-3d",
+    "status": "WRITTEN_UNTESTED",
+    "vertical_slice": "Materials Lab 0.2 — Cinematic 3D World",
+    "model": "genesis-materials-heightfield3d-v1",
+    "original_feedback": "It looks the same. It is not 3D and it does not look amazing or like Unreal Engine.",
+    "experiential_failure": "Materials Lab 0.1 used a fullscreen-triangle screen-space renderer, so better shading could not create actual perspective/depth/3D world structure.",
+    "representation": "2.5D x/z heightfield storing rock elevation, sand depth, water depth and moisture, rendered as real 3D geometry.",
+    "rendering": [
+      "perspective orbit camera",
+      "depth24plus depth buffer",
+      "triangulated rock+sand terrain geometry",
+      "separate transparent water surface geometry",
+      "directional sun lighting",
+      "procedural sky and sun disk",
+      "distance atmospheric haze approximation",
       "wet-sand darkening/specular response",
-      "state-derived animated water shading"
+      "state-derived camera-facing micro-grain sprites",
+      "animated water normal perturbation and Fresnel-like reflection",
+      "ACES-style tonemapping approximation"
     ],
-    "not_claimed": [
-      "literal micron grains",
-      "DEM rigid-body contact mechanics",
-      "Navier-Stokes or SPH fluid dynamics",
-      "validated capillary physics",
-      "validated geotechnical engineering",
-      "GPU compute physics",
-      "WebAssembly optimized physics",
-      "lava",
-      "clouds",
-      "creatures",
-      "all matter of reality",
-      "finished GENESIS"
+    "interaction": ["touch/mouse orbit","wheel/pinch zoom","sand sculpting","wet-sand sculpting","water placement","rock raising","digging","dune burst","flash flood"],
+    "acceptance_criteria": [
+      "older Matter Lab 0.6 regression remains PASS",
+      "older Materials Lab 0.1 regression remains PASS",
+      "0.2 fixed-seed reference model reproduces the same hash",
+      "0.2 stepping conserves sand and water mass within declared floating-point tolerance",
+      "dry sand pile measurably relaxes/spreads",
+      "water spreads across more heightfield cells",
+      "wet cohesive pile retains more height than equivalent dry pile",
+      "browser JavaScript syntax checks pass",
+      "renderer contains an actual depth buffer and separate terrain/water/grain pipelines",
+      "full PR CI passes on the exact candidate head before promotion"
     ],
-    "live_pages": {"status": "UNVERIFIED", "expected_path": "/materials/"},
-    "webgpu_runtime": {"status": "UNVERIFIED"},
-    "iphone_safari": {"status": "UNVERIFIED"}
+    "verification": {
+      "implementation": "WRITTEN",
+      "reference_model_tests": "NOT_YET_RUN",
+      "older_regressions": "NOT_YET_RERUN_ON_CANDIDATE",
+      "webgpu_shader_compile": "UNVERIFIED",
+      "live_pages": "UNVERIFIED",
+      "iphone_safari": "UNVERIFIED",
+      "performance": "UNMEASURED"
+    },
+    "not_claimed": ["per-grain DEM","volumetric 3D sand physics","Navier-Stokes/SPH/MPM/FLIP","validated soil mechanics","literal micron grains","Unreal Engine","ray-traced global illumination","GPU-compute simulation physics","lava","clouds","creatures","finished GENESIS"]
   },
   "idea_harbor": [
     {"idea":"thermally driven lava / molten material","status":"FUTURE_UNLOCK","prerequisites":["validated material-state architecture","thermal field","phase/state transition model","GPU/reference comparison"]},
@@ -86,8 +94,8 @@
     {"idea":"creatures interacting with materials","status":"FUTURE_UNLOCK","prerequisites":["persistent world/material substrate","life/development/control systems","causal body-environment coupling"]},
     {"idea":"simulate all matter across reality","status":"DREAM_TARGET","prerequisites":["adaptive multiresolution architecture","model families per scale","cross-scale state/causality","device-aware workload director"]}
   ],
-  "active_objective": "Exercise the integrated Materials Lab on the live GitHub.io deployment and on a real WebGPU/iPhone Safari target, measure actual frame/simulation throughput, then choose the smallest justified optimization path. Add WebGPU compute or WebAssembly only if measured performance or capability requires it and compare optimized semantics against the CPU reference fixtures.",
-  "next_gate": "Verify /materials/ on the deployed site, record renderer backend and real device behavior, benchmark representative quality presets, and do not claim WebGPU runtime or iPhone support until that evidence exists.",
+  "active_objective": "Prove that Materials Lab 0.2 is a genuinely different 3D product direction rather than another flat shader pass: run its deterministic heightfield fixtures and all preserved regressions in PR CI, then separately compile/render the WebGPU path on a real deployed device before any Unreal-quality claim.",
+  "next_gate": "Open a PR from genesis-materials-0.2-3d, inspect exact CI logs for Matter 0.6, Materials 0.1 and Materials 0.2, repair only causal failures, and do not promote if main changes or the exact candidate head is not green.",
   "invariants": [
     "ROADMAP != IMPLEMENTED != VERIFIED",
     "ChatGPT cannot self-certify its own changes",
@@ -99,11 +107,12 @@
     "CI PASS does not imply live deployment PASS or iPhone PASS",
     "Rendering consumes simulation state and must not secretly become simulation logic",
     "WebGPU rendering does not imply GPU-compute physics",
-    "Coarse sand cells must not be described as literal micron-scale grains",
-    "Toy moisture cohesion must not be described as validated capillary/geotechnical physics",
-    "Water local-move rules must not be described as Navier-Stokes or SPH",
-    "Matter Lab 0.6 remains independently available after Materials Lab integration",
-    "The all-matter dream must not be silently downgraded to the current 2D model"
+    "Visible grain sprites must not be described as independently simulated grains",
+    "2.5D heightfield geometry must not be described as volumetric 3D granular physics",
+    "Phenomenological wet cohesion must not be described as validated capillary/geotechnical physics",
+    "Water heightfield flow must not be described as Navier-Stokes/SPH/MPM/FLIP",
+    "Matter Lab 0.6 and Materials Lab 0.1 remain recoverable while 0.2 is experimental",
+    "Unreal-quality is an experiential target, not a verification status"
   ],
   "updated": "2026-08-09"
 }
