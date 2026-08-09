@@ -1,13 +1,15 @@
 name: GENESIS Foundation
 on:
   push:
-    branches: [main]
+    branches: [main, genesis-lab]
   workflow_dispatch:
 jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Syntax and clean-room checks
         run: |
           set -euo pipefail
@@ -15,10 +17,12 @@ jobs:
           test -f forge/index.html
           test -f forge/forge.js
           test -f forge/audit-core.js
+          test -f forge/promotion-core.js || [ "$GITHUB_REF_NAME" = "genesis-lab" ]
           test -f project/state.json
           python -m json.tool project/state.json >/dev/null
           node --check forge/audit-core.js
           node --check forge/forge.js
+          if [ -f forge/promotion-core.js ]; then node --check forge/promotion-core.js; fi
           ! grep -R -E "living-bodies|pennyspawn|voin|genesis-glx3|fracture-wilds|nexus-glass-science-cube" --exclude-dir=.git .
       - name: Execute shared FORGE foundation audit
         run: |
@@ -58,10 +62,32 @@ jobs:
               if(receipt.stable_preserved!==true) process.exit(4);
             }).catch(err=>{console.error(err);process.exit(1)});
           NODE
+      - name: Verify real Stable vs Lab isolation
+        if: github.ref_name == 'main'
+        run: |
+          set -euo pipefail
+          test ! -f lab/experiment.json
+          git fetch origin genesis-lab:refs/remotes/origin/genesis-lab
+          git show origin/genesis-lab:lab/experiment.json > lab-manifest.json
+          node <<'NODE'
+          const fs=require('node:fs');
+          const crypto=require('node:crypto');
+          const gate=require('./forge/promotion-core.js');
+          const lab=JSON.parse(fs.readFileSync('lab-manifest.json','utf8'));
+          const result=gate.evaluate({main_has_experiment:fs.existsSync('lab/experiment.json'),lab_manifest:lab});
+          const receipt={...result,main_sha:process.env.GITHUB_SHA,lab_sha:require('child_process').execSync('git rev-parse origin/genesis-lab').toString().trim(),generated_at:new Date().toISOString()};
+          receipt.evidence_sha256=crypto.createHash('sha256').update(JSON.stringify(receipt)).digest('hex');
+          fs.writeFileSync('promotion-receipt.json',JSON.stringify(receipt,null,2)+'\n');
+          console.log(JSON.stringify(receipt,null,2));
+          if(receipt.status!=='PASS'||receipt.promotion_allowed!==true||receipt.stable_contaminated!==false) process.exit(1);
+          NODE
       - name: Preserve foundation evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: genesis-foundation-evidence
+          name: genesis-foundation-evidence-${{ github.ref_name }}
           path: |
             foundation-receipt.json
             recovery-receipt.json
+            promotion-receipt.json
+          if-no-files-found: ignore
