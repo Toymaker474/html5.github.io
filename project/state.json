@@ -3,35 +3,60 @@
   "project": "GENESIS",
   "product": "GENESIS Foundation",
   "engineering_system": "GENESIS FORGE",
-  "phase": "simulation-vertical-slice-005-candidate",
+  "phase": "simulation-vertical-slice-005-integrated",
   "status": "IN_PROGRESS",
   "stable": {
-    "label": "matter-lab-0.4-integrated",
+    "label": "matter-lab-0.5-integrated",
     "verified": false,
-    "note": "Matter Lab 0.4 remains the integrated baseline. 0.5 is isolated on genesis-matter-0.5 until full PR CI passes. Live GitHub.io and real iPhone Safari remain separately unverified."
-  },
-  "lab": {
-    "branch": "genesis-matter-0.5",
-    "experiment": "bounded-multiparticle-topology-005",
-    "status": "CANDIDATE"
+    "note": "Matter Lab 0.5 is integrated after a fully green pull-request CI run. Overall product remains unverified because the live GitHub.io deployment and real iPhone Safari have not been independently exercised."
   },
   "simulation": {
     "built": true,
-    "candidate": "Matter Lab 0.5",
+    "status": "INTEGRATED_CI_PASS_LIVE_UNVERIFIED",
+    "vertical_slice": "Matter Lab 0.5",
     "model": "genesis-matter-lj2d-v5",
-    "added_capabilities": [
+    "main_merge_commit": "1eaac182ff4559545091e60685e4b5d2e26aa007",
+    "pull_request": 54,
+    "ci": {
+      "status": "PASS",
+      "workflow_run": 31310030817,
+      "tested_head": "18d53a147b5ece9bb38a24e11a03b6f6b3a1a462",
+      "simulation_test": "PASS genesis matter 0.5 multi-particle topology tests",
+      "fixture_energy_drift_without_associations": 0.00014467353174091733,
+      "topology_fixture": {
+        "active_edges": 78,
+        "connected_components": 23,
+        "largest_component_particles": 7,
+        "cycle_rank": 13,
+        "max_degree": 3
+      },
+      "reaction_regression_fixture": {
+        "forward_events": 55,
+        "reverse_events": 55,
+        "active_associations_after_stress": 0
+      }
+    },
+    "capabilities": [
+      "2D coarse-grained Lennard-Jones particle dynamics",
+      "velocity-Verlet integration",
+      "periodic minimum-image boundaries",
+      "touch/user impulse intervention",
+      "instantaneous radial distribution function g(r)",
+      "reversible association between unlike generic species",
+      "explicit forward and reverse toy reaction events",
+      "internal transformed particle state on reacted associations",
       "bounded multi-particle association topology",
-      "toy species valence limits used only as graph constraints",
-      "connected-component diagnostics",
-      "largest-component telemetry",
-      "cycle-rank diagnostics",
+      "toy graph valence limits",
+      "connected-component, largest-component and cycle-rank diagnostics",
       "multi-edge transformed-state synchronization",
-      "visible chains and branched clusters through the existing association renderer"
+      "visible chains and branched clusters through the association renderer",
+      "particle-count conservation invariant"
     ],
     "not_claimed": [
       "literal atoms",
       "chemical valence",
       "real molecular graph chemistry",
+      "quantum chemistry",
       "real chemical bonds",
       "validated reaction chemistry",
       "cells",
@@ -39,10 +64,12 @@
       "robots",
       "agents",
       "complete GENESIS platform"
-    ]
+    ],
+    "live_pages": {"status": "UNVERIFIED", "expected_path": "/sim/"},
+    "iphone_safari": {"status": "UNVERIFIED"}
   },
-  "active_objective": "Independently test that Matter Lab 0.5 forms structures larger than pairs while preserving bounded topology, deterministic behavior, particle-count conservation and the 0.4 reaction-event path.",
-  "next_gate": "Open a PR from genesis-matter-0.5 to main, inspect the entire GitHub Actions run and simulation test, repair failures without rewriting the stable 0.4 core, and merge only on full PASS.",
+  "active_objective": "Turn the new graph topology into a more meaningful toy reaction network with explicit node/edge state categories and causal event history while preserving the playable 0.5 baseline.",
+  "next_gate": "Add the next reaction-network capability on an isolated Lab branch; preserve the 0.5 topology and regression fixtures and do not describe toy graph rules as real chemistry.",
   "invariants": [
     "ROADMAP != IMPLEMENTED != VERIFIED",
     "ChatGPT cannot self-certify its own changes",
