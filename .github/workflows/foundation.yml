@@ -72,7 +72,7 @@ jobs:
           else
             printf 'matter simulation absent on this ref\n' > simulation-test.txt
           fi
-      - name: Test GENESIS materials candidate when present
+      - name: Test GENESIS materials 0.1 when present
         run: |
           set -euo pipefail
           if [ -f materials/model.js ]; then
@@ -90,7 +90,31 @@ jobs:
             node --check materials/renderer-canvas.js
             node materials/model.test.js | tee materials-test.txt
           else
-            printf 'materials candidate absent on this ref\n' > materials-test.txt
+            printf 'materials 0.1 absent on this ref\n' > materials-test.txt
+          fi
+      - name: Test GENESIS cinematic 3D materials candidate when present
+        run: |
+          set -euo pipefail
+          if [ -f materials3d/model.js ]; then
+            test -f materials3d/index.html
+            test -f materials3d/app.js
+            test -f materials3d/worker.js
+            test -f materials3d/renderer-webgpu.js
+            test -f materials3d/renderer-canvas.js
+            test -f materials3d/MODEL.md
+            node --check materials3d/model.js
+            node --check materials3d/model.test.js
+            node --check materials3d/worker.js
+            node --check materials3d/app.js
+            node --check materials3d/renderer-webgpu.js
+            node --check materials3d/renderer-canvas.js
+            grep -q "depth24plus" materials3d/renderer-webgpu.js
+            grep -q "terrainPipeline" materials3d/renderer-webgpu.js
+            grep -q "waterPipeline" materials3d/renderer-webgpu.js
+            grep -q "grainPipeline" materials3d/renderer-webgpu.js
+            node materials3d/model.test.js | tee materials3d-test.txt
+          else
+            printf 'materials 0.2 3D candidate absent on this ref\n' > materials3d-test.txt
           fi
       - name: Verify real Stable vs Lab isolation
         if: github.ref_name == 'main'
@@ -120,4 +144,5 @@ jobs:
             promotion-receipt.json
             simulation-test.txt
             materials-test.txt
+            materials3d-test.txt
           if-no-files-found: ignore
