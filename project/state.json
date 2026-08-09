@@ -3,54 +3,43 @@
   "project": "GENESIS",
   "product": "GENESIS Foundation",
   "engineering_system": "GENESIS FORGE",
-  "phase": "materials-lab-002-3d-candidate",
+  "phase": "materials-lab-002-3d-integrated",
   "status": "IN_PROGRESS",
-  "canonical_directive": {
-    "path": "project/CANONICAL_MASTER_DIRECTIVE.md",
-    "status": "IN_REPO"
-  },
+  "canonical_directive": {"path":"project/CANONICAL_MASTER_DIRECTIVE.md","status":"IN_REPO"},
   "stable": {
-    "label": "genesis-foundation-materials-0.1-integrated",
+    "label": "genesis-foundation-materials-0.2-integrated",
     "verified": false,
-    "note": "Matter Lab 0.6 and Materials Lab 0.1 remain the integrated main baseline. Materials Lab 0.2 cinematic 3D is isolated on genesis-materials-0.2-3d and is not promoted. Overall product remains unverified because live GitHub.io runtime behavior, real WebGPU execution, and real iPhone Safari are not independently verified."
+    "note": "Matter Lab 0.6, Materials Lab 0.1 and Materials Lab 0.2 3D are integrated on main through CI-green pull requests. Overall product remains unverified because the deployed 0.2 WebGPU shader, real WebGPU runtime, target-device frame behavior and real iPhone Safari have not yet been independently exercised."
   },
   "matter_lab": {
-    "status": "INTEGRATED_CI_PASS_LIVE_UNVERIFIED",
-    "vertical_slice": "Matter Lab 0.6",
-    "model": "genesis-matter-lj2d-v6",
-    "main_merge_commit": "a2100ab40e70da81101c00e2e0cdff44dfbf34e0",
-    "pull_request": 55,
-    "ci": {"status":"PASS","workflow_run":31310827285,"tested_head":"2198f5889073c6ad5da9e11ac006afceead39f5d","simulation_test":"PASS genesis matter 0.6 cooperative self-assembly tests"}
+    "status":"INTEGRATED_CI_PASS_LIVE_UNVERIFIED","vertical_slice":"Matter Lab 0.6","model":"genesis-matter-lj2d-v6","main_merge_commit":"a2100ab40e70da81101c00e2e0cdff44dfbf34e0","pull_request":55,
+    "ci":{"status":"PASS","workflow_run":31310827285,"tested_head":"2198f5889073c6ad5da9e11ac006afceead39f5d","simulation_test":"PASS genesis matter 0.6 cooperative self-assembly tests"}
   },
   "materials_lab": {
-    "status": "INTEGRATED_CI_PASS_LIVE_UNVERIFIED",
-    "vertical_slice": "Materials Lab 0.1",
-    "model": "genesis-materials-granular2d-v1",
-    "main_merge_commit": "1c56bd53f115174cca55a88efb7721a71a24e79e",
-    "pull_request": 56,
-    "ci": {
-      "status": "PASS",
-      "workflow_run": 31313512227,
-      "tested_head": "371677df8298e1a5929d708ad678a8527102c655",
-      "simulation_test": "PASS genesis materials 0.1 granular sand/water tests",
-      "replay_hash": 1695607716,
-      "sand_fall_fixture": {"center_y_before":23.5,"center_y_after":2.875},
-      "water_fall_fixture": {"center_y_before":20.5,"center_y_after":2.2708333333333335},
-      "wetting_fixture": {"wet_sand_cells":30},
-      "cohesion_fixture": {"dry_height":8,"wet_height":14}
-    },
-    "live_pages": {"status":"UNVERIFIED","expected_path":"/materials/"},
-    "webgpu_runtime": {"status":"UNVERIFIED"},
-    "iphone_safari": {"status":"UNVERIFIED"}
+    "status":"INTEGRATED_CI_PASS_LIVE_UNVERIFIED","vertical_slice":"Materials Lab 0.1","model":"genesis-materials-granular2d-v1","main_merge_commit":"1c56bd53f115174cca55a88efb7721a71a24e79e","pull_request":56,
+    "ci":{"status":"PASS","workflow_run":31313512227,"tested_head":"371677df8298e1a5929d708ad678a8527102c655","simulation_test":"PASS genesis materials 0.1 granular sand/water tests","replay_hash":1695607716},
+    "live_pages":{"status":"UNVERIFIED","expected_path":"/materials/"},"webgpu_runtime":{"status":"UNVERIFIED"},"iphone_safari":{"status":"UNVERIFIED"}
   },
   "materials3d_lab": {
-    "branch": "genesis-materials-0.2-3d",
-    "status": "WRITTEN_UNTESTED",
+    "status": "INTEGRATED_CI_PASS_LIVE_UNVERIFIED",
     "vertical_slice": "Materials Lab 0.2 — Cinematic 3D World",
     "model": "genesis-materials-heightfield3d-v1",
+    "main_merge_commit": "0ff60bf42086242af0396d4f0cc9f10c12e25c14",
+    "pull_request": 59,
     "original_feedback": "It looks the same. It is not 3D and it does not look amazing or like Unreal Engine.",
     "experiential_failure": "Materials Lab 0.1 used a fullscreen-triangle screen-space renderer, so better shading could not create actual perspective/depth/3D world structure.",
     "representation": "2.5D x/z heightfield storing rock elevation, sand depth, water depth and moisture, rendered as real 3D geometry.",
+    "ci": {
+      "status": "PASS",
+      "workflow_run": 31314568156,
+      "tested_head": "e61102eaabf7b4eccb2c97fddc372f66493450c2",
+      "simulation_test": "PASS genesis materials 0.2 3D heightfield tests",
+      "replay_hash": 1214435419,
+      "mass_fixture": {"sand_before":97.34284842014313,"sand_after":97.3428484313481,"water_before":18.214848399162292,"water_after":18.214848493487807},
+      "dry_relax_fixture": {"height_before":2.4000000953674316,"height_after":1.6730093955993652},
+      "water_spread_fixture": {"cells_before":13,"cells_after":178},
+      "wet_cohesion_fixture": {"dry_height":1.7133209705352783,"wet_height":2.5,"wet_cells":49}
+    },
     "rendering": [
       "perspective orbit camera",
       "depth24plus depth buffer",
@@ -64,29 +53,23 @@
       "animated water normal perturbation and Fresnel-like reflection",
       "ACES-style tonemapping approximation"
     ],
-    "interaction": ["touch/mouse orbit","wheel/pinch zoom","sand sculpting","wet-sand sculpting","water placement","rock raising","digging","dune burst","flash flood"],
-    "acceptance_criteria": [
-      "older Matter Lab 0.6 regression remains PASS",
-      "older Materials Lab 0.1 regression remains PASS",
-      "0.2 fixed-seed reference model reproduces the same hash",
-      "0.2 stepping conserves sand and water mass within declared floating-point tolerance",
-      "dry sand pile measurably relaxes/spreads",
-      "water spreads across more heightfield cells",
-      "wet cohesive pile retains more height than equivalent dry pile",
-      "browser JavaScript syntax checks pass",
-      "renderer contains an actual depth buffer and separate terrain/water/grain pipelines",
-      "full PR CI passes on the exact candidate head before promotion"
-    ],
     "verification": {
-      "implementation": "WRITTEN",
-      "reference_model_tests": "NOT_YET_RUN",
-      "older_regressions": "NOT_YET_RERUN_ON_CANDIDATE",
+      "reference_model_tests": "PASS",
+      "older_regressions": "PASS",
+      "browser_js_syntax": "PASS",
+      "renderer_structure_static_gate": "PASS",
       "webgpu_shader_compile": "UNVERIFIED",
       "live_pages": "UNVERIFIED",
       "iphone_safari": "UNVERIFIED",
-      "performance": "UNMEASURED"
+      "performance": "UNMEASURED",
+      "experiential_unreal_quality": "UNVERIFIED"
     },
     "not_claimed": ["per-grain DEM","volumetric 3D sand physics","Navier-Stokes/SPH/MPM/FLIP","validated soil mechanics","literal micron grains","Unreal Engine","ray-traced global illumination","GPU-compute simulation physics","lava","clouds","creatures","finished GENESIS"]
+  },
+  "checkpoint": {
+    "branch":"genesis-materials-0.2-checkpoint",
+    "purpose":"Make Materials 0.2 the primary homepage launch and record its merged CI evidence without changing simulation or renderer code.",
+    "status":"WRITTEN_CI_PENDING"
   },
   "idea_harbor": [
     {"idea":"thermally driven lava / molten material","status":"FUTURE_UNLOCK","prerequisites":["validated material-state architecture","thermal field","phase/state transition model","GPU/reference comparison"]},
@@ -94,8 +77,8 @@
     {"idea":"creatures interacting with materials","status":"FUTURE_UNLOCK","prerequisites":["persistent world/material substrate","life/development/control systems","causal body-environment coupling"]},
     {"idea":"simulate all matter across reality","status":"DREAM_TARGET","prerequisites":["adaptive multiresolution architecture","model families per scale","cross-scale state/causality","device-aware workload director"]}
   ],
-  "active_objective": "Prove that Materials Lab 0.2 is a genuinely different 3D product direction rather than another flat shader pass: run its deterministic heightfield fixtures and all preserved regressions in PR CI, then separately compile/render the WebGPU path on a real deployed device before any Unreal-quality claim.",
-  "next_gate": "Open a PR from genesis-materials-0.2-3d, inspect exact CI logs for Matter 0.6, Materials 0.1 and Materials 0.2, repair only causal failures, and do not promote if main changes or the exact candidate head is not green.",
+  "active_objective": "Productize the 0.2 visual jump honestly: make /materials3d/ the primary GENESIS launch, rerun all preserved regression suites on the homepage/state checkpoint, then independently exercise the deployed WebGPU renderer on target hardware before adding another major graphics or simulation subsystem.",
+  "next_gate": "Open and inspect the 0.2 checkpoint PR. Merge only if Matter 0.6, Materials 0.1 and Materials 0.2 all pass on the exact checkpoint head. After merge, verify the deployed /materials3d/ route and renderer backend; do not infer WebGPU/iPhone/Unreal-quality success from CI.",
   "invariants": [
     "ROADMAP != IMPLEMENTED != VERIFIED",
     "ChatGPT cannot self-certify its own changes",
@@ -103,15 +86,13 @@
     "Prototype experiments do not become product without a productionization gate",
     "Tyler is not the build system or log courier",
     "UNKNOWN must never silently become PASS",
-    "Infrastructure must not be described as simulation capability",
     "CI PASS does not imply live deployment PASS or iPhone PASS",
     "Rendering consumes simulation state and must not secretly become simulation logic",
-    "WebGPU rendering does not imply GPU-compute physics",
     "Visible grain sprites must not be described as independently simulated grains",
     "2.5D heightfield geometry must not be described as volumetric 3D granular physics",
     "Phenomenological wet cohesion must not be described as validated capillary/geotechnical physics",
     "Water heightfield flow must not be described as Navier-Stokes/SPH/MPM/FLIP",
-    "Matter Lab 0.6 and Materials Lab 0.1 remain recoverable while 0.2 is experimental",
+    "Matter Lab 0.6 and Materials Lab 0.1 remain independently available",
     "Unreal-quality is an experiential target, not a verification status"
   ],
   "updated": "2026-08-09"
