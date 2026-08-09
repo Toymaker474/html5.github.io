@@ -1,6 +1,10 @@
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
-async function instantiateBytes(bytes){return (await WebAssembly.instantiate(bytes,{})).instance.exports;}
+async function instantiateBytes(bytes,label){
+  try{return (await WebAssembly.instantiate(bytes,{})).instance.exports;}
+  catch(err){console.error(`${label}_INSTANTIATE_FAIL: ${err?.message||err}`);throw err;}
+}
 function fixture(e){
   assert.equal(e.genesis_model_version()>>>0,0x00030001);
   e.genesis_init(32,24,32,123456,72);e.genesis_seed_scene();
@@ -12,8 +16,22 @@ function fixture(e){
   return out;
 }
 const committed=Buffer.from(fs.readFileSync(new URL('./solver.wasm.b64',import.meta.url),'utf8').trim(),'base64');
-const committedResult=fixture(await instantiateBytes(committed));
-let compiledResult=null;
-if(process.argv[2]){compiledResult=fixture(await instantiateBytes(fs.readFileSync(process.argv[2])));assert.deepEqual(compiledResult,committedResult,'committed browser WASM and freshly compiled C++ WASM must agree on reference fixture');}
+const compiledPath=process.argv[2]||null;
+let compiled=null,compiledResult=null;
+if(compiledPath){
+  compiled=fs.readFileSync(compiledPath);
+  console.log(JSON.stringify({freshCompiledBytes:compiled.byteLength,freshCompiledSha256:crypto.createHash('sha256').update(compiled).digest('hex')}));
+  compiledResult=fixture(await instantiateBytes(compiled,'FRESH_COMPILED_WASM'));
+  console.log('PASS fresh C++ -> WebAssembly instantiate + semantic fixture');
+}
+let committedResult=null;
+try{
+  console.log(JSON.stringify({committedBrowserBytes:committed.byteLength,committedBrowserSha256:crypto.createHash('sha256').update(committed).digest('hex')}));
+  committedResult=fixture(await instantiateBytes(committed,'COMMITTED_BROWSER_WASM'));
+}catch(err){
+  if(compiled){console.error('FRESH_WASM_B64_BEGIN');console.error(compiled.toString('base64'));console.error('FRESH_WASM_B64_END');}
+  throw err;
+}
+if(compiledResult)assert.deepEqual(compiledResult,committedResult,'committed browser WASM and freshly compiled C++ WASM must agree on reference fixture');
 console.log(JSON.stringify({model:'genesis-materials-volume3d-cpp-v1',committedWasmBytes:committed.byteLength,committedResult,compiledResult}));
 console.log('PASS genesis materials 0.3 committed + compiled WebAssembly tests');
