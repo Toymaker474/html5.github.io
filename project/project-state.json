@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "project": "GENESIS",
+  "product": "GENESIS Foundation",
+  "engineering_system": "GENESIS FORGE",
+  "phase": "forge-foundation",
+  "status": "IN_PROGRESS",
+  "stable": {
+    "label": "clean-main-v1",
+    "verified": false,
+    "note": "Repository cleanup and FORGE bootstrap committed; runtime verification still required."
+  },
+  "archive_branch": "archive-pre-genesis-rebuild-2026-08-09",
+  "active_objective": "Create the minimum persistent FORGE foundation before expanding the simulation.",
+  "next_gate": "Verify GitHub Pages loads the clean landing page and FORGE; then add real execution/evidence nodes.",
+  "invariants": [
+    "ROADMAP != IMPLEMENTED != VERIFIED",
+    "ChatGPT cannot self-certify its own changes",
+    "Stable must remain recoverable while Lab experiments fail",
+    "No critical project fact may live only in chat memory",
+    "Tyler is not the build system or log courier",
+    "Prototype code must cross a productization bridge before becoming product",
+    "No required paid tool or runtime AI dependency",
+    "GENESIS runtime must remain offline-capable once installed"
+  ],
+  "removed_from_active_main": "Superseded games, demos, experiments, prototype workflows and old root redirect; recoverable from archive branch.",
+  "updated": "2026-08-09"
+}

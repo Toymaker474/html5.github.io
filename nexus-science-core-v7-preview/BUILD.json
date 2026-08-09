@@ -1,8 +1,0 @@
-{
-  "schema": "nexus.github-pages-preview.v1",
-  "cycle": 1,
-  "increment": 2,
-  "sourceBranch": "nexus-mujoco-science-core-v7",
-  "sourceCommit": "8661f04899d8519809658a02666aa228a23d22cf",
-  "workflowRun": "31088590143"
-}

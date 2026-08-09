@@ -1,4 +1,0 @@
-NEXUS V7 Realism Cycle 01 Increment 2/5
-Source branch: nexus-mujoco-science-core-v7
-Expected source commit: ea90956842539ed5483dce1caed9af87df4babb3
-Purpose: trigger the registered fail-closed local + GitHub Pages verification workflow.

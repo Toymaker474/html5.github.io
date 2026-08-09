@@ -1,1 +1,0 @@
-{"version":3,"file":"thinEngine-BWGMFN0y.js","names":[],"sources":["../../node_modules/@babylonjs/core/Engines/thinEngine.js"],"sourcesContent":["export * from \"./thinEngine.pure.js\";\n//# sourceMappingURL=thinEngine.js.map"],"x_google_ignoreList":[0],"mappings":""}
