@@ -116,6 +116,35 @@ jobs:
           else
             printf 'materials 0.2 3D candidate absent on this ref\n' > materials3d-test.txt
           fi
+      - name: Build and test true 3D C++ WebAssembly candidate when present
+        run: |
+          set -euo pipefail
+          if [ -f volume3d/solver.cpp ]; then
+            test -f volume3d/index.html
+            test -f volume3d/app.js
+            test -f volume3d/worker.js
+            test -f volume3d/renderer-webgpu.js
+            test -f volume3d/solver_test.cpp
+            test -f volume3d/solver.wasm.b64
+            test -f volume3d/wasm.test.mjs
+            test -f volume3d/MODEL.md
+            node --check volume3d/app.js
+            node --check volume3d/worker.js
+            node --check volume3d/renderer-webgpu.js
+            grep -q "x × y × z" volume3d/MODEL.md
+            grep -q "depth24plus" volume3d/renderer-webgpu.js
+            grep -q "WebGPU volumetric 3D" volume3d/renderer-webgpu.js
+            clang++ -std=c++17 -O2 volume3d/solver_test.cpp -o /tmp/genesis-volume-native
+            /tmp/genesis-volume-native | tee volume3d-native-test.txt
+            clang++ --target=wasm32 -std=c++17 -O3 -nostdlib -fno-exceptions -fno-rtti volume3d/solver.cpp \
+              -Wl,--no-entry -Wl,--export-all -Wl,--export-memory -Wl,--initial-memory=4194304 -Wl,--max-memory=4194304 \
+              -o /tmp/genesis-volume.wasm
+            test -s /tmp/genesis-volume.wasm
+            node volume3d/wasm.test.mjs /tmp/genesis-volume.wasm | tee volume3d-wasm-test.txt
+          else
+            printf 'materials 0.3 volumetric C++ candidate absent on this ref\n' > volume3d-native-test.txt
+            printf 'materials 0.3 volumetric C++ candidate absent on this ref\n' > volume3d-wasm-test.txt
+          fi
       - name: Verify real Stable vs Lab isolation
         if: github.ref_name == 'main'
         run: |
@@ -145,4 +174,6 @@ jobs:
             simulation-test.txt
             materials-test.txt
             materials3d-test.txt
+            volume3d-native-test.txt
+            volume3d-wasm-test.txt
           if-no-files-found: ignore
