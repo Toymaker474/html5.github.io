@@ -3,40 +3,52 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#06080c">
-<title>GENESIS // CODEHOOD</title>
+<meta name="theme-color" content="#05090d">
+<title>GENESIS // CODEHOOD ZERO</title>
 <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
+<div id="boot" class="boot">
+  <div class="boot-box">
+    <pre class="boot-logo">  O   O   O      GENESIS // CODEHOOD ZERO
+ /|\ /|\ /|\     EVOLUTIONARY PROGRAMMING WORLD
+ / \ / \ / \</pre>
+    <div class="row"><b id="bootLabel">BOOT</b><span id="bootPercent">0%</span></div>
+    <div class="loadbar"><i id="bootBar"></i></div>
+    <div id="bootDetail" class="boot-detail">starting…</div>
+  </div>
+</div>
 <div class="app">
 <header>
-  <span class="brand">GENESIS // CODEHOOD</span>
-  <span class="badge">EVOLUTIONARY PROGRAMMING CIVILIZATION</span>
+  <span class="brand">GENESIS // CODEHOOD ZERO</span>
+  <span class="badge">NO PRE-SOLVED PROGRAMS</span>
   <button id="pause">⏸ PAUSE</button>
-  <button id="turbo" class="primary">⚡ TURBO ×1</button>
-  <button id="rain">🌧 FLOOD PULSE</button>
+  <button id="turbo" class="primary">⚡ EVOLVE ×1</button>
+  <button id="rain">🌧 FLOOD</button>
+  <button id="zero">🧬 RESTART ZERO</button>
   <button id="save">💾 SAVE</button>
-  <button id="export">📦 EXPORT STATE</button>
+  <button id="export">📦 EXPORT</button>
 </header>
 <div class="world-wrap">
-  <canvas id="world" aria-label="ASCII agent simulation"></canvas>
+  <canvas id="world" aria-label="Chunked ASCII evolutionary simulation"></canvas>
   <div id="hud" class="hud"></div>
   <div id="terminal" class="terminal"></div>
 </div>
 <aside class="side">
   <div class="tabs">
     <button data-tab="agent" class="on">AGENT</button>
-    <button data-tab="skills">SKILLS</button>
-    <button data-tab="artifacts">PROGRAMS</button>
-    <button data-tab="city">CITY</button>
+    <button data-tab="learning">LEARNING</button>
+    <button data-tab="programs">PROGRAMS</button>
+    <button data-tab="world">WORLD</button>
   </div>
   <div id="panel" class="panel"></div>
 </aside>
 <footer>
-  POP <input id="pop" type="range" min="200" max="10000" step="200" value="1800"><span id="popValue">1800</span>
+  POP CAP <input id="popCap" type="range" min="1000" max="10000" step="500" value="6000"><span id="popValue">6000</span>
   • render <span id="fps">0</span> FPS
-  • sim <span id="tps">0</span> ticks/s
-  • agent programs execute inside the sandbox VM
+  • chunk batches <span id="bps">0</span>/s
+  • world sweeps <span id="sps">0</span>/s
+  • programs execute in sandbox VM
 </footer>
 </div>
 <script type="module" src="./src/main.js"></script>
