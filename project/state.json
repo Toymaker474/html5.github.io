@@ -3,28 +3,44 @@
   "project": "GENESIS",
   "product": "GENESIS Foundation",
   "engineering_system": "GENESIS FORGE",
-  "phase": "simulation-vertical-slice-003-candidate",
+  "phase": "simulation-vertical-slice-003-integrated",
   "status": "IN_PROGRESS",
   "stable": {
-    "label": "matter-lab-0.2-integrated",
+    "label": "matter-lab-0.3-integrated",
     "verified": false,
-    "note": "Matter Lab 0.2 remains the integrated baseline. Overall product remains unverified because live GitHub.io and real iPhone Safari have not been independently exercised."
-  },
-  "lab": {
-    "branch": "genesis-matter-0.3",
-    "experiment": "reversible-association-003",
-    "status": "CANDIDATE"
+    "note": "Matter Lab 0.3 is integrated after a fully green pull-request CI run. Overall product remains unverified because the live GitHub.io deployment and real iPhone Safari have not been independently exercised."
   },
   "simulation": {
     "built": true,
-    "candidate": "Matter Lab 0.3",
+    "status": "INTEGRATED_CI_PASS_LIVE_UNVERIFIED",
+    "vertical_slice": "Matter Lab 0.3",
     "model": "genesis-matter-lj2d-v3",
-    "added_capabilities": [
+    "main_merge_commit": "86c290e1ee4c3387073e931d0ca656a7683382f9",
+    "pull_request": 52,
+    "ci": {
+      "status": "PASS",
+      "workflow_run": 31309543497,
+      "tested_head": "8dc93c41385ffcc84645381c2a51ab871e518547",
+      "simulation_test": "PASS genesis matter 0.3 reversible association tests",
+      "fixture_energy_drift_without_associations": 0.00014574206365967045,
+      "association_fixture": {
+        "formed": 31,
+        "active_after_formation_fixture": 29,
+        "broken_after_high_off_rate_stress": 31,
+        "mean_broken_lifetime_reduced_units": 0.4281270967742107
+      }
+    },
+    "capabilities": [
+      "2D coarse-grained Lennard-Jones particle dynamics",
+      "velocity-Verlet integration",
+      "periodic minimum-image boundaries",
+      "energy, temperature, pressure and invariant telemetry",
+      "touch/user impulse intervention",
+      "instantaneous radial distribution function g(r)",
+      "low-temperature quench control",
       "seeded reversible pair association between unlike generic species",
-      "association formation and stochastic dissociation kinetics in reduced units",
       "harmonic physical interaction for active associations",
-      "active association visualization",
-      "association on/off controls",
+      "association on/off kinetic controls",
       "formation, breakage and lifetime telemetry"
     ],
     "not_claimed": [
@@ -37,10 +53,12 @@
       "robots",
       "agents",
       "complete GENESIS platform"
-    ]
+    ],
+    "live_pages": {"status": "UNVERIFIED", "expected_path": "/sim/"},
+    "iphone_safari": {"status": "UNVERIFIED"}
   },
-  "active_objective": "Independently test the Matter Lab 0.3 reversible-association model in GitHub Actions and merge only if the complete PR workflow passes.",
-  "next_gate": "Open PR from genesis-matter-0.3 to main, inspect actual simulation-test output and full workflow conclusion, repair any failure, and merge only on full PASS.",
+  "active_objective": "Make Matter Lab increasingly interesting to play while moving from generic pair association toward explicit reaction-network bookkeeping and multi-particle structures without pretending toy kinetics are real chemistry.",
+  "next_gate": "Add explicit reaction-event accounting and species-state transformation as a separate tested Lab increment, while preserving the current playable 0.3 baseline.",
   "invariants": [
     "ROADMAP != IMPLEMENTED != VERIFIED",
     "ChatGPT cannot self-certify its own changes",
