@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#07111a">
+<title>GENESIS Materials 0.2 — 3D World Lab</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07111a;color:#f4f7f8;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{position:relative}#view{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;background:#07111a}.vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 43%,transparent 38%,rgba(0,0,0,.13) 70%,rgba(0,0,0,.52) 120%);mix-blend-mode:multiply}.top{position:absolute;z-index:5;left:0;right:0;top:0;padding:calc(10px + env(safe-area-inset-top)) 12px 10px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;background:linear-gradient(180deg,rgba(4,9,14,.78),rgba(4,9,14,.20),transparent);pointer-events:none}.brand{filter:drop-shadow(0 2px 12px rgba(0,0,0,.75))}.eyebrow{font:800 9px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.19em;color:#c8d7de}.title{font-size:clamp(16px,3vw,28px);font-weight:950;letter-spacing:-.035em;margin-top:5px}.subtitle{font-size:9px;color:#b8c8ce;margin-top:3px}.backend{pointer-events:none;padding:7px 9px;border:1px solid rgba(255,255,255,.16);border-radius:999px;background:rgba(5,10,15,.58);backdrop-filter:blur(14px);font:850 9px ui-monospace,SFMono-Regular,Menlo,monospace;box-shadow:0 4px 24px rgba(0,0,0,.22)}.backend.good{color:#8effc5;border-color:rgba(142,255,197,.28)}.backend.warn{color:#ffd48b}.hud{position:absolute;z-index:4;left:10px;top:calc(82px + env(safe-area-inset-top));right:10px;display:flex;gap:5px;flex-wrap:wrap;pointer-events:none}.hud span{padding:4px 7px;border:1px solid rgba(255,255,255,.10);border-radius:8px;background:rgba(3,8,12,.50);backdrop-filter:blur(12px);font:750 8px ui-monospace,SFMono-Regular,Menlo,monospace;color:#d9e7eb;box-shadow:0 3px 14px rgba(0,0,0,.16)}.mode{position:absolute;z-index:4;left:50%;top:calc(110px + env(safe-area-inset-top));transform:translateX(-50%);pointer-events:none;padding:5px 9px;border-radius:999px;background:rgba(3,7,10,.46);border:1px solid rgba(255,255,255,.08);font:850 8px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.14em;color:#dce8eb}.panel{position:absolute;z-index:6;left:9px;right:9px;bottom:calc(8px + env(safe-area-inset-bottom));display:grid;gap:7px;padding:8px;border:1px solid rgba(255,255,255,.11);border-radius:17px;background:linear-gradient(180deg,rgba(9,15,19,.72),rgba(4,8,11,.91));backdrop-filter:blur(22px) saturate(125%);box-shadow:0 18px 50px rgba(0,0,0,.38)}.tools,.actions{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}.tools::-webkit-scrollbar,.actions::-webkit-scrollbar{display:none}button,select,input{font:inherit}.tool,.act{appearance:none;border:1px solid rgba(255,255,255,.13);border-radius:11px;min-height:37px;padding:8px 11px;background:rgba(22,31,36,.90);color:#e9f0f2;font-size:9px;font-weight:900;white-space:nowrap}.tool.active{outline:2px solid rgba(255,255,255,.82);outline-offset:-3px;box-shadow:0 0 22px rgba(255,255,255,.09)}.tool[data-tool=orbit]{background:linear-gradient(180deg,#203447,#111e29)}.tool[data-tool=sand]{background:linear-gradient(180deg,#8a5522,#4c2e16)}.tool[data-tool=wet-sand]{background:linear-gradient(180deg,#55371f,#2d2117)}.tool[data-tool=water]{background:linear-gradient(180deg,#0c617d,#093342)}.tool[data-tool=rock]{background:linear-gradient(180deg,#4a4945,#242523)}.tool[data-tool=dig]{background:linear-gradient(180deg,#462b2b,#241717)}.settings{display:grid;grid-template-columns:auto minmax(75px,1fr) auto minmax(75px,1fr) auto;gap:7px;align-items:center}.settings label{font-size:8px;color:#bac9cd}.settings input{width:100%;accent-color:#e3b56e}.settings select{appearance:none;min-height:31px;border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:0 9px;background:#10191e;color:#e9f1f3;font-size:8px;font-weight:850}.truth{text-align:center;font-size:7.5px;color:#93a4aa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hint{position:absolute;z-index:4;right:10px;bottom:calc(150px + env(safe-area-inset-bottom));pointer-events:none;text-align:right;font-size:8px;line-height:1.5;color:#b6c5ca;text-shadow:0 2px 7px #000}.hint b{color:#fff}@media(max-width:620px){.title{font-size:17px}.subtitle{display:none}.backend{font-size:8px;max-width:46vw;text-align:right}.hud{top:calc(70px + env(safe-area-inset-top))}.mode{top:calc(99px + env(safe-area-inset-top))}.settings{grid-template-columns:auto 1fr auto 1fr}.settings select{grid-column:1/-1}.hint{display:none}.tool,.act{min-height:41px}.panel{gap:7px}}
+</style>
+</head>
+<body>
+<canvas id="view"></canvas><div class="vignette"></div>
+<header class="top"><div class="brand"><div class="eyebrow">GENESIS · MATERIALS LAB</div><div class="title">0.2 — CINEMATIC 3D WORLD</div><div class="subtitle">real perspective geometry · depth buffer · sand terrain · reflective water · state-derived grains</div></div><div id="backend" class="backend warn">STARTING RENDERER</div></header>
+<div id="hud" class="hud"></div><div class="mode">MODE · <span id="mode">ORBIT</span></div>
+<div class="hint"><b>Orbit</b> drag · <b>Zoom</b> wheel/pinch<br>Choose a material, then drag across the world.</div>
+<section class="panel">
+  <div class="tools">
+    <button class="tool active" data-tool="orbit">Orbit camera</button>
+    <button class="tool" data-tool="sand">Pour sand</button>
+    <button class="tool" data-tool="wet-sand">Wet sand</button>
+    <button class="tool" data-tool="water">Water</button>
+    <button class="tool" data-tool="rock">Raise rock</button>
+    <button class="tool" data-tool="dig">Dig</button>
+  </div>
+  <div class="settings">
+    <label>Brush <b id="brushV">5</b></label><input id="brush" type="range" min="2" max="13" value="5">
+    <label>Wet cohesion <b id="cohesionV">1.00</b></label><input id="cohesion" type="range" min="0" max="2" step="0.05" value="1">
+    <select id="quality" aria-label="3D world resolution"><option value="64x64">Mobile · 4k terrain cells</option><option value="96x96" selected>High · 9k terrain cells</option><option value="128x128">Ultra · 16k terrain cells</option></select>
+  </div>
+  <div class="actions"><button id="camera" class="act">Reset camera</button><button id="dune" class="act">Drop giant dune</button><button id="storm" class="act">Flash flood</button><button id="pause" class="act">Pause</button><button id="reset" class="act">Reset world</button></div>
+  <div class="truth">3D presentation is real geometry. Physics is a deterministic 2.5D heightfield approximation — not per-grain DEM, volumetric sand, Navier–Stokes/SPH, Unreal Engine, lava, clouds, creatures, or finished GENESIS.</div>
+</section>
+<script src="./renderer-canvas.js"></script>
+<script src="./renderer-webgpu.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>
