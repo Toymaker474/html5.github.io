@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#06080c">
+<title>GENESIS // CODEHOOD</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<div class="app">
+<header>
+  <span class="brand">GENESIS // CODEHOOD</span>
+  <span class="badge">EVOLUTIONARY PROGRAMMING CIVILIZATION</span>
+  <button id="pause">⏸ PAUSE</button>
+  <button id="turbo" class="primary">⚡ TURBO ×1</button>
+  <button id="rain">🌧 FLOOD PULSE</button>
+  <button id="save">💾 SAVE</button>
+  <button id="export">📦 EXPORT STATE</button>
+</header>
+<div class="world-wrap">
+  <canvas id="world" aria-label="ASCII agent simulation"></canvas>
+  <div id="hud" class="hud"></div>
+  <div id="terminal" class="terminal"></div>
+</div>
+<aside class="side">
+  <div class="tabs">
+    <button data-tab="agent" class="on">AGENT</button>
+    <button data-tab="skills">SKILLS</button>
+    <button data-tab="artifacts">PROGRAMS</button>
+    <button data-tab="city">CITY</button>
+  </div>
+  <div id="panel" class="panel"></div>
+</aside>
+<footer>
+  POP <input id="pop" type="range" min="200" max="10000" step="200" value="1800"><span id="popValue">1800</span>
+  • render <span id="fps">0</span> FPS
+  • sim <span id="tps">0</span> ticks/s
+  • agent programs execute inside the sandbox VM
+</footer>
+</div>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
