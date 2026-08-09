@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "candidate": "Matter Lab 0.6",
+  "branch": "genesis-matter-0.6",
+  "objective": "Add a toy cooperative topology-driven self-assembly layer that can close loops and reinforce local multi-particle growth without rewriting the 0.5 core.",
+  "acceptance": [
+    "0.5 numerical and topology regression tests remain PASS",
+    "assembly path is deterministic for the same seed/runtime path",
+    "assembly-created edges are explicitly tagged",
+    "at least one closure edge forms in the assembly fixture",
+    "multi-particle structure and cycle invariants remain valid",
+    "particle count remains conserved",
+    "full pull-request CI passes before merge"
+  ],
+  "non_claims": [
+    "not lipid chemistry",
+    "not validated membrane self-assembly",
+    "not real chemical valence",
+    "not cells or life"
+  ]
+}
