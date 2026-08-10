@@ -1,1 +1,34 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#07100f"><title>GENESIS · Physical Creature V1</title><style>html,body{margin:0;height:100%;background:#07100f;color:#e8f1eb;font:15px/1.45 system-ui,-apple-system,sans-serif}body{display:grid;place-items:center;padding:20px}.card{max-width:760px;padding:24px;border:1px solid #315044;border-radius:20px;background:#0b1512}a{display:inline-block;margin-top:10px;padding:12px 16px;border-radius:12px;background:#b9efcb;color:#07100f;font-weight:850;text-decoration:none}.dim{color:#9aaba2}</style></head><body><main class="card"><h1>GENESIS · Physical Creature V1</h1><p>The current target is one causal creature slice: articulated body, lumped muscle forces, physical food capture, stomach digestion, blood/oxygen state, persistent damage, energy depletion and death.</p><p class="dim">The previous multi-layer sandbox is preserved as legacy experimental code and is not the canonical proof target.</p><a href="./physical-creature-v1/">Open current slice</a> <a href="./legacy-stack.html" style="background:#15241e;color:#c8d8cf">Legacy experiments</a></main><script>location.replace('./physical-creature-v1/'+location.search)</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#04100d">
+<title>GENESIS</title>
+<link rel="stylesheet" href="./v100.css">
+<link rel="stylesheet" href="./v108_bioglass.css">
+<link rel="stylesheet" href="./old_sim_upgrade.css">
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud" class="glass"><div id="brand">GENESIS // ECOSYSTEM SANDBOX</div><div id="stats"></div></div>
+<div id="inspect" class="glass"></div>
+<div id="dock" class="glass"><button id="pause">Ⅱ</button><button id="speed">×1</button><button id="follow">◎</button><button id="storm">☂</button><button id="debug">BODY</button><button id="reset">↻</button></div>
+<script src="./v100_core.js"></script>
+<script src="./v100_ai.js"></script>
+<script src="./v101_mind.js"></script>
+<script src="./v100_render.js"></script>
+<script src="./v102_cycle.js"></script>
+<script src="./v103_hires_jelly.js"></script>
+<script src="./v104_material_world.js"></script>
+<script src="./v105_continuum.js"></script>
+<script src="./v106_bestiary.js"></script>
+<script src="./v107_morphology.js"></script>
+<script src="./v107_living_surface.js"></script>
+<script src="./v107_anatomy.js"></script>
+<script src="./v108_bioglass.js"></script>
+<script src="./v109_biosphere.js"></script>
+<script src="./v110_world_physics.js"></script>
+<script src="./old_sim_upgrade.js"></script>
+</body>
+</html>
