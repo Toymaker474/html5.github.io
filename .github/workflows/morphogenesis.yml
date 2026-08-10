@@ -31,6 +31,7 @@ jobs:
           test -f morphogenesis/js/cognition.js
           test -f morphogenesis/js/living_art.js
           test -f morphogenesis/js/kinetic_creatures.js
+          test -f morphogenesis/js/realism_v2.js
           test -f morphogenesis/js/audio.js
           test -f morphogenesis/js/ui.js
           test -f morphogenesis/js/main.js
@@ -43,6 +44,8 @@ jobs:
         run: node morphogenesis/living_art.test.mjs | tee morphogenesis-living-art-test.txt
       - name: Kinetic creature renderer contract
         run: node morphogenesis/kinetic_creatures.test.mjs | tee morphogenesis-kinetic-render-test.txt
+      - name: Realism V2 renderer contract
+        run: node morphogenesis/realism_v2.test.mjs | tee morphogenesis-realism-v2-test.txt
       - name: Preserve experiment evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -53,4 +56,5 @@ jobs:
             morphogenesis-cognition-test.txt
             morphogenesis-living-art-test.txt
             morphogenesis-kinetic-render-test.txt
+            morphogenesis-realism-v2-test.txt
           if-no-files-found: ignore
