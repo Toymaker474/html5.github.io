@@ -17,6 +17,7 @@ const TAU=Math.PI*2;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp=(a,b,t)=>a+(b-a)*t;
 const angleDelta=(a,b)=>Math.atan2(Math.sin(b-a),Math.cos(b-a));
+const smoothstep=t=>t*t*(3-2*t);
 
 function rand(a=1,b=null){if(b===null){b=a;a=0}return a+Math.random()*(b-a)}
 function gauss(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(TAU*v)}
@@ -26,17 +27,20 @@ function hash2(x,y,s=1){let n=(x*374761393+y*668265263+s*69069)|0;n=(n^(n>>>13))
 const CFG={
   WORLD_W:8200,
   WORLD_H:5200,
-  BASE_POP:160,
-  MAX_POP:300,
-  FOOD_TARGET:680,
-  GEN_SECONDS:58,
+  BASE_POP:168,
+  MAX_POP:320,
+  FOOD_TARGET:720,
+  FOOD_MIN:430,
+  GEN_SECONDS:62,
   CELL:220,
-  MAX_CARCASSES:120
+  MAX_CARCASSES:140,
+  MAX_PARTICLES:620,
+  GENE_BANK:36
 };
 
 let DPR=1,SW=1,SH=1,last=performance.now(),fps=60,simSpeed=1,time=0;
-let creatures=[],foods=[],carcasses=[],particles=[];
-let generation=1,genStart=0,births=0,deaths=0,bites=0,swallows=0,follow=false;
+let creatures=[],foods=[],carcasses=[],particles=[],geneBank=[];
+let generation=1,genStart=0,births=0,deaths=0,bites=0,swallows=0,woundsMade=0,follow=false;
 let audioCtx=null,audioOn=false,masterGain=null;
 
 const cam={x:CFG.WORLD_W*.5,y:CFG.WORLD_H*.5,z:.46,tz:.46};
@@ -61,9 +65,16 @@ function wrap(o){
   if(o.y>=CFG.WORLD_H)o.y-=CFG.WORLD_H;
 }
 function currentAt(x,y){
+  const depth=y/CFG.WORLD_H;
+  const curl=Math.sin(y*.0022+time*.47)+Math.cos(x*.0013-time*.19);
   return{
-    x:Math.sin(y*.0024+time*.52)*.065+Math.cos(x*.0011-time*.23)*.028,
-    y:Math.cos(x*.0018-time*.30)*.032
+    x:Math.sin(curl+x*.00045)*(.045+.035*depth),
+    y:Math.cos(curl-y*.00032)*(.018+.022*depth)
   };
 }
 function depthLight(y){return clamp(1-y/CFG.WORLD_H,.05,1)}
+function waterTemp(y){return 24-18*(y/CFG.WORLD_H)}
+function speciesKey(g){
+  const carn=g.carnivore>.62?'C':g.carnivore<.35?'G':'O';
+  return `${g.plan}:${Math.round(g.segments/2)}:${Math.round(g.bodyDepth*2)}:${carn}`;
+}
