@@ -1,7 +1,9 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js';
-import {OrbitControls} from 'https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/controls/OrbitControls.js';
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
 const stats=document.getElementById('stats');
+const bootmsg=document.getElementById('bootmsg');
+stats.textContent='modules loaded • creating renderer…';
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x071018);scene.fog=new THREE.FogExp2(0x071018,0.014);
 const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,1500);camera.position.set(38,24,46);
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(2,devicePixelRatio||1));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;document.body.prepend(renderer.domElement);
@@ -25,5 +27,6 @@ class Organism{
 }
 const organisms=[];for(let i=0;i<26;i++){const x=(Math.random()-.5)*70,z=(Math.random()-.5)*70;organisms.push(new Organism(x,z,false))}for(let i=0;i<6;i++){const x=(Math.random()-.5)*70,z=(Math.random()-.5)*70;organisms.push(new Organism(x,z,true))}
 
+if(bootmsg)bootmsg.textContent='3D renderer booted • preview kernel active';
 const clock=new THREE.Clock();let acc=0,frames=0,ft=0,fps=0;function loop(){requestAnimationFrame(loop);const real=Math.min(.05,clock.getDelta());acc+=real;const dt=1/120;let steps=0;while(acc>=dt&&steps<8){for(const o of organisms)o.step(dt,organisms);acc-=dt;steps++}controls.update();renderer.render(scene,camera);frames++;ft+=real;if(ft>.5){fps=frames/ft;frames=0;ft=0;const alive=organisms.filter(o=>!o.dead).length,pred=organisms.filter(o=>!o.dead&&o.predator).length;stats.textContent=`3D preview • life ${alive} • predators ${pred} • sim 120 Hz • ${fps.toFixed(0)} fps`;}}loop();
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
