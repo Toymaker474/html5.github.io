@@ -3,53 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#090a0d">
-<title>GENESIS // CODEHOOD: CAVEMAN AGE</title>
+<meta name="theme-color" content="#08090d">
+<title>GENESIS // ALIFE WORLD V8</title>
 <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-<div id="boot" class="boot">
-  <div class="boot-box">
-    <pre class="boot-logo">      *
-   \☺/ \☺/      CODEHOOD
-    |   |       CAVEMAN AGE
-   / \ / \      survive → learn → invent → use</pre>
-    <div class="row"><b id="bootLabel">MAKING PREHISTORY</b><span id="bootPercent">0%</span></div>
-    <div class="loadbar"><i id="bootBar"></i></div>
-    <div id="bootDetail" class="boot-detail">carving rivers, caves, forests, deserts, ruins and wildlife…</div>
-  </div>
-</div>
+<div id="boot" class="boot"><div class="boot-box"><pre class="boot-logo">        ▲  ^      ~~~~~
+   ♣ T ♣   \☺/   ~≈~~      GENESIS // ALIFE WORLD V8
+  ;♣♣♣;     |    ~~≈~      geology → ecology → lives → history
+   O  %    / \    ~~~</pre><div class="row"><b id="bootLabel">FORMING WORLD</b><span id="bootPercent">0%</span></div><div class="loadbar"><i id="bootBar"></i></div><div id="bootDetail" class="boot-detail">tectonics, climate, rivers, strata, caves, wildlife and five founders…</div></div></div>
 <div class="app">
-<header>
-  <span class="brand">CODEHOOD // CAVEMAN AGE</span>
-  <span class="badge">5 FOUNDERS · ZERO SOLVED PROGRAMS</span>
-  <button id="pause">⏸ PAUSE</button>
-  <button id="turbo" class="primary">⚡ SPEED ×1</button>
-  <button id="rain">🌧 STORM</button>
-  <button id="zero">🔥 NEW TRIBE</button>
-</header>
-<main class="world-wrap">
-  <canvas id="world" aria-label="Procedural prehistoric ASCII world with five evolving cavemen"></canvas>
-  <div id="hud" class="hud"></div>
-</main>
-<aside class="side">
-  <nav class="tabs" aria-label="Game panels">
-    <button data-tab="tribe" class="on">☺ TRIBE</button>
-    <button data-tab="software">🧰 SOFTWARE</button>
-    <button data-tab="history">📜 HISTORY</button>
-    <button data-tab="world">🗺 WORLD</button>
-  </nav>
-  <div id="panel" class="panel"></div>
-</aside>
-<footer>
-  POP CAP <input id="popCap" type="range" min="5" max="100" step="5" value="30"><span id="popValue">30</span>
-  <span>• render <b id="fps">0</b> FPS</span>
-  <span>• sim work <b id="bps">0</b>/s</span>
-  <span>• world sweeps <b id="sps">0</b>/s</span>
-  <button id="save">💾 SAVE</button>
-  <button id="export">📦 EXPORT</button>
-</footer>
+<header><span class="brand">GENESIS // ALIFE WORLD V8</span><span class="badge">5 FOUNDERS · 384 REGIONS · ZERO SOLVED PROGRAMS</span><button id="pause">⏸ PAUSE</button><button id="turbo" class="primary">⚡ SPEED ×1</button><button id="rain">🌧 STORM</button><button id="zero">🌍 NEW WORLD</button></header>
+<main class="world-wrap"><canvas id="world" aria-label="Procedural artificial-life ASCII world with geology, climate, rivers, caves and evolving inhabitants"></canvas><div id="hud" class="hud"></div></main>
+<aside class="side"><nav class="tabs"><button data-tab="tribe" class="on">☺ LIVES</button><button data-tab="software">🧰 SOFTWARE</button><button data-tab="history">📜 HISTORY</button><button data-tab="world">🌍 WORLD</button></nav><div id="panel" class="panel"></div></aside>
+<footer>POP CAP <input id="popCap" type="range" min="5" max="100" step="5" value="30"><span id="popValue">30</span><span>• render <b id="fps">0</b> FPS</span><span>• sim work <b id="bps">0</b>/s</span><span>• world sweeps <b id="sps">0</b>/s</span><button id="save">💾 SAVE</button><button id="export">📦 EXPORT</button></footer>
 </div>
-<script type="module" src="./src/main.js"></script>
+<script type="module" src="./src/main_v8.js"></script>
 </body>
 </html>
