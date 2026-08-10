@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import { dimensionsFor,sanitizeWorldSettings } from '../src/v10_config.js';
+import { createWorldV10 } from '../src/world_v10.js';
+import { decoratePersonV10,practice,refreshGeneratedRole,LIFE_SKILLS } from '../src/people_v10.js';
+const seed=0x51A7E123;
+const base=sanitizeWorldSettings({size:'SMALL',seed,landmass:.68,roughness:.58,wetness:.56,temperature:.52,rivers:.58,forests:.60,minerals:.62,wildlife:.30,predators:.22,ruins:.10});
+const dim=dimensionsFor(base);assert.deepEqual([dim.cols,dim.rows],[22,14]);
+const w=createWorldV10(base);assert.equal(w.chunks.length,22*14);assert.equal(w.chunks.filter(c=>c.site==='CAMP').length,1);assert.ok(w.summary.rivers>0);assert.ok(Object.keys(w.summary.geology).length>=4);assert.ok(Object.keys(w.summary.biomes).length>=5);
+const islands=createWorldV10({...base,landmass:.22}),continent=createWorldV10({...base,landmass:.92});assert.ok(islands.summary.ocean>continent.summary.ocean,'landmass slider must change ocean coverage');
+const dry=createWorldV10({...base,wetness:.05}),wet=createWorldV10({...base,wetness:.95});const avg=a=>a.chunks.reduce((n,c)=>n+c.moisture,0)/a.chunks.length;assert.ok(avg(wet)>avg(dry),'rainfall slider must change moisture field');
+const few=createWorldV10({...base,rivers:.02}),many=createWorldV10({...base,rivers:.98});assert.ok(many.riverCount>few.riverCount,'river slider must change requested river count');
+let s=.12345;const rng=()=>{s=(s*9301+49297)%233280;return s/233280;};const person={id:7,name:'Test',energy:80,age:0};decoratePersonV10(person,0,rng,null);for(const k of LIFE_SKILLS){person.lifeSkills[k]=0;person.aptitudes[k]=.5;}for(let i=0;i<80;i++)practice(person,'program',.04);refreshGeneratedRole(person,rng);assert.ok(person.lifeSkills.program>person.lifeSkills.explore);assert.match(person.roleReason,/program/);assert.notEqual(person.currentRole,'Wanderer');console.log(`PASS V10: ${w.chunks.length} regions, ${Object.keys(w.summary.biomes).length} biomes, sliders alter geography, generated role follows practiced skill.`);
