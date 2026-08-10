@@ -36,8 +36,8 @@ jobs:
           test -f genesis-codehood/physical-creature-v1/README.md
           node --check genesis-codehood/physical-creature-v1/model.js
           node --check genesis-codehood/physical-creature-v1/app.js
-          grep -q "authored stabilizer" genesis-codehood/physical-creature-v1/index.html
-          grep -q "does \*\*not\*\* claim full biology" genesis-codehood/physical-creature-v1/README.md
+          grep -Eq "authored.*stabilizer" genesis-codehood/physical-creature-v1/index.html
+          grep -Fq 'does **not** claim full biology' genesis-codehood/physical-creature-v1/README.md
       - name: Execute Physical Creature V1 causal tests
         run: |
           set -euo pipefail
