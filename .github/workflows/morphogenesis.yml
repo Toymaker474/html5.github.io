@@ -28,16 +28,21 @@ jobs:
           test -f morphogenesis/js/entities.js
           test -f morphogenesis/js/evolution.js
           test -f morphogenesis/js/render.js
+          test -f morphogenesis/js/cognition.js
           test -f morphogenesis/js/audio.js
           test -f morphogenesis/js/ui.js
           test -f morphogenesis/js/main.js
           for f in morphogenesis/js/*.js; do node --check "$f"; done
       - name: Deterministic anatomy and feeding tests
-        run: node morphogenesis/model.test.mjs | tee morphogenesis-test.txt
+        run: node morphogenesis/model.test.mjs | tee morphogenesis-model-test.txt
+      - name: Deterministic cognition tests
+        run: node morphogenesis/cognition.test.mjs | tee morphogenesis-cognition-test.txt
       - name: Preserve experiment evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: morphogenesis-evidence-${{ github.run_id }}
-          path: morphogenesis-test.txt
+          path: |
+            morphogenesis-model-test.txt
+            morphogenesis-cognition-test.txt
           if-no-files-found: ignore
