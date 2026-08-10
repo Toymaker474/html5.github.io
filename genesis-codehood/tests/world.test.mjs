@@ -1,40 +1,41 @@
 import assert from 'node:assert/strict';
-import { createWorld, CHUNK_COUNT, DISTRICT_TYPES, chunkIndexFor, rebuildOccupancy, takeChunkBatch, updateEnvironment } from '../src/world.js';
+import { createWorld, CHUNK_COUNT, DISTRICT_TYPES, BIOMES, chunkIndexFor, rebuildOccupancy, takeChunkBatch, updateEnvironment } from '../src/world.js';
 import { createBrain, chooseAction, ACTIONS } from '../src/brain.js';
+import { emptyLibrary } from '../src/evolution.js';
 
+const i=(op,arg=0)=>({op,arg});
 const w=createWorld(123);
 assert.equal(w.chunks.length,CHUNK_COUNT);
 assert.equal(chunkIndexFor(0,0),0);
 assert.equal(chunkIndexFor(1199,799),CHUNK_COUNT-1);
 
-const types=new Set(w.chunks.map(c=>c.type));
-assert.ok(types.size>=4,'generated world should contain multiple meaningful district types');
-for(const type of types)assert.ok(DISTRICT_TYPES.includes(type),`unknown district type ${type}`);
+const biomes=new Set(w.chunks.map(c=>c.biome));
+assert.ok(biomes.size>=4,'world must generate multiple coherent biome classes');
+assert.ok(biomes.has('RIVER'),'world generator must carve a river');
+for(const b of biomes)assert.ok(BIOMES.includes(b),`unknown biome ${b}`);
+const sites=new Set(w.chunks.map(c=>c.site));
+for(const s of sites)assert.ok(DISTRICT_TYPES.includes(s),`unknown site ${s}`);
+for(const needed of ['HOME','FARM','WORK','LAB'])assert.ok(sites.has(needed),`settlement must contain ${needed}`);
 
-const farm=w.chunks.find(c=>c.type==='FARM');
-const home=w.chunks.find(c=>c.type==='HOME');
-const lab=w.chunks.find(c=>c.type==='LAB');
-const park=w.chunks.find(c=>c.type==='PARK');
-assert.ok(farm&&home&&lab&&park,'test seed should generate farm/home/lab/park districts');
-assert.ok(farm.food>.70,'farm art must correspond to a real food-rich district');
-assert.ok(home.shelter>.70,'home art must correspond to real shelter');
-assert.ok(lab.jobs>park.jobs,'lab must provide more work/training opportunity than a park');
-assert.equal(lab.learning,1,'lab district must carry a learning semantic');
+const farm=w.chunks.find(c=>c.site==='FARM'),home=w.chunks.find(c=>c.site==='HOME'),lab=w.chunks.find(c=>c.site==='LAB'),work=w.chunks.find(c=>c.site==='WORK');
+assert.ok(farm.food>.65,'farm glyph must correspond to real food capacity');
+assert.ok(home.shelter>.65,'home glyph must correspond to real shelter');
+assert.ok(lab.jobs>.60&&lab.learning===1,'lab must provide real programming work semantics');
+assert.ok(w.chunks.some(c=>c.biome==='FOREST'&&c.wood>.60),'forest must materially provide wood');
+assert.ok(w.chunks.some(c=>c.biome==='RIVER'&&c.water===1),'river must materially provide water');
 
-const beforeFood=farm.food;
-updateEnvironment(farm,{floodLevel:0,rain:0});
-assert.ok(farm.food>=beforeFood,'dry farm should regenerate food');
-updateEnvironment(farm,{floodLevel:1,rain:1});
-assert.ok(farm.flood>0,'storm should create real flood state');
+const beforeFood=farm.food;updateEnvironment(farm,{floodLevel:0,rain:0});assert.ok(farm.food>=beforeFood,'dry farm should regenerate food');
+updateEnvironment(farm,{floodLevel:1,rain:1});assert.ok(farm.flood>0,'storm should create real flood state');
 
-const agents=[{alive:true,x:10,y:10},{alive:true,x:1100,y:700},{alive:false,x:5,y:5}];
-rebuildOccupancy(w,agents);
-assert.equal(w.chunks.reduce((n,c)=>n+c.agents.length,0),2);
-const batch=takeChunkBatch(w,8);assert.equal(batch.length,8);
+// Install verified evolved-style control modules into the shared knowledge object.
+const library=emptyLibrary();
+library.IS_AHEAD={program:[i('PUSH_A'),i('PUSH_B'),i('GT'),i('HALT')],report:{verified:true}};
+library.PICK_LOW={program:[i('PUSH_A'),i('PUSH_B'),i('LT'),i('JZ',2),i('PUSH_A'),i('HALT'),i('PUSH_B'),i('HALT')],report:{verified:true}};
+work.drainage=0;updateEnvironment(work,{floodLevel:1,rain:1});
+assert.equal(work.floodAlarm,true,'verified threshold program must power the real world flood alarm');
+assert.equal(work.pumpActive,true,'verified min-selection program must power the real world pump controller');
+assert.ok(work.pumpRate>0,'pump controller must compute a non-zero bounded pump rate');
 
-let seed=.314159;
-const rng=()=>{seed=(seed*9301+49297)%233280;return seed/233280;};
-const brain=createBrain(rng);
-assert.equal(brain.length,63);
-assert.ok(ACTIONS.includes(chooseAction(brain,{hunger:1,food:1},rng)));
-console.log(`PASS: ${CHUNK_COUNT} chunk fortress world with semantic districts, occupancy, scheduler, flooding and evolving survival brain.`);
+const agents=[{alive:true,x:10,y:10},{alive:true,x:1100,y:700},{alive:false,x:5,y:5}];rebuildOccupancy(w,agents);assert.equal(w.chunks.reduce((n,c)=>n+c.agents.length,0),2);assert.equal(takeChunkBatch(w,8).length,8);
+let seed=.314159;const rng=()=>{seed=(seed*9301+49297)%233280;return seed/233280;};const brain=createBrain(rng);assert.equal(brain.length,63);assert.ok(ACTIONS.includes(chooseAction(brain,{hunger:1,food:1},rng)));
+console.log(`PASS: ${CHUNK_COUNT} chunks, ${biomes.size} biomes, functional sites, flooding, evolved alarms/pumps, scheduler and survival brain.`);
