@@ -30,6 +30,7 @@ jobs:
           test -f morphogenesis/js/render.js
           test -f morphogenesis/js/cognition.js
           test -f morphogenesis/js/living_art.js
+          test -f morphogenesis/js/kinetic_creatures.js
           test -f morphogenesis/js/audio.js
           test -f morphogenesis/js/ui.js
           test -f morphogenesis/js/main.js
@@ -40,6 +41,8 @@ jobs:
         run: node morphogenesis/cognition.test.mjs | tee morphogenesis-cognition-test.txt
       - name: Deterministic living art tests
         run: node morphogenesis/living_art.test.mjs | tee morphogenesis-living-art-test.txt
+      - name: Kinetic creature renderer contract
+        run: node morphogenesis/kinetic_creatures.test.mjs | tee morphogenesis-kinetic-render-test.txt
       - name: Preserve experiment evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -49,4 +52,5 @@ jobs:
             morphogenesis-model-test.txt
             morphogenesis-cognition-test.txt
             morphogenesis-living-art-test.txt
+            morphogenesis-kinetic-render-test.txt
           if-no-files-found: ignore
