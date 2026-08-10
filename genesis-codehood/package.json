@@ -1,10 +1,10 @@
 {
   "name":"genesis-codehood",
-  "version":"0.7.0",
+  "version":"0.8.0",
   "private":true,
   "type":"module",
   "scripts":{
     "test":"node tests/vm.test.mjs && node tests/world.test.mjs && node tests/projects.test.mjs && node tests/learning.test.mjs && node tests/caveman.test.mjs",
-    "check":"node --check src/vm.js && node --check src/tasks.js && node --check src/brain.js && node --check src/world.js && node --check src/evolution.js && node --check src/ascii.js && node --check src/projects.js && node --check src/caveman.js && node --check src/main.js && node --check tests/learning.test.mjs && node --check tests/caveman.test.mjs"
+    "check":"node --check src/vm.js && node --check src/tasks.js && node --check src/brain.js && node --check src/worldgen.js && node --check src/world.js && node --check src/evolution.js && node --check src/ascii.js && node --check src/projects.js && node --check src/caveman.js && node --check src/main.js && node --check tests/learning.test.mjs && node --check tests/caveman.test.mjs"
   }
 }
