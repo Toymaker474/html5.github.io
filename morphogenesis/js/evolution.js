@@ -43,8 +43,9 @@ function evolve(){
 function initWorld(){
   creatures=Array.from({length:CFG.BASE_POP},()=>new Creature());
   foods=Array.from({length:CFG.FOOD_TARGET},()=>new Food());
+  carcasses=[];
   particles=[];
-  generation=1;births=0;deaths=0;time=0;
+  generation=1;births=0;deaths=0;bites=0;swallows=0;time=0;
   genStart=performance.now();
 }
 
@@ -52,12 +53,14 @@ function step(dt){
   time+=dt;
 
   for(const f of foods)f.update(dt);
+  for(const c of carcasses)c.update(dt);
 
   rebuildGrid();
 
   for(const c of creatures)c.update(dt);
 
   foods=foods.filter(x=>!x.dead);
+  carcasses=carcasses.filter(x=>!x.dead);
   creatures=creatures.filter(x=>!x.dead);
 
   while(foods.length<CFG.FOOD_TARGET)foods.push(new Food());
@@ -70,6 +73,8 @@ function step(dt){
     creatures.sort((a,b)=>b.fitness()-a.fitness());
     creatures.length=CFG.MAX_POP;
   }
+
+  if(carcasses.length>CFG.MAX_CARCASSES)carcasses.splice(0,carcasses.length-CFG.MAX_CARCASSES);
 
   if((performance.now()-genStart)/1000>CFG.GEN_SECONDS)evolve();
 
