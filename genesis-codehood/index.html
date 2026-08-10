@@ -3,38 +3,64 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#070910">
-<title>GENESIS // PIXELLIFE V9</title>
-<link rel="stylesheet" href="./styles.css">
-<link rel="stylesheet" href="./pixel.css">
+<meta name="theme-color" content="#07100d">
+<title>GENESIS // LIVING WORLD V10</title>
+<link rel="stylesheet" href="./v10.css">
 </head>
 <body>
-<div class="app pixel-app">
-<header>
-  <span class="brand">GENESIS // PIXELLIFE V9</span>
-  <span class="badge">ALIFE + EVOLVED SOFTWARE</span>
-  <button id="pause">⏸ PAUSE</button>
-  <button id="turbo" class="primary">⚡ SPEED ×1</button>
-  <button id="rain">⛈ STORM</button>
-  <button id="zero">🌍 NEW WORLD</button>
-</header>
-<main class="world-wrap pixel-world">
-  <canvas id="world" aria-label="Pixel artificial-life world with evolving animals, humans and software"></canvas>
-  <div id="hud" class="hud"></div>
-</main>
-<aside class="side">
-  <nav class="tabs">
-    <button data-tab="lives" class="on">🧬 LIVES</button>
-    <button data-tab="software">💻 SOFTWARE</button>
-    <button data-tab="history">📜 HISTORY</button>
-    <button data-tab="world">🌎 WORLD</button>
+<div class="game-shell">
+  <canvas id="world" aria-label="Zoomable procedural pixel artificial-life world"></canvas>
+
+  <div class="top-hud glass">
+    <div class="brand-lock"><span class="sigil">G</span><div><b>GENESIS</b><small>LIVING WORLD // V10</small></div></div>
+    <div class="world-chips"><span id="hudTime">Y0 · SPRING</span><span id="hudPop">5 lives</span><span id="hudWild">0 wild</span><span id="hudLearned">0 software</span></div>
+    <div class="sim-controls"><button id="pause" title="Pause">Ⅱ</button><button id="speed" title="Simulation speed">×1</button><button id="storm" title="Create storm">☂</button><button id="newWorld" title="Generate another world">✦</button></div>
+  </div>
+
+  <div class="event-ticker glass"><i></i><span id="eventTicker">Generate a world to begin.</span></div>
+
+  <div class="camera-tools glass">
+    <button id="zoomIn" aria-label="Zoom in">＋</button>
+    <button id="zoomOut" aria-label="Zoom out">−</button>
+    <button id="follow" aria-label="Follow selected life">◎</button>
+  </div>
+
+  <nav class="god-dock glass" aria-label="World tools">
+    <button data-open="lives"><strong>◉</strong><span>Lives</span></button>
+    <button data-open="software"><strong>⌘</strong><span>Software</span></button>
+    <button data-open="history"><strong>≋</strong><span>History</span></button>
+    <button data-open="world"><strong>◇</strong><span>World</span></button>
   </nav>
-  <div id="panel" class="panel"></div>
-</aside>
-<footer>
-  <span>PIXEL ENGINE</span><span>• wildlife worker</span><span>• 384 regions</span><span>• zero solved programs</span><span>• tap a human to inspect</span>
-</footer>
+
+  <aside id="drawer" class="drawer glass" aria-live="polite">
+    <header><div><small>GENESIS DATABASE</small><h1 id="drawerTitle">LIVES</h1></div><button id="drawerClose">×</button></header>
+    <div id="drawerBody" class="drawer-body"></div>
+  </aside>
 </div>
-<script type="module" src="./src/main_v9.js"></script>
+
+<section id="worldgen" class="worldgen">
+  <div class="worldgen-backdrop"></div>
+  <div class="worldgen-shell">
+    <section class="gen-preview">
+      <div class="eyebrow">GENESIS // WORLD FOUNDRY</div>
+      <h1>Build the universe.<br><em>Then don't control it.</em></h1>
+      <p>Every slider changes the generated physical world. People receive traits and aptitudes, not permanent classes. Wildlife is sparse, genetic and biome-bound.</p>
+      <div class="preset-row">
+        <button data-preset="BALANCED">Balanced</button><button data-preset="ISLANDS">Islands</button><button data-preset="WILD">Wild</button><button data-preset="HARSH">Harsh</button>
+      </div>
+      <div class="preview-frame"><canvas id="worldPreview" width="420" height="250"></canvas><div class="scanline"></div></div>
+      <div id="previewStats" class="preview-stats">Generating preview…</div>
+      <div class="seed-row"><label>WORLD SEED <input id="seedInput" inputmode="numeric"></label><button id="rerollSeed">↻ RANDOM</button></div>
+    </section>
+
+    <section class="gen-controls">
+      <div class="control-head"><div><small>WORLD SCALE</small><h2>Generation parameters</h2></div><div class="size-row"><button data-size="TINY">Tiny</button><button data-size="SMALL">Small</button><button data-size="MEDIUM" class="selected">Medium</button><button data-size="LARGE">Large</button></div></div>
+      <div id="settingsControls" class="settings-list"></div>
+      <div class="gen-footer"><div><b>NO TECH TREE</b><small>World laws first. History starts when the simulation starts.</small></div><button id="generateWorld" class="generate">GENERATE LIVING WORLD <span>→</span></button></div>
+    </section>
+  </div>
+</section>
+
+<script type="module" src="./src/main_v10.js"></script>
 </body>
 </html>
