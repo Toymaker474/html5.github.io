@@ -3,23 +3,30 @@
   "project": "GENESIS",
   "product": "GENESIS Ecosystem Sandbox",
   "engineering_system": "GENESIS FORGE",
-  "phase": "ecosystem-sandbox-restored",
+  "phase": "ecosystem-fluid-refinement",
   "status": "IN_PROGRESS",
   "canonical_directive": {"path":"project/CANONICAL_MASTER_DIRECTIVE.md","status":"IN_REPO"},
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
   "stable": {
-    "label": "ecosystem-sandbox-restored-main-experience",
+    "label": "ecosystem-sandbox-fluid-refinement-local-tested",
     "verified": false,
-    "note": "The multi-creature ecosystem sandbox is again the primary GENESIS experience. It is implemented and source-wired, but this restored route has not yet been independently live/device tested. Physical Creature V1 remains preserved as a separate CI-proven causal test slice."
+    "note": "The restored multi-creature ecosystem remains the primary GENESIS experience. A new finer water layer is source-wired and locally tested, but the ecosystem route is not yet live/device verified. Physical Creature V1 remains preserved as a separate CI-proven causal test slice."
   },
   "active_experience": {
     "route": "/genesis-codehood/",
     "verification_level": "IMPLEMENTED",
-    "stack": ["v100_core","v100_ai","v101_mind","v100_render","v102_cycle","v103_hires_jelly","v104_material_world","v105_continuum","v106_bestiary","v107_morphology","v107_living_surface","v107_anatomy","v108_bioglass","v109_biosphere","v110_world_physics","old_sim_upgrade"],
-    "current_change": "restore old ecosystem sandbox as main route and improve presentation/jaw placement without deleting prior simulation systems",
+    "stack": ["v100_core","v100_ai","v101_mind","v100_render","v102_cycle","v103_hires_jelly","v104_material_world","v105_continuum","v106_bestiary","v107_morphology","v107_living_surface","v107_anatomy","v108_bioglass","v109_biosphere","v110_world_physics","old_sim_upgrade","fluid_refinement"],
+    "current_change": "make the existing world/fluid simulation finer and less visually/mechanically janky without replacing the ecosystem sandbox",
     "simulation_changes": [
       "morphology-aware jaw and tongue node re-anchoring toward front/underside mouth geometry",
-      "per-creature local wetness/biome cache derived from existing material/saturation state"
+      "per-creature local wetness/biome cache derived from existing material/saturation state",
+      "2x-per-axis subcell water-volume state layered over the existing V110 coarse water reservoir",
+      "pairwise conservative gravity and lateral volume transfers inside the active refined region",
+      "damped momentum proxy for refined water flow",
+      "gradual bidirectional coarse/fine water synchronization instead of whole-cell teleporting",
+      "hysteretic synchronization of visible AIR/WATER material classification from refined volume",
+      "creature-node drag, buoyancy-like lift/current coupling, and local water displacement that redistributes refined water mass",
+      "terrain-change evacuation attempts for refined water when coarse material becomes solid"
     ],
     "presentation_changes": [
       "deeper deterministic canopy/parallax layers",
@@ -29,15 +36,41 @@
       "wet creature highlights derived from simulated saturation",
       "foreground occlusion and vignette",
       "compact biome/weather/population/focus HUD",
-      "cleaner front/underslung mouth presentation and stronger eye direction"
+      "cleaner front/underslung mouth presentation and stronger eye direction",
+      "smoothed 2x refined water texture",
+      "surface highlight/foam derived from refined fluid velocity rather than random animation"
     ],
     "approximations": [
       "canopy, light shafts, foreground foliage and extra plant leaves are presentation layers, not new physical simulation",
       "biome labels are classifications derived from local material/heat/wetness fields, not separate simulated biome agents",
       "jaw re-anchoring changes existing jaw/tongue nodes but does not replace the older bite/feeding model with the isolated Physical Creature V1 ingestion model",
-      "V109/V110 remain coarse grid/transfer approximations and are not CFD"
+      "V109/V110 remain coarse grid/transfer approximations and are not CFD",
+      "fluid_refinement is a conservative 2x subcell volume-relaxation / finite-volume-like cellular approximation; it is not Navier-Stokes CFD, SPH, FLIP, PBF, or MPM",
+      "refined water velocity is a damped momentum proxy derived from transferred volume, not a solved incompressible velocity field",
+      "creature water lift is an authored buoyancy-like coupling, not full fluid-body pressure integration"
     ],
     "browser_exercise": {"live_pages":"NOT_TESTED","iphone_safari":"NOT_TESTED"}
+  },
+  "fluid_refinement": {
+    "verification_level": "TESTED",
+    "source": "genesis-codehood/fluid_refinement.js",
+    "tests": "genesis-codehood/tests/fluid_refinement.test.mjs",
+    "coarse_cell_world_size": 7,
+    "refined_cell_world_size": 3.5,
+    "resolution_scale_per_axis": 2,
+    "representation": "2D subcell water-volume field with pairwise conservative transfer and damped momentum proxy",
+    "local_tests": {
+      "status": "PASS",
+      "cases": {
+        "fine_resolution_is_2x_per_axis": "PASS",
+        "internal_pairwise_mass_conservation": "PASS",
+        "gravity_moves_center_of_mass_downward": "PASS",
+        "fluid_current_couples_to_creature_and_displacement_redistributes_mass": "PASS",
+        "coarse_to_fine_sync_is_gradual": "PASS"
+      }
+    },
+    "ci": {"status":"PENDING","workflow":".github/workflows/genesis-codehood.yml","run_id":null},
+    "live_browser": "NOT_TESTED"
   },
   "physical_creature_v1": {
     "status": "PRESERVED_PROOF_SLICE",
@@ -56,12 +89,12 @@
       "cases":{"A":"PASS","B":"PASS","C":"PASS","D":"PASS","E":"PASS","F":"PASS","F2":"PASS","N":"PASS"}
     },
     "browser_exercise": {"live_pages":"NOT_TESTED","iphone_safari":"NOT_TESTED"},
-    "note": "This lab is retained for causal body/feeding test work but is no longer the primary user-facing GENESIS route."
+    "note": "This lab is retained for causal body/feeding test work but is not the primary user-facing GENESIS route."
   },
   "legacy_snapshot": {
     "route": "/genesis-codehood/legacy-stack.html",
     "status": "PRESERVED_SNAPSHOT",
-    "note": "Snapshot of the pre-restoration V100-V110 stack without old_sim_upgrade.js."
+    "note": "Snapshot of the pre-restoration V100-V110 stack without old_sim_upgrade.js or fluid_refinement.js."
   },
   "preserved_labs": [
     {"route":"/volume3d/","label":"Materials 0.3 volumetric C++/WASM","status":"PRESERVED"},
@@ -69,18 +102,21 @@
     {"route":"/materials/","label":"Materials 0.1","status":"PRESERVED"},
     {"route":"/sim/","label":"Matter Lab 0.6","status":"PRESERVED"}
   ],
-  "active_objective": "Keep the restored ecosystem sandbox as the main GENESIS experience and improve it in coherent, testable passes. First verify the restored live route, then deepen one high-impact subsystem at a time instead of replacing the sandbox with isolated demos.",
-  "next_gate": "Run the restored /genesis-codehood/ route in a functioning browser, inspect runtime errors/performance and visual mouth/world behavior, then choose the next single subsystem upgrade from real observed weaknesses.",
+  "active_objective": "Obtain independent CI evidence for the new fluid_refinement test, then exercise the restored /genesis-codehood/ route in a functioning browser and inspect fluid stability, performance, creature-water coupling and visual smoothness before increasing verification.",
+  "next_gate": "CI_PASS for fluid_refinement requires the existing GENESIS Codehood Verify workflow to execute tests/fluid_refinement.test.mjs successfully. LIVE_TESTED still requires actual deployed browser execution; a source fetch or CI result alone is insufficient.",
   "invariants": [
     "IMPLEMENTATION > NAME",
     "ROADMAP != IMPLEMENTED != TESTED != CI_PASS != LIVE_TESTED != DEVICE_TESTED != VERIFIED",
-    "The ecosystem sandbox is the primary user-facing experience again",
+    "The ecosystem sandbox is the primary user-facing experience",
     "Physical Creature V1 CI evidence remains preserved and must not be re-described as proof of the ecosystem stack",
     "Presentation layers must not be described as physics",
     "No interpolation may be called physics",
     "No authored controller may be called learning",
     "No mutation-only system may be called evolution",
+    "The refined water solver must conserve pairwise internal transfer mass within tolerance when coarse synchronization is disabled",
+    "Refined fluid visualization must read refined WATER state rather than author fluid outcomes",
+    "fluid_refinement must not be called CFD/SPH/FLIP/PBF/MPM",
     "Unknown or unexercised runtime state remains UNKNOWN/NOT_TESTED"
   ],
-  "updated": "2026-08-10T12:57:00-04:00"
+  "updated": "2026-08-10T13:28:00-04:00"
 }
