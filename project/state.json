@@ -1,219 +1,121 @@
 {
   "schema": 1,
   "project": "GENESIS",
-  "product": "GENESIS Foundation",
+  "product": "Physical Creature V1",
   "engineering_system": "GENESIS FORGE",
-  "phase": "materials-lab-003-volumetric-wasm-integrated",
+  "phase": "physical-creature-v1",
   "status": "IN_PROGRESS",
   "canonical_directive": {
     "path": "project/CANONICAL_MASTER_DIRECTIVE.md",
     "status": "IN_REPO"
   },
+  "verification_levels": ["NOT_BUILT", "IMPLEMENTED", "TESTED", "CI_PASS", "LIVE_TESTED", "DEVICE_TESTED", "VERIFIED"],
   "stable": {
-    "label": "genesis-foundation-materials-0.3-integrated",
+    "label": "physical-creature-v1-tested-local",
     "verified": false,
-    "note": "Matter Lab 0.6, Materials 0.1, Materials 0.2 and the Materials 0.3 true-volume C++/WebAssembly candidate are integrated through CI-green pull requests. Overall product remains unverified because the deployed /volume3d/ WebGPU runtime, sustained target-device performance and real iPhone Safari behavior have not yet been independently exercised."
+    "note": "The current canonical target is one narrow creature slice. Local deterministic Node tests pass, but dedicated GitHub Actions CI and the deployed browser route have not yet been accepted as PASS in canonical state. The previous multi-layer genesis-codehood sandbox is preserved as legacy experimental code and is not evidence for this slice."
   },
-  "matter_lab": {
-    "status": "INTEGRATED_CI_PASS_LIVE_UNVERIFIED",
-    "vertical_slice": "Matter Lab 0.6",
-    "model": "genesis-matter-lj2d-v6",
-    "main_merge_commit": "a2100ab40e70da81101c00e2e0cdff44dfbf34e0",
-    "pull_request": 55,
-    "ci": {
-      "status": "PASS",
-      "workflow_run": 31310827285,
-      "tested_head": "2198f5889073c6ad5da9e11ac006afceead39f5d",
-      "simulation_test": "PASS genesis matter 0.6 cooperative self-assembly tests"
-    }
-  },
-  "materials_lab": {
-    "status": "INTEGRATED_CI_PASS_LIVE_UNVERIFIED",
-    "vertical_slice": "Materials Lab 0.1",
-    "model": "genesis-materials-granular2d-v1",
-    "main_merge_commit": "1c56bd53f115174cca55a88efb7721a71a24e79e",
-    "pull_request": 56,
-    "ci": {
-      "status": "PASS",
-      "workflow_run": 31313512227,
-      "tested_head": "371677df8298e1a5929d708ad678a8527102c655",
-      "simulation_test": "PASS genesis materials 0.1 granular sand/water tests",
-      "replay_hash": 1695607716
-    },
-    "live_pages": {"status": "UNVERIFIED", "expected_path": "/materials/"},
-    "webgpu_runtime": {"status": "UNVERIFIED"},
-    "iphone_safari": {"status": "UNVERIFIED"}
-  },
-  "materials3d_lab": {
-    "status": "INTEGRATED_CI_PASS_LIVE_FAILURE_OBSERVED_REPAIRED_UNRETESTED",
-    "vertical_slice": "Materials Lab 0.2 — Cinematic 3D World",
-    "model": "genesis-materials-heightfield3d-v1",
-    "representation": "2.5D x/z heightfield rendered as perspective 3D geometry",
-    "main_merge_commit": "0ff60bf42086242af0396d4f0cc9f10c12e25c14",
-    "pull_request": 59,
-    "live_failure": {
-      "observed": "black screen",
-      "repair_pull_request": 61,
-      "repair_merge_commit": "0123826000638146079b14fd6a7d7920a100efa5",
-      "cache_checkpoint_pull_request": 62,
-      "cache_checkpoint_merge_commit": "800d7bdce3b52955eac3fcd1828254fc8011ce88",
-      "post_repair_live_status": "UNVERIFIED"
-    },
-    "not_claimed": ["volumetric 3D sand physics", "Unreal Engine", "validated soil mechanics", "finished GENESIS"]
-  },
-  "volume3d_lab": {
-    "status": "INTEGRATED_CI_PASS_LIVE_UNVERIFIED",
-    "vertical_slice": "Materials Lab 0.3 — Volumetric C++ / WebAssembly",
-    "model": "genesis-materials-volume3d-cpp-v1",
-    "representation": "Genuine x/y/z coarse voxel volume; not a heightfield",
-    "solver": {
-      "language": "C++17",
-      "browser_runtime": "WebAssembly",
-      "source": "volume3d/solver.cpp",
-      "active_browser_payload": "volume3d/solver.v1.wasm.b64",
-      "model_version": "0x00030001",
-      "max_capacity": "64x40x64 coarse voxels",
-      "browser_presets": ["32x24x32", "40x28x40", "48x32x48"]
-    },
-    "implemented_rules": [
-      "3D gravity",
-      "diagonal granular settling",
-      "phenomenological wet-sand cohesion",
-      "3D water fall and spread",
-      "wetting and moisture decay",
-      "erosion into water-carried sediment",
-      "sediment deposition"
+  "physical_creature_v1": {
+    "verification_level": "TESTED",
+    "route": "/genesis-codehood/physical-creature-v1/",
+    "model": "genesis-physical-creature-2d-v1",
+    "source": "genesis-codehood/physical-creature-v1/model.js",
+    "browser": "genesis-codehood/physical-creature-v1/app.js",
+    "tests": "genesis-codehood/physical-creature-v1/model.test.mjs",
+    "documentation": "genesis-codehood/physical-creature-v1/README.md",
+    "representation": "2D point-mass articulated skeleton with projected distance constraints and lumped joint-torque muscle actuators",
+    "implemented": [
+      "eight persistent body nodes with position, velocity, mass, structural integrity, skin integrity, flesh mass, temperature, hydration and damage",
+      "seven persistent skeleton constraints",
+      "six persistent joint records with integrity and angle limits",
+      "eight lumped muscle actuators driven by controller activation rather than direct body position/velocity assignment",
+      "gravity, ground collision and friction",
+      "explicit bounded authored pelvis-height/balance stabilizer exposed in controller state",
+      "persistent wounds and localized body/joint/bone integrity damage",
+      "scalar blood-volume loss affecting muscle output, consciousness and circulatory death",
+      "lung integrity, ventilation and oxygenation proxy affected by torso damage",
+      "physical food body with jaw contact, capture and throat approach before stomach inventory",
+      "stomach contents, gradual digestion energy release, indigestible mass and waste mass",
+      "basal and muscle energy expenditure",
+      "death from circulatory failure, prolonged hypoxia or energy failure",
+      "live inspector exposing body, joint, muscle, feeding and physiology state"
     ],
-    "rendering": [
-      "WebGPU perspective orbit camera",
-      "depth24plus depth buffer",
-      "state-derived exposed voxel surfaces",
-      "transparent water surfaces",
-      "state-derived sand micro-grain presentation",
-      "directional lighting",
-      "procedural sky and atmospheric haze",
-      "wet-sand response",
-      "water Fresnel-like response",
-      "3D ray-picked material placement and carving"
+    "approximations": [
+      "2D point masses and projected distance constraints; not FEM or a validated biomechanical rigid-body model",
+      "muscles are lumped torque/stance actuators; not anatomical fiber/tendon bundles",
+      "balance includes an authored PD pelvis-height stabilizer; this is not learned balance",
+      "blood is a scalar circulation proxy; not transported fluid",
+      "lungs are a ventilation/oxygen state model; not gas-exchange CFD",
+      "digestion is a lumped stomach inventory and energy-release model; not biochemical digestion",
+      "controller is a hand-authored oscillator/reflex controller; no learning is claimed"
     ],
-    "main_merge_commit": "73f46716b181cdd20b12e8af862bb973214df03a",
-    "pull_request": 63,
-    "ci": {
+    "local_tests": {
       "status": "PASS",
-      "workflow_run": 31317257384,
-      "job": 93254400397,
-      "tested_head": "45e1059b0aca71ab33b8f97571da483b51b54ce3",
-      "native_test": "PASS genesis materials 0.3 native C++ volumetric tests",
-      "wasm_test": "PASS genesis materials 0.3 versioned browser + compiled WebAssembly tests",
-      "fresh_wasm_bytes": 10599,
-      "browser_wasm_bytes": 10599,
-      "wasm_sha256": "b91392208308a1753bfc2aba71a47ef031ab015eff0b65a81e5d68eabd48d1e0",
-      "fixture": {
-        "hash": 301791802,
-        "sand_equivalent_units": 1118940,
-        "water_voxels": 155,
-        "erosion_events": 3,
-        "deposition_events": 2,
-        "invariant": "PASS"
-      },
-      "older_regressions": "PASS"
-    },
-    "failures_learned": [
-      {
-        "record": "project/failures/2026-08-09-volume3d-freestanding-wasm-memset.md",
-        "cause": "Freestanding wasm32 link required explicit memory primitives after LLVM optimized clearing loops to memset",
-        "repair": "Provide tiny freestanding memset/memcpy and keep compile regression in CI"
-      },
-      {
-        "record": "project/failures/2026-08-09-volume3d-ci-wasm-instantiate.md",
-        "cause": "Initial committed browser WASM payload was malformed/truncated while fresh CI-compiled WASM was valid",
-        "repair": "Use versioned solver.v1.wasm.b64 generated from the verified 10,599-byte CI module and compare semantics/hash in CI"
+      "environment": "local Node runtime",
+      "cases": {
+        "A_body_invariants": "PASS",
+        "B_muscle_force_moves_body": "PASS",
+        "C_damaged_limb_reduces_locomotion": "PASS",
+        "D_no_energy_without_ingestion": "PASS",
+        "E_capture_swallow_then_gradual_digestion": "PASS",
+        "F_blood_loss_changes_state_and_causes_failure": "PASS",
+        "F2_respiratory_damage_lowers_oxygenation": "PASS",
+        "N_deterministic_replay": "PASS"
       }
-    ],
-    "verification": {
-      "native_cpp": "PASS",
-      "fresh_cpp_to_wasm_compile": "PASS",
-      "fresh_wasm_instantiate_and_fixture": "PASS",
-      "browser_wasm_semantics": "PASS",
-      "browser_wasm_matches_ci_sha256": "PASS",
-      "older_regressions": "PASS",
-      "renderer_js_syntax": "PASS",
-      "renderer_structure_static_gate": "PASS",
-      "webgpu_shader_compile_on_live_browser": "UNVERIFIED",
-      "live_pages": "UNVERIFIED",
-      "expected_path": "/volume3d/",
-      "iphone_safari": "UNVERIFIED",
-      "sustained_performance": "UNMEASURED",
-      "experiential_unreal_quality": "UNVERIFIED",
-      "biological_evolution": "NOT_BUILT"
     },
-    "not_claimed": [
-      "literal individual grains",
-      "discrete element method",
-      "Navier-Stokes CFD",
-      "SPH",
-      "MPM",
-      "FLIP",
-      "validated soil mechanics",
-      "photoreal Unreal Engine quality",
-      "ray-traced global illumination",
-      "biological evolution",
-      "creatures",
-      "finished GENESIS"
+    "ci": {
+      "status": "PENDING",
+      "workflow": ".github/workflows/physical-creature-v1.yml",
+      "run_id": null
+    },
+    "browser_exercise": {
+      "local_chromium": "FAILED_ENVIRONMENT",
+      "detail": "Headless Chromium did not return a trustworthy DOM smoke result in the current container because the browser process hung with DBus/zygote errors.",
+      "live_pages": "NOT_TESTED",
+      "iphone_safari": "NOT_TESTED"
+    },
+    "not_built": [
+      "fluid-body coupling",
+      "WebGPU fluid solver",
+      "learning",
+      "evolution",
+      "chunk persistence/LOD",
+      "plants/fungi",
+      "civilizations",
+      "GPU compute creature physics",
+      "full vascular flow",
+      "tissue FEM/MPM"
     ]
   },
-  "primary_launch_checkpoint": {
-    "route": "/volume3d/",
-    "pull_request": 64,
-    "tested_head": "aa5ac1746b03795e070b8cd41f6b6d1af6a54fa9",
-    "workflow_run": 31317401301,
-    "job": 93254756179,
-    "ci_status": "PASS",
-    "merge_commit": "8d30649a09496db8c610cb766187da559edebe30",
-    "changed_scope": "homepage only",
-    "older_slices_preserved": true
+  "legacy_experimental_stack": {
+    "route": "/genesis-codehood/legacy-stack.html",
+    "status": "PRESERVED_NON_CANONICAL",
+    "note": "V100-V110 layered experiments are preserved for reference. Their names and visuals do not upgrade verification of Physical Creature V1."
   },
-  "idea_harbor": [
-    {
-      "idea": "thermally driven lava / molten material",
-      "status": "FUTURE_UNLOCK",
-      "prerequisites": ["thermal field", "phase/state transition model", "GPU/reference comparison", "runtime-healthy volumetric substrate"]
-    },
-    {
-      "idea": "volumetric atmosphere and clouds",
-      "status": "FUTURE_UNLOCK",
-      "prerequisites": ["field representation", "advection/transport model", "GPU performance path", "state-derived volumetric renderer"]
-    },
-    {
-      "idea": "logical biological evolution and creatures",
-      "status": "FUTURE_UNLOCK",
-      "prerequisites": ["runtime-healthy persistent 3D environment", "chemistry/self-assembly progression", "heredity/variation/selection", "causal body-environment coupling"]
-    },
-    {
-      "idea": "simulate all matter across reality",
-      "status": "DREAM_TARGET",
-      "prerequisites": ["adaptive multiresolution architecture", "model families per scale", "cross-scale state/causality", "device-aware workload director"]
-    }
+  "preserved_labs": [
+    {"route": "/volume3d/", "label": "Materials 0.3 volumetric C++/WASM", "status": "PRESERVED"},
+    {"route": "/materials3d/", "label": "Materials 0.2 heightfield 3D", "status": "PRESERVED"},
+    {"route": "/materials/", "label": "Materials 0.1", "status": "PRESERVED"},
+    {"route": "/sim/", "label": "Matter Lab 0.6", "status": "PRESERVED"}
   ],
-  "active_objective": "Independently exercise the deployed /volume3d/ C++/WebAssembly + WebGPU route, capture actual runtime backend/errors and performance, and repair any live failure before adding another major graphics, material or biological subsystem.",
-  "next_gate": "Live/runtime validation of /volume3d/: confirm the versioned WebAssembly payload loads, WebGPU shader/pipelines compile and render non-black state, interaction works, and capture target-device performance. Do not infer live WebGPU, iPhone, photorealism or evolution success from CI.",
+  "previous_canonical_state": {
+    "blob_sha": "4afad28c0e7179446cfb297c4cadd219ddea4856",
+    "note": "The prior Materials 0.3 canonical record remains recoverable in Git history."
+  },
+  "active_objective": "Obtain an actual PASS from the dedicated Physical Creature V1 GitHub Actions workflow, then exercise the deployed /genesis-codehood/physical-creature-v1/?smoke=1 route in a functioning browser before raising the verification level.",
+  "next_gate": "CI_PASS is required before LIVE_TESTED. LIVE_TESTED must execute the deployed browser module and inspect its runtime readiness/invariants; a simple HTTP fetch is insufficient. DEVICE_TESTED and VERIFIED remain blocked after that.",
   "invariants": [
-    "ROADMAP != IMPLEMENTED != VERIFIED",
-    "ChatGPT cannot self-certify its own changes",
-    "No critical project fact may live only in chat memory",
-    "Prototype experiments do not become product without a productionization gate",
-    "Tyler is not the build system or log courier",
-    "UNKNOWN must never silently become PASS",
-    "CI PASS does not imply live deployment PASS or iPhone PASS",
-    "Rendering consumes simulation state and must not secretly become simulation logic",
-    "Materials 0.3 is genuine x/y/z coarse volume state and must not be described as a heightfield",
-    "A coarse voxel must not be described as a literal individual sand grain",
-    "State-derived grain presentation must not be described as extra simulated particles",
-    "Phenomenological wet cohesion must not be described as validated capillary or geotechnical physics",
-    "Volumetric water cell rules must not be described as Navier-Stokes/SPH/MPM/FLIP",
-    "Biological evolution is not built and must not be faked with predefined creatures",
-    "Unreal-quality is an experiential target, not a verification status",
-    "Matter Lab 0.6, Materials 0.1 and Materials 0.2 remain independently available"
+    "IMPLEMENTATION > NAME",
+    "ROADMAP != IMPLEMENTED != TESTED != CI_PASS != LIVE_TESTED != DEVICE_TESTED != VERIFIED",
+    "No visual effect may be called a simulation without authoritative evolving state",
+    "No interpolation may be called physics",
+    "No authored controller may be called learning",
+    "No mutation-only system may be called evolution",
+    "The Physical Creature V1 controller may not assign body position or velocity as normal locomotion",
+    "Food may not add energy before physical capture, swallowing and stomach digestion",
+    "Damage must persist and alter functional output",
+    "Unknown or unexercised runtime state remains UNKNOWN/NOT_TESTED",
+    "The legacy genesis-codehood stack is experimental and non-canonical"
   ],
-  "updated": "2026-08-09"
+  "updated": "2026-08-10T11:33:00-04:00"
 }
