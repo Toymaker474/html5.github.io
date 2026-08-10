@@ -5,15 +5,12 @@
   "engineering_system": "GENESIS FORGE",
   "phase": "physical-creature-v1",
   "status": "IN_PROGRESS",
-  "canonical_directive": {
-    "path": "project/CANONICAL_MASTER_DIRECTIVE.md",
-    "status": "IN_REPO"
-  },
-  "verification_levels": ["NOT_BUILT", "IMPLEMENTED", "TESTED", "CI_PASS", "LIVE_TESTED", "DEVICE_TESTED", "VERIFIED"],
+  "canonical_directive": {"path":"project/CANONICAL_MASTER_DIRECTIVE.md","status":"IN_REPO"},
+  "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
   "stable": {
     "label": "physical-creature-v1-tested-local",
     "verified": false,
-    "note": "The current canonical target is one narrow creature slice. Local deterministic Node tests pass, but dedicated GitHub Actions CI and the deployed browser route have not yet been accepted as PASS in canonical state. The previous multi-layer genesis-codehood sandbox is preserved as legacy experimental code and is not evidence for this slice."
+    "note": "Physical Creature V1 remains TESTED. Local deterministic model tests pass. The first dedicated PR CI proof failed in the fail-closed text gate before causal tests executed; live browser and device gates remain untested."
   },
   "physical_creature_v1": {
     "verification_level": "TESTED",
@@ -53,57 +50,44 @@
       "status": "PASS",
       "environment": "local Node runtime",
       "cases": {
-        "A_body_invariants": "PASS",
-        "B_muscle_force_moves_body": "PASS",
-        "C_damaged_limb_reduces_locomotion": "PASS",
-        "D_no_energy_without_ingestion": "PASS",
-        "E_capture_swallow_then_gradual_digestion": "PASS",
-        "F_blood_loss_changes_state_and_causes_failure": "PASS",
-        "F2_respiratory_damage_lowers_oxygenation": "PASS",
-        "N_deterministic_replay": "PASS"
+        "A_body_invariants":"PASS",
+        "B_muscle_force_moves_body":"PASS",
+        "C_damaged_limb_reduces_locomotion":"PASS",
+        "D_no_energy_without_ingestion":"PASS",
+        "E_capture_swallow_then_gradual_digestion":"PASS",
+        "F_blood_loss_changes_state_and_causes_failure":"PASS",
+        "F2_respiratory_damage_lowers_oxygenation":"PASS",
+        "N_deterministic_replay":"PASS"
       }
     },
     "ci": {
-      "status": "PENDING",
+      "status": "FAIL",
       "workflow": ".github/workflows/physical-creature-v1.yml",
-      "run_id": null
+      "proof_pull_request": 82,
+      "run_id": 31407251780,
+      "job_id": 93516476300,
+      "tested_pr_head": "bfc0f31078381993228939198539ad4e877ad267",
+      "failure_stage": "Fail-closed file and syntax gate",
+      "failure_detail": "Gate required literal text 'authored stabilizer'; documentation uses the more precise phrase 'authored pelvis-height stabilizer'. Causal model tests were skipped, so this run is not CI_PASS."
     },
     "browser_exercise": {
-      "local_chromium": "FAILED_ENVIRONMENT",
-      "detail": "Headless Chromium did not return a trustworthy DOM smoke result in the current container because the browser process hung with DBus/zygote errors.",
-      "live_pages": "NOT_TESTED",
-      "iphone_safari": "NOT_TESTED"
+      "local_chromium":"FAILED_ENVIRONMENT",
+      "detail":"Headless Chromium did not return a trustworthy DOM smoke result in the current container because the browser process hung with DBus/zygote errors.",
+      "live_pages":"NOT_TESTED",
+      "iphone_safari":"NOT_TESTED"
     },
-    "not_built": [
-      "fluid-body coupling",
-      "WebGPU fluid solver",
-      "learning",
-      "evolution",
-      "chunk persistence/LOD",
-      "plants/fungi",
-      "civilizations",
-      "GPU compute creature physics",
-      "full vascular flow",
-      "tissue FEM/MPM"
-    ]
+    "not_built": ["fluid-body coupling","WebGPU fluid solver","learning","evolution","chunk persistence/LOD","plants/fungi","civilizations","GPU compute creature physics","full vascular flow","tissue FEM/MPM"]
   },
-  "legacy_experimental_stack": {
-    "route": "/genesis-codehood/legacy-stack.html",
-    "status": "PRESERVED_NON_CANONICAL",
-    "note": "V100-V110 layered experiments are preserved for reference. Their names and visuals do not upgrade verification of Physical Creature V1."
-  },
+  "legacy_experimental_stack": {"route":"/genesis-codehood/legacy-stack.html","status":"PRESERVED_NON_CANONICAL","note":"V100-V110 layered experiments are preserved for reference and do not upgrade this slice's verification."},
   "preserved_labs": [
-    {"route": "/volume3d/", "label": "Materials 0.3 volumetric C++/WASM", "status": "PRESERVED"},
-    {"route": "/materials3d/", "label": "Materials 0.2 heightfield 3D", "status": "PRESERVED"},
-    {"route": "/materials/", "label": "Materials 0.1", "status": "PRESERVED"},
-    {"route": "/sim/", "label": "Matter Lab 0.6", "status": "PRESERVED"}
+    {"route":"/volume3d/","label":"Materials 0.3 volumetric C++/WASM","status":"PRESERVED"},
+    {"route":"/materials3d/","label":"Materials 0.2 heightfield 3D","status":"PRESERVED"},
+    {"route":"/materials/","label":"Materials 0.1","status":"PRESERVED"},
+    {"route":"/sim/","label":"Matter Lab 0.6","status":"PRESERVED"}
   ],
-  "previous_canonical_state": {
-    "blob_sha": "4afad28c0e7179446cfb297c4cadd219ddea4856",
-    "note": "The prior Materials 0.3 canonical record remains recoverable in Git history."
-  },
-  "active_objective": "Obtain an actual PASS from the dedicated Physical Creature V1 GitHub Actions workflow, then exercise the deployed /genesis-codehood/physical-creature-v1/?smoke=1 route in a functioning browser before raising the verification level.",
-  "next_gate": "CI_PASS is required before LIVE_TESTED. LIVE_TESTED must execute the deployed browser module and inspect its runtime readiness/invariants; a simple HTTP fetch is insufficient. DEVICE_TESTED and VERIFIED remain blocked after that.",
+  "previous_canonical_state": {"blob_sha":"4afad28c0e7179446cfb297c4cadd219ddea4856","note":"Prior Materials 0.3 canonical record remains recoverable in Git history."},
+  "active_objective": "Repair the failed dedicated Physical Creature V1 CI text gate, rerun the same causal tests to CI_PASS, then execute the deployed browser module before any verification promotion.",
+  "next_gate": "Dedicated Physical Creature V1 CI must PASS. Only then may live browser execution be attempted for LIVE_TESTED. Device and independent VERIFIED gates remain blocked.",
   "invariants": [
     "IMPLEMENTATION > NAME",
     "ROADMAP != IMPLEMENTED != TESTED != CI_PASS != LIVE_TESTED != DEVICE_TESTED != VERIFIED",
@@ -115,7 +99,8 @@
     "Food may not add energy before physical capture, swallowing and stomach digestion",
     "Damage must persist and alter functional output",
     "Unknown or unexercised runtime state remains UNKNOWN/NOT_TESTED",
+    "A failed CI gate remains FAIL even if unrelated workflows are green",
     "The legacy genesis-codehood stack is experimental and non-canonical"
   ],
-  "updated": "2026-08-10T11:33:00-04:00"
+  "updated": "2026-08-10T12:10:00-04:00"
 }
