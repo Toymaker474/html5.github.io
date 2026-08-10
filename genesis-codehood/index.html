@@ -2,22 +2,39 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#08090d">
-<title>GENESIS // ALIFE WORLD V8</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#070910">
+<title>GENESIS // PIXELLIFE V9</title>
 <link rel="stylesheet" href="./styles.css">
+<link rel="stylesheet" href="./pixel.css">
 </head>
 <body>
-<div id="boot" class="boot"><div class="boot-box"><pre class="boot-logo">        ▲  ^      ~~~~~
-   ♣ T ♣   \☺/   ~≈~~      GENESIS // ALIFE WORLD V8
-  ;♣♣♣;     |    ~~≈~      geology → ecology → lives → history
-   O  %    / \    ~~~</pre><div class="row"><b id="bootLabel">FORMING WORLD</b><span id="bootPercent">0%</span></div><div class="loadbar"><i id="bootBar"></i></div><div id="bootDetail" class="boot-detail">tectonics, climate, rivers, strata, caves, wildlife and five founders…</div></div></div>
-<div class="app">
-<header><span class="brand">GENESIS // ALIFE WORLD V8</span><span class="badge">5 FOUNDERS · 384 REGIONS · ZERO SOLVED PROGRAMS</span><button id="pause">⏸ PAUSE</button><button id="turbo" class="primary">⚡ SPEED ×1</button><button id="rain">🌧 STORM</button><button id="zero">🌍 NEW WORLD</button></header>
-<main class="world-wrap"><canvas id="world" aria-label="Procedural artificial-life ASCII world with geology, climate, rivers, caves and evolving inhabitants"></canvas><div id="hud" class="hud"></div></main>
-<aside class="side"><nav class="tabs"><button data-tab="tribe" class="on">☺ LIVES</button><button data-tab="software">🧰 SOFTWARE</button><button data-tab="history">📜 HISTORY</button><button data-tab="world">🌍 WORLD</button></nav><div id="panel" class="panel"></div></aside>
-<footer>POP CAP <input id="popCap" type="range" min="5" max="100" step="5" value="30"><span id="popValue">30</span><span>• render <b id="fps">0</b> FPS</span><span>• sim work <b id="bps">0</b>/s</span><span>• world sweeps <b id="sps">0</b>/s</span><button id="save">💾 SAVE</button><button id="export">📦 EXPORT</button></footer>
+<div class="app pixel-app">
+<header>
+  <span class="brand">GENESIS // PIXELLIFE V9</span>
+  <span class="badge">ALIFE + EVOLVED SOFTWARE</span>
+  <button id="pause">⏸ PAUSE</button>
+  <button id="turbo" class="primary">⚡ SPEED ×1</button>
+  <button id="rain">⛈ STORM</button>
+  <button id="zero">🌍 NEW WORLD</button>
+</header>
+<main class="world-wrap pixel-world">
+  <canvas id="world" aria-label="Pixel artificial-life world with evolving animals, humans and software"></canvas>
+  <div id="hud" class="hud"></div>
+</main>
+<aside class="side">
+  <nav class="tabs">
+    <button data-tab="lives" class="on">🧬 LIVES</button>
+    <button data-tab="software">💻 SOFTWARE</button>
+    <button data-tab="history">📜 HISTORY</button>
+    <button data-tab="world">🌎 WORLD</button>
+  </nav>
+  <div id="panel" class="panel"></div>
+</aside>
+<footer>
+  <span>PIXEL ENGINE</span><span>• wildlife worker</span><span>• 384 regions</span><span>• zero solved programs</span><span>• tap a human to inspect</span>
+</footer>
 </div>
-<script type="module" src="./src/main_v8.js"></script>
+<script type="module" src="./src/main_v9.js"></script>
 </body>
 </html>
