@@ -3,6 +3,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 em++ native/material_kernel.cpp -O3 -std=c++20 \
   -sWASM=1 \
+  -sWASM_BIGINT=1 \
   -sMODULARIZE=1 \
   -sEXPORT_NAME=createOuroborosKernel \
   -sALLOW_MEMORY_GROWTH=1 \
