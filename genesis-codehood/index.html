@@ -2,65 +2,56 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#07100d">
-<title>GENESIS // LIVING WORLD V10</title>
-<link rel="stylesheet" href="./v10.css">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#07110d">
+<title>GENESIS // KINETIC WILD MOBILE</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050807;color:#edf7f0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;image-rendering:pixelated}.glass{position:absolute;background:#07100dcc;border:1px solid #d7ffe421;box-shadow:0 8px 28px #0009;backdrop-filter:blur(7px)}#hud{top:max(8px,env(safe-area-inset-top));left:max(8px,env(safe-area-inset-left));padding:7px 9px;border-radius:9px;font-size:9px;line-height:1.45;pointer-events:none}#brand{font-weight:900;color:#bdf5d0;letter-spacing:.1em}#card{left:8px;right:8px;bottom:66px;padding:9px;border-radius:10px;font-size:10px;display:none;max-height:31vh;overflow:auto}#card h2{margin:0 0 6px;font-size:13px}.row{display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px solid #fff1}#dock{left:50%;bottom:max(8px,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:4px;padding:5px;border-radius:11px}button{border:1px solid #486353;background:#132019;color:#eff9f2;border-radius:8px;padding:8px 10px;font:inherit;font-size:10px;min-width:44px}.dim{color:#90a69a}.good{color:#99efb4}@media(min-width:760px){#card{left:auto;right:8px;top:8px;bottom:auto;width:320px;max-height:70vh}}
+</style>
 </head>
 <body>
-<div class="game-shell">
-  <canvas id="world" aria-label="Zoomable procedural pixel artificial-life world"></canvas>
-
-  <div class="top-hud glass">
-    <div class="brand-lock"><span class="sigil">G</span><div><b>GENESIS</b><small>LIVING WORLD // V10</small></div></div>
-    <div class="world-chips"><span id="hudTime">Y0 · SPRING</span><span id="hudPop">5 lives</span><span id="hudWild">0 wild</span><span id="hudLearned">0 software</span></div>
-    <div class="sim-controls"><button id="pause" title="Pause">Ⅱ</button><button id="speed" title="Simulation speed">×1</button><button id="storm" title="Create storm">☂</button><button id="newWorld" title="Generate another world">✦</button></div>
-  </div>
-
-  <div class="event-ticker glass"><i></i><span id="eventTicker">Generate a world to begin.</span></div>
-
-  <div class="camera-tools glass">
-    <button id="zoomIn" aria-label="Zoom in">＋</button>
-    <button id="zoomOut" aria-label="Zoom out">−</button>
-    <button id="follow" aria-label="Follow selected life">◎</button>
-  </div>
-
-  <nav class="god-dock glass" aria-label="World tools">
-    <button data-open="lives"><strong>◉</strong><span>Lives</span></button>
-    <button data-open="software"><strong>⌘</strong><span>Software</span></button>
-    <button data-open="history"><strong>≋</strong><span>History</span></button>
-    <button data-open="world"><strong>◇</strong><span>World</span></button>
-  </nav>
-
-  <aside id="drawer" class="drawer glass" aria-live="polite">
-    <header><div><small>GENESIS DATABASE</small><h1 id="drawerTitle">LIVES</h1></div><button id="drawerClose">×</button></header>
-    <div id="drawerBody" class="drawer-body"></div>
-  </aside>
-</div>
-
-<section id="worldgen" class="worldgen">
-  <div class="worldgen-backdrop"></div>
-  <div class="worldgen-shell">
-    <section class="gen-preview">
-      <div class="eyebrow">GENESIS // WORLD FOUNDRY</div>
-      <h1>Build the universe.<br><em>Then don't control it.</em></h1>
-      <p>Every slider changes the generated physical world. People receive traits and aptitudes, not permanent classes. Wildlife is sparse, genetic and biome-bound.</p>
-      <div class="preset-row">
-        <button data-preset="BALANCED">Balanced</button><button data-preset="ISLANDS">Islands</button><button data-preset="WILD">Wild</button><button data-preset="HARSH">Harsh</button>
-      </div>
-      <div class="preview-frame"><canvas id="worldPreview" width="420" height="250"></canvas><div class="scanline"></div></div>
-      <div id="previewStats" class="preview-stats">Generating preview…</div>
-      <div class="seed-row"><label>WORLD SEED <input id="seedInput" inputmode="numeric"></label><button id="rerollSeed">↻ RANDOM</button></div>
-    </section>
-
-    <section class="gen-controls">
-      <div class="control-head"><div><small>WORLD SCALE</small><h2>Generation parameters</h2></div><div class="size-row"><button data-size="TINY">Tiny</button><button data-size="SMALL">Small</button><button data-size="MEDIUM" class="selected">Medium</button><button data-size="LARGE">Large</button></div></div>
-      <div id="settingsControls" class="settings-list"></div>
-      <div class="gen-footer"><div><b>NO TECH TREE</b><small>World laws first. History starts when the simulation starts.</small></div><button id="generateWorld" class="generate">GENERATE LIVING WORLD <span>→</span></button></div>
-    </section>
-  </div>
-</section>
-
-<script type="module" src="./src/main_v10.js"></script>
+<canvas id="game"></canvas>
+<div id="hud" class="glass"><div id="brand">GENESIS // KINETIC WILD MOBILE</div><div id="stats"></div></div>
+<div id="card" class="glass"></div>
+<div id="dock" class="glass"><button id="pause">Ⅱ</button><button id="speed">×1</button><button id="follow">◎</button><button id="rain">☂</button><button id="reset">↻</button></div>
+<script>
+'use strict';
+const C=document.querySelector('#game'),X=C.getContext('2d',{alpha:false}),stats=document.querySelector('#stats'),card=document.querySelector('#card');
+const B=document.createElement('canvas'),G=B.getContext('2d',{alpha:false});
+let DPR=1,PIX=3;
+function resize(){DPR=Math.min(devicePixelRatio||1,2);C.width=innerWidth*DPR;C.height=innerHeight*DPR;X.setTransform(DPR,0,0,DPR,0,0);PIX=innerWidth<700?3:4;B.width=Math.max(240,Math.ceil(innerWidth/PIX));B.height=Math.max(150,Math.ceil(innerHeight/PIX));G.imageSmoothingEnabled=false}addEventListener('resize',resize);resize();
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t,TAU=Math.PI*2;
+let seed=1;function rnd(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}function randn(){let u=0,v=0;while(!u)u=rnd();while(!v)v=rnd();return Math.sqrt(-2*Math.log(u))*Math.cos(TAU*v)}
+function hash(x,y,s=0){let n=(x*374761393+y*668265263+s*1442695041)|0;n=(n^(n>>>13))*1274126177;return(((n^(n>>>16))>>>0)/4294967296)}function sm(t){return t*t*(3-2*t)}function noise(x,y,s=0){const X0=Math.floor(x),Y0=Math.floor(y),tx=sm(x-X0),ty=sm(y-Y0),a=hash(X0,Y0,s),b=hash(X0+1,Y0,s),c=hash(X0,Y0+1,s),d=hash(X0+1,Y0+1,s);return lerp(lerp(a,b,tx),lerp(c,d,tx),ty)}function fbm(x,y,s=0){let v=0,a=.56,f=.004,n=0;for(let i=0;i<4;i++){v+=noise(x*f,y*f,s+i*19)*a;n+=a;a*=.5;f*=2.05}return v/n}
+function rect(x,y,w,h,c){G.fillStyle=c;G.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)))}function px(x,y,c){rect(x,y,1,1,c)}function line(x1,y1,x2,y2,c,w=1){G.strokeStyle=c;G.lineWidth=w;G.lineCap='square';G.beginPath();G.moveTo(Math.round(x1),Math.round(y1));G.lineTo(Math.round(x2),Math.round(y2));G.stroke()}
+const WW=2400,WH=1600,cam={x:WW*.5,y:WH*.5,z:1.35,follow:false};
+function S(x,y){return{x:Math.round(B.width/2+(x-cam.x)*cam.z/PIX),y:Math.round(B.height/2+(y-cam.y)*cam.z/PIX)}}function W(x,y){return{x:cam.x+(x-innerWidth/2)/cam.z,y:cam.y+(y-innerHeight/2)/cam.z}}
+function terrain(x,y){const edge=clamp(1-Math.pow(Math.max(Math.abs(x/WW*2-1),Math.abs(y/WH*2-1)),1.8),0,1),e=clamp(.18+fbm(x,y,4)*.47+edge*.29+Math.pow(Math.abs(fbm(x+350,y-170,8)-.5)*2,3)*.14,0,1),m=clamp(fbm(x-300,y+200,12)*.75+(1-e)*.15,0,1),riverY=WH*.53+Math.sin(x*.004)*115+Math.sin(x*.011)*28,r=Math.abs(y-riverY);let b='grass';if(e<.34)b='water';else if(r<24)b='river';else if(r<43&&m>.55)b='marsh';else if(e>.78)b='alpine';else if(e>.66)b='rock';else if(m>.68)b='forest';else if(m<.28)b='dry';return{e,m,b,riverY}}
+const PAL={water:['#153848','#1b4a5d'],river:['#245f73','#32798b'],marsh:['#476a58','#577c66'],forest:['#24482f','#315b39'],grass:['#4e703f','#5e8149'],dry:['#876941','#9a7950'],rock:['#5d6562','#707875'],alpine:['#92999c','#b0b5b7']};
+function drawWorld(t){const tile=11;rect(0,0,B.width,B.height,'#06100d');for(let sy=-tile;sy<B.height+tile;sy+=tile)for(let sx=-tile;sx<B.width+tile;sx+=tile){const wx=cam.x+(sx-B.width/2)*PIX/cam.z,wy=cam.y+(sy-B.height/2)*PIX/cam.z,q=terrain(wx,wy),n=hash((wx/34)|0,(wy/34)|0,2),p=PAL[q.b],lift=Math.round(Math.max(0,q.e-.34)*5*cam.z/PIX);rect(sx,sy-lift,tile+1,tile+1,p[n>.52?1:0]);if((q.b==='river'||q.b==='water')&&Math.sin(t*.005+wx*.03+wy*.01)>.55)rect(sx+2,sy-lift+3,5,1,'#65a2af');if(q.b==='forest'&&n>.64){rect(sx+5,sy-lift+2,1,6,'#493323');rect(sx+3,sy-lift,5,4,'#2b6138')}else if((q.b==='grass'||q.b==='marsh')&&n>.62){px(sx+5,sy-lift+4,'#83a162');px(sx+6,sy-lift+3,'#91ad6d')}else if((q.b==='rock'||q.b==='alpine')&&n>.72)rect(sx+3,sy-lift+3,4,2,'#8b918e')}}
+const food=[];function spawnFood(x,y){const b=terrain(x,y).b;if(['water','river','rock','alpine'].includes(b))return;food.push({x,y})}function nearestFood(a,r){let best=null,bd=r*r;for(const f of food){const d=(f.x-a.x)**2+(f.y-a.y)**2;if(d<bd){bd=d;best=f}}return best}
+function drawFood(f){const q=S(f.x,f.y);rect(q.x-1,q.y-2,3,2,'#4c753d');px(q.x,q.y-3,'#d96a65')}
+const TYPES={DEER:{name:'Reed Deer',pred:false,body:'#9eaf74',light:'#d4d8a3'},FOX:{name:'Rust Fox',pred:true,body:'#a0503d',light:'#dc8064'}};
+const animals=[];let nextId=1,maxGen=0;
+function newGenome(){return{food:.7+rnd()*.6,fear:.7+rnd()*.7,hunt:.7+rnd()*.6,social:rnd(),curious:rnd(),speed:.85+rnd()*.3,vision:.85+rnd()*.3,size:.9+rnd()*.2,legs:.9+rnd()*.2,tail:.85+rnd()*.3,sigma:.08+rnd()*.05}}
+function childGenome(a,b){const g={};for(const k of ['food','fear','hunt','social','curious','speed','vision','size','legs','tail']){g[k]=rnd()<.5?a[k]:b[k]}g.sigma=clamp((a.sigma+b.sigma)*.5*Math.exp(randn()*.08),.025,.22);for(const k of ['food','fear','hunt','social','curious','speed','vision','size','legs','tail'])if(rnd()<.3)g[k]=clamp(g[k]+randn()*g.sigma,k==='size'||k==='legs'||k==='tail'?.7:0,k==='size'||k==='legs'||k==='tail'?1.35:1.6);return g}
+function habitat(kind,center={x:WW*.5,y:WH*.5},rad=500){for(let i=0;i<180;i++){const x=clamp(center.x+(rnd()-.5)*rad,20,WW-20),y=clamp(center.y+(rnd()-.5)*rad,20,WH-20),b=terrain(x,y).b;if(kind==='DEER'?['grass','forest','marsh'].includes(b):['grass','forest','dry'].includes(b))return{x,y}}return{x:center.x,y:center.y}}
+function spawn(kind,parentA=null,parentB=null,pos=null){const t=TYPES[kind],p=pos||habitat(kind),g=parentA?childGenome(parentA.g,parentB?parentB.g:parentA.g):newGenome(),a={id:nextId++,kind,name:t.name,pred:t.pred,body:t.body,light:t.light,g,x:p.x,y:p.y,vx:0,vy:0,ang:rnd()*TAU,energy:72+rnd()*20,health:100,age:0,gen:parentA?Math.max(parentA.gen,parentB?parentB.gen:0)+1:0,repro:500+rnd()*500,state:'ROAM',gait:rnd()*TAU,breath:rnd()*TAU,blink:0,tail:rnd()*TAU,wander:rnd()*TAU,alive:true};animals.push(a);maxGen=Math.max(maxGen,a.gen);return a}
+function nearestAnimal(a,test,r){let best=null,bd=r*r;for(const o of animals){if(o===a||!o.alive||!test(o))continue;const d=(o.x-a.x)**2+(o.y-a.y)**2;if(d<bd){bd=d;best=o}}return best}
+function steer(a,target,away=false,strength=.06){if(!target)return;let dx=target.x-a.x,dy=target.y-a.y;if(away){dx=-dx;dy=-dy}const d=Math.hypot(dx,dy)||1,desired=Math.atan2(dy,dx),delta=Math.atan2(Math.sin(desired-a.ang),Math.cos(desired-a.ang));a.ang+=clamp(delta,-.16,.16)*strength/.06;a.vx+=Math.cos(a.ang)*strength;a.vy+=Math.sin(a.ang)*strength}
+function stepAI(a){const sight=150*a.g.vision,foodTarget=nearestFood(a,sight),threat=!a.pred?nearestAnimal(a,o=>o.pred,sight):null,prey=a.pred?nearestAnimal(a,o=>!o.pred,sight):null;const t=terrain(a.x,a.y);a.wander+=randn()*.07;a.ang+=Math.sin(a.wander)*.018*a.g.curious;if(a.pred&&prey){a.state='STALK';steer(a,prey,false,.05*a.g.hunt);if(Math.hypot(prey.x-a.x,prey.y-a.y)<10){a.state='BITE';prey.health-=4.5*a.g.size;prey.vx+=(prey.x-a.x)*.02;prey.vy+=(prey.y-a.y)*.02;if(prey.health<=0){prey.alive=false;a.energy=Math.min(105,a.energy+35)}}}else if(!a.pred&&threat){a.state='FLEE';steer(a,threat,true,.075*a.g.fear)}else if(!a.pred&&a.energy<78&&foodTarget){a.state='FORAGE';steer(a,foodTarget,false,.045*a.g.food);if(Math.hypot(foodTarget.x-a.x,foodTarget.y-a.y)<8){food.splice(food.indexOf(foodTarget),1);a.energy=Math.min(105,a.energy+20);a.state='EAT'}}else{a.state='ROAM';a.vx+=Math.cos(a.ang)*.012*(.4+a.g.curious);a.vy+=Math.sin(a.ang)*.012*(.4+a.g.curious)}if(['water','river'].includes(t.b)){a.vx*=.72;a.vy*=.72}}
+function integrate(a,dt){const max=(a.pred?1.15:1.05)*a.g.speed*a.g.legs,m=Math.hypot(a.vx,a.vy);if(m>max){a.vx=a.vx/m*max;a.vy=a.vy/m*max}a.vx*=.93;a.vy*=.93;a.x=clamp(a.x+a.vx*dt,8,WW-8);a.y=clamp(a.y+a.vy*dt,8,WH-8);if(Math.hypot(a.vx,a.vy)>.02)a.ang=Math.atan2(a.vy,a.vx);a.gait+=Math.hypot(a.vx,a.vy)*.8*dt+.02;a.breath+=.035*dt;a.tail+=.03*dt;a.energy-=.0035*dt;a.age+=dt;a.repro-=dt;if(a.blink>0)a.blink-=dt;else if(rnd()<.0015*dt)a.blink=4;if(a.energy<=0||a.health<=0||a.age>28000)a.alive=false}
+function reproduce(){if(animals.length>=18)return;for(const a of animals){if(!a.alive||a.energy<86||a.repro>0)continue;const mate=nearestAnimal(a,o=>o.kind===a.kind&&o.energy>82&&o.repro<=0,65);if(mate&&rnd()<.12){spawn(a.kind,a,mate,{x:(a.x+mate.x)/2,y:(a.y+mate.y)/2});a.energy-=16;mate.energy-=16;a.repro=550+rnd()*500;mate.repro=550+rnd()*500;if(animals.length>=18)break}}}
+function drawAnimal(a,t){const q=S(a.x,a.y),face=Math.cos(a.ang)>=0?1:-1,sp=Math.hypot(a.vx,a.vy),bw=Math.max(7,Math.round((a.pred?8:9)*a.g.size)),bh=Math.max(4,Math.round((a.pred?4:5)*a.g.size)),leg=Math.max(3,Math.round(4*a.g.legs)),tail=Math.max(3,Math.round(5*a.g.tail)),bob=sp>.05?Math.sin(a.gait*2)*.6:Math.sin(a.breath)*.3,stride=sp>.05?Math.sin(a.gait)*2:0;rect(q.x-bw/2,q.y+3,bw,2,'#02040355');let tx=q.x-face*bw*.45,ty=q.y-1+bob;for(let i=1;i<=3;i++){const nx=q.x-face*(bw*.45+tail*i/3),ny=q.y-1+bob+Math.sin(a.tail+i*.7)*i*.4+(a.state==='FLEE'?-i*.2:0);line(tx,ty,nx,ny,a.body,2);tx=nx;ty=ny}line(q.x-bw*.25,q.y,q.x-bw*.25+stride,q.y+leg,a.body,2);line(q.x+bw*.25,q.y,q.x+bw*.25-stride,q.y+leg,a.body,2);rect(q.x-bw/2,q.y-bh+bob,bw,bh,a.body);rect(q.x-bw/2+1,q.y-bh+bob,bw-2,1,a.light);let hx=q.x+face*(bw/2+2),hy=q.y-bh+1+bob;if(a.state==='EAT')hy+=3;if(a.state==='STALK')hy+=1;rect(hx-2,hy-2,5,4,a.body);rect(hx+(face>0?2:-3),hy,3,2,a.light);if(!a.pred){line(hx-1,hy-2,hx-2,hy-5,a.body,1);line(hx+1,hy-2,hx+2,hy-5,a.body,1)}else{px(hx-1,hy-3,'#6c352d');px(hx+1,hy-3,'#6c352d')}px(hx+(face>0?2:-1),hy-1,a.blink>0?'#2b211c':'#f1e6b7');if(a.state==='BITE')rect(hx+face*3,hy+1,2,1,'#eee0c7');if(selected===a){G.strokeStyle='#ffe879';G.strokeRect(q.x-bw/2-5,q.y-bh-7,bw+10,bh+leg+12)}}
+let raining=false,selected=null,tick=0;
+function sim(){tick++;for(const a of animals)if(a.alive){if(tick%5===a.id%5)stepAI(a);integrate(a,1)}if(tick%150===0)reproduce();if(tick%180===0){for(let i=animals.length-1;i>=0;i--)if(!animals[i].alive){if(selected===animals[i])selected=null;animals.splice(i,1)}while(food.length<80)spawnFood(rnd()*WW,rnd()*WH)}}
+function render(t){drawWorld(t);for(const f of food)drawFood(f);for(const a of [...animals].filter(a=>a.alive).sort((a,b)=>a.y-b.y))drawAnimal(a,t);if(raining){rect(0,0,B.width,B.height,'#36536518');for(let i=0;i<34;i++){const x=(hash(i,(tick/2)|0,90)*B.width)|0,y=(hash(i,(tick/2)|0,91)*B.height)|0;line(x,y,x-1,y+3,'#a8d0df',1)}}X.fillStyle='#040706';X.fillRect(0,0,innerWidth,innerHeight);X.imageSmoothingEnabled=false;X.drawImage(B,0,0,innerWidth,innerHeight);updateUI()}
+function updateUI(){const alive=animals.filter(a=>a.alive);stats.innerHTML=`life ${alive.length} · generation ${maxGen}<br>${raining?'rain':'clear'} · ${selected?'tap ◎ to follow':'tap a creature'}`;if(!selected||!selected.alive){card.style.display='none';return}card.style.display='block';card.innerHTML=`<h2>${selected.name} #${selected.id}</h2><div class="row"><span>state</span><b>${selected.state}</b></div><div class="row"><span>generation</span><b>${selected.gen}</b></div><div class="row"><span>energy</span><b>${selected.energy.toFixed(0)}</b></div><div class="row"><span>health</span><b>${selected.health.toFixed(0)}</b></div><div class="row"><span>speed gene</span><b>${selected.g.speed.toFixed(2)}</b></div><div class="row"><span>fear / hunt</span><b>${(selected.pred?selected.g.hunt:selected.g.fear).toFixed(2)}</b></div><div class="row"><span>curiosity</span><b>${selected.g.curious.toFixed(2)}</b></div><div class="row"><span>mutation σ</span><b>${selected.g.sigma.toFixed(3)}</b></div><p class="dim">Offspring cross over inherited behavior + body genes, then mutate. No giant evolution lab is running every frame.</p>`}
+let paused=false,speed=1,last=0,acc=0;const STEP=1000/60;function frame(t){const dt=Math.min(50,t-last||16.7);last=t;acc+=dt;if(!paused)while(acc>=STEP){for(let i=0;i<speed;i++)sim();acc-=STEP}if(cam.follow&&selected&&selected.alive){cam.x=lerp(cam.x,selected.x,.08);cam.y=lerp(cam.y,selected.y,.08)}render(t);requestAnimationFrame(frame)}
+const pointers=new Map();let drag=null,pinch=0,pinchZ=1,moved=false;C.addEventListener('pointerdown',e=>{pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});C.setPointerCapture(e.pointerId);moved=false;if(pointers.size===1)drag={x:e.clientX,y:e.clientY};if(pointers.size===2){const a=[...pointers.values()];pinch=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);pinchZ=cam.z}});C.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;const prev=pointers.get(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===2){const a=[...pointers.values()],d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);if(pinch>0)cam.z=clamp(pinchZ*d/pinch,.65,3.1);moved=true;return}if(pointers.size===1&&drag){const dx=e.clientX-prev.x,dy=e.clientY-prev.y;if(Math.abs(e.clientX-drag.x)+Math.abs(e.clientY-drag.y)>4)moved=true;cam.follow=false;cam.x=clamp(cam.x-dx/cam.z,0,WW);cam.y=clamp(cam.y-dy/cam.z,0,WH)}});C.addEventListener('pointerup',e=>{if(!moved&&pointers.size===1){const w=W(e.clientX,e.clientY);let best=null,bd=30*30;for(const a of animals){const d=(a.x-w.x)**2+(a.y-w.y)**2;if(a.alive&&d<bd){bd=d;best=a}}selected=best}pointers.delete(e.pointerId);if(!pointers.size){drag=null;pinch=0}});C.addEventListener('pointercancel',e=>pointers.delete(e.pointerId));
+document.querySelector('#pause').onclick=()=>{paused=!paused;document.querySelector('#pause').textContent=paused?'▶':'Ⅱ'};document.querySelector('#speed').onclick=()=>{speed=speed===1?2:speed===2?4:1;document.querySelector('#speed').textContent='×'+speed};document.querySelector('#follow').onclick=()=>{cam.follow=!!selected&&!cam.follow;document.querySelector('#follow').textContent=cam.follow?'●':'◎'};document.querySelector('#rain').onclick=()=>raining=!raining;document.querySelector('#reset').onclick=()=>start();
+function start(){seed=(Math.random()*0xffffffff)>>>0;animals.length=0;food.length=0;nextId=1;maxGen=0;selected=null;tick=0;const start={x:WW*.5,y:WH*.52};for(let i=0;i<75;i++)spawnFood(clamp(start.x+(rnd()-.5)*700,20,WW-20),clamp(start.y+(rnd()-.5)*500,20,WH-20));for(let i=0;i<9;i++)spawn('DEER',null,null,habitat('DEER',start,520));for(let i=0;i<3;i++)spawn('FOX',null,null,habitat('FOX',start,600));cam.x=start.x;cam.y=start.y;cam.z=1.35;cam.follow=false}
+start();requestAnimationFrame(frame);
+</script>
 </body>
 </html>
