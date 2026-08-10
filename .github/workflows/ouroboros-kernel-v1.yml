@@ -1,0 +1,41 @@
+name: Build OUROBOROS Material Kernel
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ouroboros-kernel-v1/native/**'
+      - 'ouroboros-kernel-v1/build-web.sh'
+      - '.github/workflows/ouroboros-kernel-v1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Native headless conservation run
+        run: |
+          g++ ouroboros-kernel-v1/native/material_kernel.cpp -O2 -std=c++20 -o /tmp/ouroboros-kernel
+          /tmp/ouroboros-kernel | tee /tmp/kernel-receipt.txt
+      - name: Build WebAssembly with Emscripten
+        run: |
+          docker run --rm -v "$PWD:/src" -w /src/ouroboros-kernel-v1 emscripten/emsdk:latest bash ./build-web.sh
+      - name: Verify generated WASM
+        run: |
+          test -s ouroboros-kernel-v1/kernel.js
+          test -s ouroboros-kernel-v1/kernel.wasm
+          ls -lh ouroboros-kernel-v1/kernel.js ouroboros-kernel-v1/kernel.wasm
+      - name: Publish generated kernel
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ouroboros-kernel-v1/kernel.js ouroboros-kernel-v1/kernel.wasm
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Build OUROBOROS material kernel WASM'
+          git push
