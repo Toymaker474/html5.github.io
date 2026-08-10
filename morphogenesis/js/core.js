@@ -16,6 +16,7 @@ function bootPct(p,s){fillEl.style.width=p+'%';stateEl.textContent=s}
 const TAU=Math.PI*2;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp=(a,b,t)=>a+(b-a)*t;
+const angleDelta=(a,b)=>Math.atan2(Math.sin(b-a),Math.cos(b-a));
 
 function rand(a=1,b=null){if(b===null){b=a;a=0}return a+Math.random()*(b-a)}
 function gauss(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(TAU*v)}
@@ -29,12 +30,13 @@ const CFG={
   MAX_POP:300,
   FOOD_TARGET:680,
   GEN_SECONDS:58,
-  CELL:220
+  CELL:220,
+  MAX_CARCASSES:120
 };
 
 let DPR=1,SW=1,SH=1,last=performance.now(),fps=60,simSpeed=1,time=0;
-let creatures=[],foods=[],particles=[];
-let generation=1,genStart=0,births=0,deaths=0,follow=false;
+let creatures=[],foods=[],carcasses=[],particles=[];
+let generation=1,genStart=0,births=0,deaths=0,bites=0,swallows=0,follow=false;
 let audioCtx=null,audioOn=false,masterGain=null;
 
 const cam={x:CFG.WORLD_W*.5,y:CFG.WORLD_H*.5,z:.46,tz:.46};
