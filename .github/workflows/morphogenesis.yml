@@ -1,0 +1,43 @@
+name: Morphogenesis Experiment
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'morphogenesis/**'
+      - '.github/workflows/morphogenesis.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'morphogenesis/**'
+      - '.github/workflows/morphogenesis.yml'
+  workflow_dispatch:
+
+jobs:
+  verify-morphogenesis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax check browser files
+        run: |
+          set -euo pipefail
+          test -f morphogenesis/index.html
+          test -f morphogenesis/js/core.js
+          test -f morphogenesis/js/spatial.js
+          test -f morphogenesis/js/genetics.js
+          test -f morphogenesis/js/entities.js
+          test -f morphogenesis/js/evolution.js
+          test -f morphogenesis/js/render.js
+          test -f morphogenesis/js/audio.js
+          test -f morphogenesis/js/ui.js
+          test -f morphogenesis/js/main.js
+          for f in morphogenesis/js/*.js; do node --check "$f"; done
+      - name: Deterministic anatomy and feeding tests
+        run: node morphogenesis/model.test.mjs | tee morphogenesis-test.txt
+      - name: Preserve experiment evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: morphogenesis-evidence-${{ github.run_id }}
+          path: morphogenesis-test.txt
+          if-no-files-found: ignore
