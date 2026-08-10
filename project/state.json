@@ -8,9 +8,9 @@
   "canonical_directive": {"path":"project/CANONICAL_MASTER_DIRECTIVE.md","status":"IN_REPO"},
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
   "stable": {
-    "label": "ecosystem-sandbox-fluid-refinement-local-tested",
+    "label": "ecosystem-sandbox-fluid-refinement-ci-pass",
     "verified": false,
-    "note": "The restored multi-creature ecosystem remains the primary GENESIS experience. A new finer water layer is source-wired and locally tested, but the ecosystem route is not yet live/device verified. Physical Creature V1 remains preserved as a separate CI-proven causal test slice."
+    "note": "The restored multi-creature ecosystem remains the primary GENESIS experience. The new finer water layer has local and independent GitHub Actions test evidence, but the deployed ecosystem route is not yet live/device verified. Physical Creature V1 remains preserved as a separate CI-proven causal test slice."
   },
   "active_experience": {
     "route": "/genesis-codehood/",
@@ -52,7 +52,7 @@
     "browser_exercise": {"live_pages":"NOT_TESTED","iphone_safari":"NOT_TESTED"}
   },
   "fluid_refinement": {
-    "verification_level": "TESTED",
+    "verification_level": "CI_PASS",
     "source": "genesis-codehood/fluid_refinement.js",
     "tests": "genesis-codehood/tests/fluid_refinement.test.mjs",
     "coarse_cell_world_size": 7,
@@ -69,7 +69,24 @@
         "coarse_to_fine_sync_is_gradual": "PASS"
       }
     },
-    "ci": {"status":"PENDING","workflow":".github/workflows/genesis-codehood.yml","run_id":null},
+    "ci": {
+      "status":"PASS",
+      "workflow":".github/workflows/genesis-codehood.yml",
+      "proof_pull_request":83,
+      "run_id":31415020788,
+      "job_id":93541872398,
+      "tested_pr_head":"a87e841f5624286286c19254e928d6151257456f",
+      "tested_merge_ref":"84915c57525103364f7e4273e79629f0f945d3b0",
+      "simulation_source_changed_on_proof_branch":false,
+      "cases": {
+        "fine_resolution_is_2x_per_axis":"PASS",
+        "internal_pairwise_mass_conservation":"PASS",
+        "gravity_moves_center_of_mass_downward":"PASS",
+        "fluid_current_couples_to_creature_and_displacement_redistributes_mass":"PASS",
+        "coarse_to_fine_sync_is_gradual":"PASS"
+      },
+      "syntax_check":"PASS"
+    },
     "live_browser": "NOT_TESTED"
   },
   "physical_creature_v1": {
@@ -102,8 +119,8 @@
     {"route":"/materials/","label":"Materials 0.1","status":"PRESERVED"},
     {"route":"/sim/","label":"Matter Lab 0.6","status":"PRESERVED"}
   ],
-  "active_objective": "Obtain independent CI evidence for the new fluid_refinement test, then exercise the restored /genesis-codehood/ route in a functioning browser and inspect fluid stability, performance, creature-water coupling and visual smoothness before increasing verification.",
-  "next_gate": "CI_PASS for fluid_refinement requires the existing GENESIS Codehood Verify workflow to execute tests/fluid_refinement.test.mjs successfully. LIVE_TESTED still requires actual deployed browser execution; a source fetch or CI result alone is insufficient.",
+  "active_objective": "Exercise the deployed /genesis-codehood/ route in a functioning browser and inspect refined-fluid stability, frame cost, creature-water coupling and visual smoothness before increasing verification or adding another major subsystem.",
+  "next_gate": "LIVE_TESTED still requires actual deployed browser execution of the ecosystem with fluid_refinement.js active. CI_PASS proves the deterministic Node contract and syntax only; a source fetch or CI result alone is insufficient for live runtime/device claims.",
   "invariants": [
     "IMPLEMENTATION > NAME",
     "ROADMAP != IMPLEMENTED != TESTED != CI_PASS != LIVE_TESTED != DEVICE_TESTED != VERIFIED",
@@ -116,7 +133,8 @@
     "The refined water solver must conserve pairwise internal transfer mass within tolerance when coarse synchronization is disabled",
     "Refined fluid visualization must read refined WATER state rather than author fluid outcomes",
     "fluid_refinement must not be called CFD/SPH/FLIP/PBF/MPM",
+    "CI_PASS does not imply live deployment PASS",
     "Unknown or unexercised runtime state remains UNKNOWN/NOT_TESTED"
   ],
-  "updated": "2026-08-10T13:28:00-04:00"
+  "updated": "2026-08-10T13:40:00-04:00"
 }
