@@ -3,11 +3,15 @@ import { TASKS, VERIFY_CASES, evaluateProgram, unlockedTaskNames } from './tasks
 import { createBrain } from './brain.js';
 
 export const ROLES=Object.freeze(['BUILDER','CRITIC','TESTER','OPTIMIZER','ARCHITECT','SECURITY']);
-export function emptyLibrary(){return {};}
-function pickTask(library,rng){const names=unlockedTaskNames(library);return names[(rng()*names.length)|0];}
+let ACTIVE_LIBRARY={};
+export function emptyLibrary(){ACTIVE_LIBRARY={};return ACTIVE_LIBRARY;}
+export function getActiveLibrary(){return ACTIVE_LIBRARY;}
+function bindLibrary(library){if(library&&library!==ACTIVE_LIBRARY)ACTIVE_LIBRARY=library;return ACTIVE_LIBRARY;}
+function pickTask(library,rng){bindLibrary(library);const names=unlockedTaskNames(library);return names[(rng()*names.length)|0];}
 function fitnessOf(report,program){return report.passRate*1200+(report.errorQuality??0)*240-report.avgSteps*.25-program.length*1.2;}
 
 export function createAgent(id,rng=Math.random,parent=null,library={}){
+  bindLibrary(library);
   const task=parent&&rng()<.70?parent.task:pickTask(library,rng);
   const parentProgram=parent?.bestProgram||parent?.program;
   let program=parentProgram?mutateProgram(parentProgram,rng):randomProgram(rng,2,8);
@@ -23,82 +27,54 @@ export function createAgent(id,rng=Math.random,parent=null,library={}){
     stats:{jobs:0,verified:0,critiques:0,conflicts:0,food:0,shelter:0,children:0,social:0,attempts:0}
   };
 }
-
 export function retargetAgent(agent,library,rng=Math.random){
-  const names=unlockedTaskNames(library);
+  bindLibrary(library);const names=unlockedTaskNames(library);
   if(!names.includes(agent.task)||rng()<.08){
-    agent.task=names[(rng()*names.length)|0];
-    agent.program=randomProgram(rng,2,8);
-    agent.bestProgram=cloneProgram(agent.program);
+    agent.task=names[(rng()*names.length)|0];agent.program=randomProgram(rng,2,8);agent.bestProgram=cloneProgram(agent.program);
     agent.bestFitness=-Infinity;agent.bestPassRate=0;agent.bestErrorQuality=0;
   }
 }
-
 function candidateFrom(agent,library,rng,i){
   const base=agent.bestProgram?.length?agent.bestProgram:agent.program;
   if(i===0)return cloneProgram(agent.program);
   if(library[agent.task]&&rng()<.06)return crossoverPrograms(base,library[agent.task].program,rng);
-  let out=cloneProgram(base);
-  const edits=1+(rng()<.22?1:0)+(rng()<.06?1:0);
-  for(let k=0;k<edits;k++)out=mutateProgram(out,rng);
-  return out;
+  let out=cloneProgram(base);const edits=1+(rng()<.22?1:0)+(rng()<.06?1:0);
+  for(let k=0;k<edits;k++)out=mutateProgram(out,rng);return out;
 }
-
 export function scoreCandidate(agent,library,rng=Math.random){
-  const task=TASKS[agent.task];
-  const sample=[];for(let i=0;i<24;i++)sample.push(VERIFY_CASES[(rng()*VERIFY_CASES.length)|0]);
+  bindLibrary(library);
+  const task=TASKS[agent.task];const sample=[];for(let i=0;i<24;i++)sample.push(VERIFY_CASES[(rng()*VERIFY_CASES.length)|0]);
   const attempts=agent.role==='BUILDER'||agent.role==='OPTIMIZER'?12:7;
-  let roundBest=null,roundFitness=-Infinity,roundReport=null;
+  let roundBest=null,roundFitness=-Infinity,roundReport=null,improvedPersonal=false;
   let shipped=false,improvedLibrary=false,verifiedReport=null;
-
   for(let i=0;i<attempts;i++){
-    const candidate=candidateFrom(agent,library,rng,i);
-    const report=evaluateProgram(candidate,agent.task,sample);
-    const fitness=fitnessOf(report,candidate);
+    const candidate=candidateFrom(agent,library,rng,i),report=evaluateProgram(candidate,agent.task,sample),fitness=fitnessOf(report,candidate);
     if(fitness>roundFitness){roundFitness=fitness;roundBest=candidate;roundReport=report;}
-    if(fitness>agent.bestFitness){
-      agent.bestFitness=fitness;agent.bestPassRate=report.passRate;agent.bestErrorQuality=report.errorQuality??0;agent.bestProgram=cloneProgram(candidate);
-    }
+    if(fitness>agent.bestFitness){improvedPersonal=true;agent.bestFitness=fitness;agent.bestPassRate=report.passRate;agent.bestErrorQuality=report.errorQuality??0;agent.bestProgram=cloneProgram(candidate);}
     if(report.verified){
       const full=evaluateProgram(candidate,agent.task,VERIFY_CASES);
       if(full.verified){
-        const prior=library[agent.task];
-        const better=!prior||candidate.length<prior.program.length||full.avgSteps<prior.report.avgSteps;
+        const prior=library[agent.task],better=!prior||candidate.length<prior.program.length||full.avgSteps<prior.report.avgSteps;
         if(better)library[agent.task]={task:agent.task,program:cloneProgram(candidate),report:full,author:agent.label,version:(prior?.version??0)+1,tick:0};
         agent.bestProgram=cloneProgram(candidate);agent.bestPassRate=1;agent.bestErrorQuality=1;agent.bestFitness=Math.max(agent.bestFitness,fitnessOf(full,candidate));
-        shipped=true;improvedLibrary=improvedLibrary||better;verifiedReport=full;
-        break;
+        shipped=true;improvedLibrary=improvedLibrary||better;verifiedReport=full;break;
       }
     }
   }
-
-  agent.lastAttempts=attempts;agent.stats.attempts=(agent.stats.attempts||0)+attempts;
-  agent.lastReport=verifiedReport||roundReport;
-  const correctness=(verifiedReport||roundReport)?.passRate??0;
-  const closeness=(verifiedReport||roundReport)?.errorQuality??0;
+  agent.lastAttempts=attempts;agent.stats.attempts=(agent.stats.attempts||0)+attempts;agent.lastReport=verifiedReport||roundReport;
+  const correctness=(verifiedReport||roundReport)?.passRate??0,closeness=(verifiedReport||roundReport)?.errorQuality??0;
   const pay=correctness>.50?(1.5+correctness*task.reward*.14):0;
   agent.money+=pay;agent.skill=Math.min(100,agent.skill+correctness*.48+closeness*.04);agent.stats.jobs++;
-
-  if(shipped){
-    agent.money+=task.reward;agent.stats.verified++;
-    agent.program=mutateProgram(agent.bestProgram,rng);
-    return{report:verifiedReport,pay:pay+task.reward,shipped:true,improved:improvedLibrary,improvedPersonal:true,attempts};
-  }
-
+  if(shipped){agent.money+=task.reward;agent.stats.verified++;agent.program=mutateProgram(agent.bestProgram,rng);return{report:verifiedReport,pay:pay+task.reward,shipped:true,improved:improvedLibrary,improvedPersonal:true,attempts};}
   agent.program=mutateProgram(agent.bestProgram?.length?agent.bestProgram:roundBest,rng);
-  return{report:roundReport,pay,shipped:false,improved:false,improvedPersonal:roundFitness>=agent.bestFitness,attempts};
+  return{report:roundReport,pay,shipped:false,improved:false,improvedPersonal,attempts};
 }
-
 export function socialLearn(a,b,rng=Math.random){
   if(!b||!b.alive||a===b)return false;
-  if(a.task===b.task&&b.bestFitness>a.bestFitness&&rng()<.22){
-    a.program=crossoverPrograms(a.bestProgram,b.bestProgram||b.program,rng);a.stats.social++;return true;
-  }
-  if(rng()<.06){a.brain=createBrain(rng,b.brain);a.stats.social++;return true;}
-  return false;
+  if(a.task===b.task&&b.bestFitness>a.bestFitness&&rng()<.22){a.program=crossoverPrograms(a.bestProgram,b.bestProgram||b.program,rng);a.stats.social++;return true;}
+  if(rng()<.06){a.brain=createBrain(rng,b.brain);a.stats.social++;return true;}return false;
 }
 export function critiqueAgent(critic,target){
   const full=evaluateProgram(target.bestProgram||target.program,target.task,VERIFY_CASES);
-  if(!full.verified){critic.money+=4;critic.skill=Math.min(100,critic.skill+.16);critic.stats.critiques++;return full.firstFailure;}
-  return null;
+  if(!full.verified){critic.money+=4;critic.skill=Math.min(100,critic.skill+.16);critic.stats.critiques++;return full.firstFailure;}return null;
 }
