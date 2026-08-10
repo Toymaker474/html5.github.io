@@ -1,0 +1,59 @@
+name: GENESIS Physical Creature V1
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'genesis-codehood/physical-creature-v1/**'
+      - 'genesis-codehood/index.html'
+      - 'project/state.json'
+      - 'index.html'
+      - 'forge/index.html'
+      - '.github/workflows/physical-creature-v1.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'genesis-codehood/physical-creature-v1/**'
+      - 'genesis-codehood/index.html'
+      - 'project/state.json'
+      - 'index.html'
+      - 'forge/index.html'
+      - '.github/workflows/physical-creature-v1.yml'
+  workflow_dispatch:
+
+jobs:
+  verify-physical-creature-v1:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail-closed file and syntax gate
+        run: |
+          set -euo pipefail
+          test -f genesis-codehood/physical-creature-v1/index.html
+          test -f genesis-codehood/physical-creature-v1/model.js
+          test -f genesis-codehood/physical-creature-v1/app.js
+          test -f genesis-codehood/physical-creature-v1/style.css
+          test -f genesis-codehood/physical-creature-v1/model.test.mjs
+          test -f genesis-codehood/physical-creature-v1/README.md
+          node --check genesis-codehood/physical-creature-v1/model.js
+          node --check genesis-codehood/physical-creature-v1/app.js
+          grep -q "authored stabilizer" genesis-codehood/physical-creature-v1/index.html
+          grep -q "does \*\*not\*\* claim full biology" genesis-codehood/physical-creature-v1/README.md
+      - name: Execute Physical Creature V1 causal tests
+        run: |
+          set -euo pipefail
+          node genesis-codehood/physical-creature-v1/model.test.mjs | tee physical-creature-v1-test.txt
+          grep -q "PASS A body conservation/invariants" physical-creature-v1-test.txt
+          grep -q "PASS B muscle force actually moves body" physical-creature-v1-test.txt
+          grep -q "PASS C damaged limb reduces locomotion" physical-creature-v1-test.txt
+          grep -q "PASS D food cannot become energy without ingestion" physical-creature-v1-test.txt
+          grep -q "PASS E physical ingestion then digestion releases energy over time" physical-creature-v1-test.txt
+          grep -q "PASS F blood loss affects performance/state" physical-creature-v1-test.txt
+          grep -q "PASS F2 respiratory damage changes physiology" physical-creature-v1-test.txt
+          grep -q "PASS N deterministic seed produces reproducible run" physical-creature-v1-test.txt
+      - name: Preserve CI evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: physical-creature-v1-evidence-${{ github.run_id }}
+          path: physical-creature-v1-test.txt
+          if-no-files-found: error
