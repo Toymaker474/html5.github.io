@@ -3,47 +3,48 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#090b10">
-<title>GENESIS // CODEHOOD FORTRESS</title>
+<meta name="theme-color" content="#090a0d">
+<title>GENESIS // CODEHOOD: CAVEMAN AGE</title>
 <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
 <div id="boot" class="boot">
   <div class="boot-box">
-    <pre class="boot-logo">   \☺/   \☺/   \☺/
-    |     |     |      CODEHOOD FORTRESS
-   / \   / \   / \     survive → learn → build → use</pre>
-    <div class="row"><b id="bootLabel">GENERATING WORLD</b><span id="bootPercent">0%</span></div>
+    <pre class="boot-logo">      *
+   \☺/ \☺/      CODEHOOD
+    |   |       CAVEMAN AGE
+   / \ / \      survive → learn → invent → use</pre>
+    <div class="row"><b id="bootLabel">MAKING PREHISTORY</b><span id="bootPercent">0%</span></div>
     <div class="loadbar"><i id="bootBar"></i></div>
-    <div id="bootDetail" class="boot-detail">making biomes, rivers, ruins, farms, caves and settlements…</div>
+    <div id="bootDetail" class="boot-detail">carving rivers, caves, forests, deserts, ruins and wildlife…</div>
   </div>
 </div>
 <div class="app">
 <header>
-  <span class="brand">CODEHOOD FORTRESS</span>
-  <span class="badge">5 PEOPLE · ZERO SOLVED PROGRAMS</span>
+  <span class="brand">CODEHOOD // CAVEMAN AGE</span>
+  <span class="badge">5 FOUNDERS · ZERO SOLVED PROGRAMS</span>
   <button id="pause">⏸ PAUSE</button>
-  <button id="turbo" class="primary">⚡ EVOLVE ×1</button>
+  <button id="turbo" class="primary">⚡ SPEED ×1</button>
   <button id="rain">🌧 STORM</button>
-  <button id="zero">🌍 NEW WORLD</button>
+  <button id="zero">🔥 NEW TRIBE</button>
 </header>
 <main class="world-wrap">
-  <canvas id="world" aria-label="Fortress-style procedural ASCII world with five learning agents"></canvas>
+  <canvas id="world" aria-label="Procedural prehistoric ASCII world with five evolving cavemen"></canvas>
   <div id="hud" class="hud"></div>
 </main>
 <aside class="side">
-  <nav class="tabs" aria-label="Simulation panels">
-    <button data-tab="person" class="on">☺ PEOPLE</button>
-    <button data-tab="projects">🛠 BUILDS</button>
-    <button data-tab="learning">🧠 SCHOOL</button>
-    <button data-tab="world">🗺 MAP</button>
+  <nav class="tabs" aria-label="Game panels">
+    <button data-tab="tribe" class="on">☺ TRIBE</button>
+    <button data-tab="software">🧰 SOFTWARE</button>
+    <button data-tab="history">📜 HISTORY</button>
+    <button data-tab="world">🗺 WORLD</button>
   </nav>
   <div id="panel" class="panel"></div>
 </aside>
 <footer>
-  PEOPLE LIMIT <input id="popCap" type="range" min="5" max="500" step="5" value="5"><span id="popValue">5</span>
+  POP CAP <input id="popCap" type="range" min="5" max="100" step="5" value="30"><span id="popValue">30</span>
   <span>• render <b id="fps">0</b> FPS</span>
-  <span>• evolution work <b id="bps">0</b>/s</span>
+  <span>• sim work <b id="bps">0</b>/s</span>
   <span>• world sweeps <b id="sps">0</b>/s</span>
   <button id="save">💾 SAVE</button>
   <button id="export">📦 EXPORT</button>
