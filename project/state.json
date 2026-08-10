@@ -1,101 +1,86 @@
 {
   "schema": 1,
   "project": "GENESIS",
-  "product": "Physical Creature V1",
+  "product": "GENESIS Ecosystem Sandbox",
   "engineering_system": "GENESIS FORGE",
-  "phase": "physical-creature-v1",
+  "phase": "ecosystem-sandbox-restored",
   "status": "IN_PROGRESS",
   "canonical_directive": {"path":"project/CANONICAL_MASTER_DIRECTIVE.md","status":"IN_REPO"},
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
   "stable": {
-    "label": "physical-creature-v1-ci-pass",
+    "label": "ecosystem-sandbox-restored-main-experience",
     "verified": false,
-    "note": "Physical Creature V1 has independent GitHub Actions CI evidence for the causal model tests. The deployed browser module has not yet been successfully exercised, so LIVE_TESTED, DEVICE_TESTED and VERIFIED are not claimed."
+    "note": "The multi-creature ecosystem sandbox is again the primary GENESIS experience. It is implemented and source-wired, but this restored route has not yet been independently live/device tested. Physical Creature V1 remains preserved as a separate CI-proven causal test slice."
+  },
+  "active_experience": {
+    "route": "/genesis-codehood/",
+    "verification_level": "IMPLEMENTED",
+    "stack": ["v100_core","v100_ai","v101_mind","v100_render","v102_cycle","v103_hires_jelly","v104_material_world","v105_continuum","v106_bestiary","v107_morphology","v107_living_surface","v107_anatomy","v108_bioglass","v109_biosphere","v110_world_physics","old_sim_upgrade"],
+    "current_change": "restore old ecosystem sandbox as main route and improve presentation/jaw placement without deleting prior simulation systems",
+    "simulation_changes": [
+      "morphology-aware jaw and tongue node re-anchoring toward front/underside mouth geometry",
+      "per-creature local wetness/biome cache derived from existing material/saturation state"
+    ],
+    "presentation_changes": [
+      "deeper deterministic canopy/parallax layers",
+      "light shafts and atmospheric depth",
+      "material-derived surface micro-detail",
+      "additional plant silhouette/detail rendering",
+      "wet creature highlights derived from simulated saturation",
+      "foreground occlusion and vignette",
+      "compact biome/weather/population/focus HUD",
+      "cleaner front/underslung mouth presentation and stronger eye direction"
+    ],
+    "approximations": [
+      "canopy, light shafts, foreground foliage and extra plant leaves are presentation layers, not new physical simulation",
+      "biome labels are classifications derived from local material/heat/wetness fields, not separate simulated biome agents",
+      "jaw re-anchoring changes existing jaw/tongue nodes but does not replace the older bite/feeding model with the isolated Physical Creature V1 ingestion model",
+      "V109/V110 remain coarse grid/transfer approximations and are not CFD"
+    ],
+    "browser_exercise": {"live_pages":"NOT_TESTED","iphone_safari":"NOT_TESTED"}
   },
   "physical_creature_v1": {
+    "status": "PRESERVED_PROOF_SLICE",
     "verification_level": "CI_PASS",
     "route": "/genesis-codehood/physical-creature-v1/",
     "model": "genesis-physical-creature-2d-v1",
-    "source": "genesis-codehood/physical-creature-v1/model.js",
-    "browser": "genesis-codehood/physical-creature-v1/app.js",
-    "tests": "genesis-codehood/physical-creature-v1/model.test.mjs",
-    "documentation": "genesis-codehood/physical-creature-v1/README.md",
     "representation": "2D point-mass articulated skeleton with projected distance constraints and lumped joint-torque muscle actuators",
-    "implemented": [
-      "eight persistent body nodes with position, velocity, mass, structural integrity, skin integrity, flesh mass, temperature, hydration and damage",
-      "seven persistent skeleton constraints",
-      "six persistent joint records with integrity and angle limits",
-      "eight lumped muscle actuators driven by controller activation rather than direct body position/velocity assignment",
-      "gravity, ground collision and friction",
-      "explicit bounded authored pelvis-height/balance stabilizer exposed in controller state",
-      "persistent wounds and localized body/joint/bone integrity damage",
-      "scalar blood-volume loss affecting muscle output, consciousness and circulatory death",
-      "lung integrity, ventilation and oxygenation proxy affected by torso damage",
-      "physical food body with jaw contact, capture and throat approach before stomach inventory",
-      "stomach contents, gradual digestion energy release, indigestible mass and waste mass",
-      "basal and muscle energy expenditure",
-      "death from circulatory failure, prolonged hypoxia or energy failure",
-      "live inspector exposing body, joint, muscle, feeding and physiology state"
-    ],
-    "approximations": [
-      "2D point masses and projected distance constraints; not FEM or a validated biomechanical rigid-body model",
-      "muscles are lumped torque/stance actuators; not anatomical fiber/tendon bundles",
-      "balance includes an authored PD pelvis-height stabilizer; this is not learned balance",
-      "blood is a scalar circulation proxy; not transported fluid",
-      "lungs are a ventilation/oxygen state model; not gas-exchange CFD",
-      "digestion is a lumped stomach inventory and energy-release model; not biochemical digestion",
-      "controller is a hand-authored oscillator/reflex controller; no learning is claimed"
-    ],
-    "local_tests": {
-      "status":"PASS",
-      "cases":{"A_body_invariants":"PASS","B_muscle_force_moves_body":"PASS","C_damaged_limb_reduces_locomotion":"PASS","D_no_energy_without_ingestion":"PASS","E_capture_swallow_then_gradual_digestion":"PASS","F_blood_loss_changes_state_and_causes_failure":"PASS","F2_respiratory_damage_lowers_oxygenation":"PASS","N_deterministic_replay":"PASS"}
-    },
     "ci": {
       "status":"PASS",
       "workflow":".github/workflows/physical-creature-v1.yml",
       "proof_pull_request":82,
       "run_id":31407465956,
       "job_id":93517163075,
-      "tested_pr_head":"4cc367158b232bdf44337b6a61a6a76eb7fa0cf6",
-      "tested_merge_ref":"cfb724235d01f89c409389536e7e4ef13bb7789a",
-      "simulation_source_changed_from_main_at_proof_start":false,
       "artifact_id":9070180368,
       "artifact_sha256":"c0f798577d949f3a088bf3f65a438ffa998bb6d91d25098945bae29261616f36",
-      "cases":{"A":"PASS","B":"PASS","C":"PASS","D":"PASS","E":"PASS","F":"PASS","F2":"PASS","N":"PASS"},
-      "prior_failed_run":{"run_id":31407251780,"job_id":93516476300,"cause":"overly literal documentation grep failed before causal tests; gate repaired and rerun"}
+      "cases":{"A":"PASS","B":"PASS","C":"PASS","D":"PASS","E":"PASS","F":"PASS","F2":"PASS","N":"PASS"}
     },
-    "browser_exercise": {
-      "local_chromium":"FAILED_ENVIRONMENT",
-      "detail":"Headless Chromium did not return a trustworthy DOM smoke result in the current container because the browser process hung with DBus/zygote errors.",
-      "live_pages":"NOT_TESTED",
-      "iphone_safari":"NOT_TESTED"
-    },
-    "not_built": ["fluid-body coupling","WebGPU fluid solver","learning","evolution","chunk persistence/LOD","plants/fungi","civilizations","GPU compute creature physics","full vascular flow","tissue FEM/MPM"]
+    "browser_exercise": {"live_pages":"NOT_TESTED","iphone_safari":"NOT_TESTED"},
+    "note": "This lab is retained for causal body/feeding test work but is no longer the primary user-facing GENESIS route."
   },
-  "legacy_experimental_stack": {"route":"/genesis-codehood/legacy-stack.html","status":"PRESERVED_NON_CANONICAL","note":"V100-V110 layered experiments are preserved for reference and do not upgrade this slice's verification."},
+  "legacy_snapshot": {
+    "route": "/genesis-codehood/legacy-stack.html",
+    "status": "PRESERVED_SNAPSHOT",
+    "note": "Snapshot of the pre-restoration V100-V110 stack without old_sim_upgrade.js."
+  },
   "preserved_labs": [
     {"route":"/volume3d/","label":"Materials 0.3 volumetric C++/WASM","status":"PRESERVED"},
     {"route":"/materials3d/","label":"Materials 0.2 heightfield 3D","status":"PRESERVED"},
     {"route":"/materials/","label":"Materials 0.1","status":"PRESERVED"},
     {"route":"/sim/","label":"Matter Lab 0.6","status":"PRESERVED"}
   ],
-  "previous_canonical_state": {"blob_sha":"4afad28c0e7179446cfb297c4cadd219ddea4856","note":"Prior Materials 0.3 canonical record remains recoverable in Git history."},
-  "active_objective": "Exercise the deployed /genesis-codehood/physical-creature-v1/?smoke=1 browser module in a functioning browser and inspect runtime readiness plus invariants before promoting beyond CI_PASS.",
-  "next_gate": "LIVE_TESTED requires executing the deployed JavaScript module and inspecting its runtime self-check. A source fetch, Pages HTTP 200, or CI result alone is insufficient. DEVICE_TESTED and VERIFIED remain blocked.",
+  "active_objective": "Keep the restored ecosystem sandbox as the main GENESIS experience and improve it in coherent, testable passes. First verify the restored live route, then deepen one high-impact subsystem at a time instead of replacing the sandbox with isolated demos.",
+  "next_gate": "Run the restored /genesis-codehood/ route in a functioning browser, inspect runtime errors/performance and visual mouth/world behavior, then choose the next single subsystem upgrade from real observed weaknesses.",
   "invariants": [
     "IMPLEMENTATION > NAME",
     "ROADMAP != IMPLEMENTED != TESTED != CI_PASS != LIVE_TESTED != DEVICE_TESTED != VERIFIED",
-    "No visual effect may be called a simulation without authoritative evolving state",
+    "The ecosystem sandbox is the primary user-facing experience again",
+    "Physical Creature V1 CI evidence remains preserved and must not be re-described as proof of the ecosystem stack",
+    "Presentation layers must not be described as physics",
     "No interpolation may be called physics",
     "No authored controller may be called learning",
     "No mutation-only system may be called evolution",
-    "The Physical Creature V1 controller may not assign body position or velocity as normal locomotion",
-    "Food may not add energy before physical capture, swallowing and stomach digestion",
-    "Damage must persist and alter functional output",
-    "Unknown or unexercised runtime state remains UNKNOWN/NOT_TESTED",
-    "A failed CI gate remains FAIL until the repaired dedicated gate itself passes",
-    "CI PASS does not imply live deployment PASS",
-    "The legacy genesis-codehood stack is experimental and non-canonical"
+    "Unknown or unexercised runtime state remains UNKNOWN/NOT_TESTED"
   ],
-  "updated": "2026-08-10T12:12:00-04:00"
+  "updated": "2026-08-10T12:57:00-04:00"
 }
