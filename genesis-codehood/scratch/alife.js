@@ -40,9 +40,7 @@ export function senseCreature(world,c){
   return {food,foodDistance:fd,water,waterDistance:wd,danger};
 }
 
-function remember(m,key,x,gain){
-  m[key+'X']=x;m[key+'C']=clamp(m[key+'C']+gain,0,1);
-}
+function remember(m,key,x,gain){m[key+'X']=x;m[key+'C']=clamp(m[key+'C']+gain,0,1);}
 
 export function updateMind(world,c,dt,sense){
   const m=c.mind;m.intentAge+=dt;m.senseSweep+=dt*(.7+m.curiosity*1.4+m.fear*1.6);
@@ -57,7 +55,7 @@ export function updateMind(world,c,dt,sense){
   let desired=m.intent,target=m.targetX;
   if(urgentFear&&m.memory.dangerC>.05){desired='flee';target=clamp(c.nodes[2].x+Math.sign(c.nodes[2].x-m.memory.dangerX||c.dir)*180,12,world.n*world.dx-12);}
   else if(thirst>.48){desired='drink';target=sense.water?.x??(m.memory.waterC>.08?m.memory.waterX:target);}
-  else if(c.hunger>.48||c.energy<.38){desired='forage';target=sense.food? sense.food.x*world.dx : (m.memory.foodC>.08?m.memory.foodX:target);}
+  else if(c.hunger>.48||c.energy<.38){desired='forage';target=sense.food?sense.food.x*world.dx:(m.memory.foodC>.08?m.memory.foodX:target);}
   else if(c.fatigue>.72){desired='rest';target=c.nodes[2].x;}
   else if(m.intentAge>=m.commitFor){desired=m.curiosity>.28?'explore':'rest';target=clamp(c.nodes[2].x+world.rng.range(-190,190),12,world.n*world.dx-12);}
 
@@ -72,7 +70,7 @@ export function updateMind(world,c,dt,sense){
 
 export function locomotionDemand(c){
   const m=c.mind;
-  const speed=m.intent==='flee'?1.35:m.intent==='forage'?0.82:m.intent==='drink'?0.62:m.intent==='explore'?0.52:0;
+  const speed=m.intent==='flee'?1.35:m.intent==='forage'?.82:m.intent==='drink'?.62:m.intent==='explore'?.52:0;
   const bodyFactor=clamp(Math.min(c.energy/.28,c.hydration/.3)*(1-c.fatigue*.55)*(1-m.stress*.28),0,.98);
   return speed*bodyFactor;
 }
@@ -83,6 +81,14 @@ export function contactDrink(world,c,dt){
   const wy=world.waterSurfaceY(c.mouth.x);if(Math.abs(c.mouth.y-wy)>12)return 0;
   const take=Math.min(h,.13*dt*60,1-c.hydration);if(take<=0)return 0;
   c.hydration=clamp(c.hydration+take*.12,0,1);world.water[i]=Math.max(0,world.water[i]-take*.02);c.mind.memory.waterX=c.mouth.x;c.mind.memory.waterC=1;return take;
+}
+
+export function contactFeed(world,c,p,dt){
+  if(!p?.alive||p.biomass<=.06||c.mind.intent!=='forage'||c.stomach>=.5)return 0;
+  const px=p.x*world.dx,py=world.surfaceY(px)-Math.min(28,8+p.biomass*12);
+  if(Math.hypot(c.mouth.x-px,c.mouth.y-py)>=12)return 0;
+  const bite=Math.min(Math.max(0,p.biomass-.06),dt*.06,.55-c.stomach);if(bite<=0)return 0;
+  p.biomass-=bite;p.energy=Math.max(0,p.energy-bite*.08);c.stomach=clamp(c.stomach+bite,0,.55);c.mind.memory.foodX=px;c.mind.memory.foodC=1;return bite;
 }
 
 export function digest(c,dt){
