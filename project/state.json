@@ -3,75 +3,78 @@
   "project": "GENESIS",
   "product": "GENESIS Ecosystem Sandbox",
   "engineering_system": "GENESIS FORGE",
-  "phase": "ecosystem-mobile-observer-feeding-truth",
+  "phase": "ecosystem-articulated-rig-acoustic-ecology",
   "status": "IN_PROGRESS",
   "canonical_directive": {"path":"project/CANONICAL_MASTER_DIRECTIVE.md","status":"IN_REPO"},
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
   "stable": {
-    "label": "ecosystem-sandbox-mobile-feeding-ci-pass",
+    "label": "ecosystem-sandbox-rig25-local-tested",
     "verified": false,
-    "note": "The ecosystem remains the primary GENESIS experience. Fluid refinement, creature-rig math, and feeding-truth regression tests have GitHub Actions evidence. The newly wired phone UI and deployed route have not yet been exercised after this change, so user-facing LIVE_TESTED remains false."
+    "note": "The ecosystem remains the primary GENESIS experience. The new articulated crab/ragdoll/acoustic layer passed local deterministic tests and is wired on main, but CI and deployed browser/device verification for this layer are still pending."
   },
   "active_experience": {
     "route": "/genesis-codehood/",
     "verification_level": "IMPLEMENTED",
-    "stack": ["v100_core","v100_ai","v101_mind","v100_render","v102_cycle","v103_hires_jelly","v104_material_world","v105_continuum","v106_bestiary","v107_morphology","v107_living_surface","v107_anatomy","v108_bioglass","v109_biosphere","v110_world_physics","old_sim_upgrade","fluid_refinement","creature_world_overhaul","feeding_truth","mobile_observer"],
-    "current_change": "remove the legacy predator proximity-damage shortcut and replace the phone-first observer layout with hideable world-first controls",
+    "stack": ["v100_core","v100_ai","v101_mind","v100_render","v102_cycle","v103_hires_jelly","v104_material_world","v105_continuum","v106_bestiary","v107_morphology","v107_living_surface","v107_anatomy","v108_bioglass","v109_biosphere","v110_world_physics","old_sim_upgrade","fluid_refinement","creature_world_overhaul","feeding_truth","mobile_observer","rig25_sound"],
+    "current_change": "replace the crab's circle-and-derived-bend presentation with persistent articulated joints/claw tips, slower gait filtering, ragdoll behavior and simulation-driven acoustic events",
     "simulation_changes": [
-      "legacy predator head-distance damage/grab path in handleInteractions is bypassed",
-      "predator tissue damage is now left to the existing V107 articulated jaw-node contact gate",
-      "corpse scavenging requires jaw-node overlap with a corpse body node before meat/energy transfer",
-      "2x-per-axis refined water field and existing creature-water coupling remain active"
+      "each legacy limb receives a persistent added mid-joint Node with terrain collision and distance constraints",
+      "crab arm rigs receive persistent dual claw-tip Nodes constrained to the physical hand endpoint",
+      "added joints stop receiving authored pose targets after death and continue under gravity/collision/constraints as ragdoll parts",
+      "crab desired locomotion speed is low-pass filtered and heavily reduced for slower deliberate movement",
+      "crab step phase uses its own slower gait clock instead of the previous fast simTick oscillator",
+      "foot-contact, jaw-latch and death transitions generate acoustic events at simulation coordinates",
+      "nearby creatures receive distance-attenuated sound memory plus arousal/nerves changes from those same acoustic events",
+      "rain and local refined-water state drive procedural ambient WebAudio after user interaction"
     ],
     "presentation_and_controls": [
-      "phone default view hides the previous giant HUD/observer sheet",
-      "compact selected-creature strip and six-button touch dock",
-      "single-tap creature selection",
-      "single-finger world pan",
-      "two-finger pinch zoom",
-      "on-demand inspector via info button",
-      "look mode hides all simulation UI except one restore button",
-      "truth chip explicitly reports JAW CONTACT / DIGESTION APPROX"
+      "crab rendering uses a continuous oriented shell silhouette instead of exposing body-node circles",
+      "back/front legs are ordered from persistent depth state for a limited 2.5D appearance",
+      "wet shell highlight remains tied to local simulated wetness",
+      "mobile dock receives a sound toggle when the new acoustic layer is active",
+      "existing world-first hideable mobile observer controls remain active"
     ],
     "approximations": [
-      "V107 predator bite is a jaw-node to target-node distance/contact threshold, not tooth-shape penetration or collision-manifold biting",
-      "predator bite damage is localized to the nearest contacted body node but does not simulate material fracture/tearing mechanics",
-      "corpse scavenging is contact-gated but calories still move directly to energy; the ecosystem stack has no stomach/digestion pipeline",
-      "herbivore plant feeding and intelligent-creature plant gathering remain proximity-based resource transfer",
-      "V107 loose-gut scavenging still uses an older proximity/resource shortcut",
-      "the old body controller still applies authored direct body drive in several locomotion paths; movement is not a pure muscle-force biomechanics solver",
-      "limb mid-joints in the visual overhaul are derived bend points because the legacy limb model stores anchor + end-effector rather than explicit upper/lower limb bones",
-      "fluid_refinement is a conservative 2x subcell volume-relaxation approximation, not CFD/SPH/FLIP/PBF/MPM",
-      "biome labels and atmospheric layers are presentation/classification, not independent simulated biome agents"
+      "2.5D depth state currently affects render ordering/scale only; terrain/body collision is still 2D",
+      "the legacy body controller still contains authored direct body drive; locomotion is not yet a pure muscle-force biomechanics solver",
+      "added knee joints physically couple to anchor and hand but the original limb endpoint planner is still authored",
+      "WebAudio timbre is procedurally synthesized; it is driven by simulation events but is not physically modeled acoustics",
+      "V107 bite remains jaw-node to target-node contact threshold rather than tooth-shape penetration/fracture mechanics",
+      "corpse scavenging is contact-gated but still lacks stomach digestion",
+      "fluid_refinement remains a conservative 2x subcell volume-relaxation approximation, not CFD/SPH/FLIP/PBF/MPM"
     ],
-    "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_CHANGE","iphone_safari":"NOT_TESTED_AFTER_CHANGE"}
+    "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_RIG25_CHANGE","iphone_safari":"NOT_TESTED_AFTER_RIG25_CHANGE"}
+  },
+  "rig25_acoustic": {
+    "verification_level":"TESTED",
+    "source":"genesis-codehood/rig25_sound.js",
+    "tests":"genesis-codehood/tests/rig25_sound.test.mjs",
+    "local_tests": {
+      "status":"PASS",
+      "cases": {
+        "crab_motion_filter_is_damped":"PASS",
+        "persistent_joint_geometry":"PASS",
+        "acoustic_attenuation":"PASS",
+        "bounded_depth_presentation":"PASS",
+        "persistent_crab_joint_and_claw_nodes":"PASS",
+        "bite_acoustic_event_changes_nearby_agent_state":"PASS",
+        "truth_metadata_rejects_full3d_and_pure_muscle_claims":"PASS"
+      }
+    },
+    "ci":{"status":"PENDING"},
+    "live_browser":"NOT_TESTED",
+    "iphone_safari":"NOT_TESTED_AFTER_CHANGE"
   },
   "feeding_truth": {
     "verification_level":"CI_PASS",
     "source":"genesis-codehood/feeding_truth.js",
     "tests":"genesis-codehood/tests/feeding_truth.test.mjs",
-    "ci": {
-      "status":"PASS",
-      "workflow":".github/workflows/genesis-codehood.yml",
-      "proof_pull_request":85,
-      "run_id":31493769069,
-      "job_id":93786300605,
-      "cases": {
-        "predator_proximity_alone_cannot_damage_prey":"PASS",
-        "corpse_consumption_requires_jaw_contact":"PASS",
-        "no_corpse_calories_without_jaw_contact":"PASS",
-        "truth_metadata_exposes_missing_digestion":"PASS"
-      },
-      "syntax_check":"PASS"
-    },
-    "live_browser":"NOT_TESTED"
+    "ci":{"status":"PASS","proof_pull_request":85,"run_id":31493769069,"job_id":93786300605}
   },
   "mobile_observer": {
     "verification_level":"CI_PASS_SYNTAX_ONLY",
     "source":["genesis-codehood/mobile_observer.js","genesis-codehood/mobile_observer.css"],
-    "ci":{"status":"PASS","run_id":31493769069,"job_id":93786300605,"javascript_syntax_check":"PASS"},
-    "behavioral_browser_test":"NOT_TESTED",
-    "iphone_safari":"NOT_TESTED_AFTER_CHANGE"
+    "behavioral_browser_test":"NOT_TESTED"
   },
   "creature_rig_overhaul": {
     "verification_level":"CI_PASS",
@@ -83,9 +86,6 @@
     "verification_level":"CI_PASS",
     "source":"genesis-codehood/fluid_refinement.js",
     "tests":"genesis-codehood/tests/fluid_refinement.test.mjs",
-    "coarse_cell_world_size":7,
-    "refined_cell_world_size":3.5,
-    "resolution_scale_per_axis":2,
     "representation":"2D subcell water-volume field with pairwise conservative transfer and damped momentum proxy",
     "ci":{"status":"PASS","proof_pull_request":83,"run_id":31415020788,"job_id":93541872398},
     "live_browser":"NOT_TESTED"
@@ -93,22 +93,21 @@
   "physical_creature_v1": {
     "status":"PRESERVED_PROOF_SLICE",
     "verification_level":"CI_PASS",
-    "route":"/genesis-codehood/physical-creature-v1/",
-    "note":"Preserved causal-body lab; not the primary user-facing ecosystem."
+    "route":"/genesis-codehood/physical-creature-v1/"
   },
-  "active_objective": "Exercise the newly wired phone UI and feeding changes in iPhone Safari. If the controls behave correctly, the next simulation change is physical ingestion: mouth capture -> swallowed food mass -> stomach contents -> timed digestion, eliminating the remaining direct-calorie feeding shortcut for the selected vertical slice.",
-  "next_gate": "A fresh iPhone/browser run must verify hide/show UI, drag, pinch, selection, inspector, and lack of runtime errors. Feeding CI_PASS does not prove the deployed browser behavior. The next causal simulation gate is stomach ingestion/digestion rather than more visual polish.",
+  "active_objective": "Run CI for rig25_sound, then exercise the deployed ecosystem on iPhone. If stable, deepen one crab further: explicit upper/lower limb lengths, joint limits, contact-force gait and physical ingestion rather than broadening into more cosmetic species.",
+  "next_gate": "rig25_acoustic can move to CI_PASS only after GitHub Actions runs tests/rig25_sound.test.mjs successfully. LIVE_TESTED still requires the deployed browser route to execute with the new layer and sound unlock behavior.",
   "invariants": [
     "IMPLEMENTATION > NAME",
     "The ecosystem sandbox is the primary user-facing experience",
+    "2.5D presentation must not be called full 3D physics",
+    "Procedural WebAudio must not be called physically simulated acoustics",
     "A visual mouth animation is not proof of feeding",
     "Predator proximity alone must not damage prey",
     "Contact-gated scavenging must not be called digestion",
-    "Presentation layers must not be described as physics",
     "No authored controller may be called learning",
-    "fluid_refinement must not be called CFD/SPH/FLIP/PBF/MPM",
     "CI_PASS does not imply live deployment PASS",
     "Unknown or unexercised runtime state remains UNKNOWN/NOT_TESTED"
   ],
-  "updated":"2026-08-11T08:59:00-04:00"
+  "updated":"2026-08-11T09:08:00-04:00"
 }
