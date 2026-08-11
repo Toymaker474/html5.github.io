@@ -7,47 +7,45 @@
   "status": "IN_PROGRESS",
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
   "stable": {
-    "label": "ecosystem-surface-liquid-ci-pass",
+    "label": "ecosystem-continuous-liquids-tested",
     "verified": false,
-    "note": "The ecosystem remains the primary experience. The continuous open-surface water layer has independent Codehood and Foundation CI evidence, but deployed-browser/iPhone behavior is still unverified."
+    "note": "The ecosystem remains the primary experience. The current open-surface water+lava implementation is locally TESTED only until the changed code receives fresh CI evidence."
   },
   "active_experience": {
     "route": "/genesis-codehood/",
     "verification_level": "IMPLEMENTED",
     "stack": ["v100_core","v100_ai","v101_mind","v100_render","v102_cycle","v103_hires_jelly","v104_material_world","v105_continuum","v106_bestiary","v107_morphology","v107_living_surface","v107_anatomy","v108_bioglass","v109_biosphere","v110_world_physics","old_sim_upgrade","fluid_refinement","creature_world_overhaul","feeding_truth","mobile_observer","rig25_sound","hydro_geomorph25","surface_liquid"],
-    "current_change": "replace visible open-surface falling-cell water with a continuous conservative free-surface heightfield solver that carries depth and momentum, couples to bodies, and drives erosion",
+    "current_change": "replace visible open-surface falling-cell water and lava with continuous free-surface depth/momentum fields; water uses a local-inertial shallow-water approximation and lava uses a much more strongly damped viscous approximation",
     "approximations": [
-      "surface_liquid is a 1D local-inertial shallow-water approximation over the open terrain surface, not full 2D CFD",
-      "enclosed cave water is not represented by the shallow-water field and remains outside this solver's verified scope",
-      "legacy fine/coarse water state is absorbed as a source/reservoir rather than displayed as the primary visible liquid",
-      "lava still uses the older material solver and has not yet been converted to a continuous viscous free-surface model",
+      "surface_liquid is one-dimensional along the side-view terrain surface and is not full 2D CFD",
+      "lava is a high-friction free-surface approximation, not a temperature-dependent Navier-Stokes viscosity model",
+      "enclosed cave liquids remain outside the verified scope of this open-surface solver",
+      "legacy fine/coarse open water and V104 open lava are absorbed as source/reservoir state rather than displayed as primary liquid cells",
       "creature locomotion still contains legacy authored body drive",
       "feeding still lacks stomach digestion"
     ],
-    "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_SURFACE_LIQUID_CHANGE","iphone_safari":"NOT_TESTED_AFTER_SURFACE_LIQUID_CHANGE"}
+    "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_CONTINUOUS_LIQUID_CHANGE","iphone_safari":"NOT_TESTED_AFTER_CONTINUOUS_LIQUID_CHANGE"}
   },
   "surface_liquid": {
-    "verification_level": "CI_PASS",
+    "verification_level": "TESTED",
     "source": "genesis-codehood/surface_liquid.js",
     "tests": "genesis-codehood/tests/surface_liquid.test.mjs",
-    "representation": "1D local-inertial shallow-water free-surface approximation over open terrain",
-    "ci": {
+    "representation": "1D local-inertial shallow-water water plus high-friction viscous free-surface lava approximation over open terrain",
+    "local_tests": {
       "status": "PASS",
-      "proof_pull_request": 89,
-      "codehood_run_id": 31499528916,
-      "codehood_job_id": 93805603570,
-      "foundation_run_id": 31499529023,
-      "foundation_job_id": 93805600054,
       "cases": {
-        "mass_conservation_without_sources": "PASS",
-        "surface_gradient_generates_momentum": "PASS",
+        "water_mass_conservation": "PASS",
+        "water_surface_gradient_generates_momentum": "PASS",
         "contained_pool_relaxes_toward_flat_surface": "PASS",
         "surface_water_changes_submerged_body_motion": "PASS",
         "surface_flow_couples_to_real_terrain_erosion": "PASS",
-        "metadata_rejects_full2d_cfd_and_full3d_claims": "PASS"
-      },
-      "syntax_check": "PASS"
+        "metadata_rejects_full2d_cfd_and_full3d_claims": "PASS",
+        "lava_mass_conservation_and_redistribution": "PASS",
+        "lava_is_slower_than_water_under_same_surface_slope": "PASS",
+        "metadata_exposes_continuous_lava_conversion": "PASS"
+      }
     },
+    "ci": {"status":"PENDING_AFTER_LAVA_CHANGE","prior_water_only_proof_pull_request":89,"prior_water_only_codehood_run_id":31499528916,"prior_water_only_foundation_run_id":31499529023},
     "live_browser": "NOT_TESTED",
     "iphone_safari": "NOT_TESTED"
   },
@@ -58,16 +56,15 @@
   "creature_rig_overhaul": {"verification_level":"CI_PASS","source":"genesis-codehood/creature_world_overhaul.js","tests":"genesis-codehood/tests/creature_rig_overhaul.test.mjs","ci":{"status":"PASS","proof_pull_request":84,"run_id":31491623456,"job_id":93779238092}},
   "mobile_observer": {"verification_level":"CI_PASS_SYNTAX_ONLY","source":["genesis-codehood/mobile_observer.js","genesis-codehood/mobile_observer.css"],"behavioral_browser_test":"NOT_TESTED"},
   "physical_creature_v1": {"status":"PRESERVED_PROOF_SLICE","verification_level":"CI_PASS","route":"/genesis-codehood/physical-creature-v1/"},
-  "active_objective": "Exercise the deployed ecosystem on iPhone and verify that open water now forms continuous pools/streams rather than visible falling-cell liquid. If that is stable, convert lava separately to a viscous continuous free-surface model and then add depth-aware connected basins/cave water.",
-  "next_gate": "LIVE_TESTED requires deployed-browser execution with surface_liquid active. DEVICE_TESTED requires the iPhone Safari run after that. CI_PASS alone is not sufficient.",
+  "active_objective": "Run fresh CI for the changed water+lava surface solver, then exercise the deployed ecosystem on iPhone and verify that both blue water and orange lava stop reading as falling-sand cell liquids. If stable, add connected-basin/cave-liquid handling without returning to pixel-liquid rendering.",
+  "next_gate": "surface_liquid returns to CI_PASS only after GitHub Actions executes the updated water+lava tests and syntax. LIVE_TESTED and DEVICE_TESTED remain separate later gates.",
   "invariants": [
     "IMPLEMENTATION > NAME",
     "Do not call surface_liquid full 2D CFD or full 3D physics",
-    "Continuous water rendering must derive from the simulated depth field",
-    "Open-water legacy cells are source/reservoir inputs, not the primary visible liquid",
-    "Erosion claims require authoritative terrain state changes",
+    "Continuous water/lava rendering must derive from simulated depth fields",
+    "Changed code invalidates prior CI promotion until fresh CI runs",
     "CI_PASS does not imply LIVE_TESTED",
     "Unknown runtime state remains NOT_TESTED"
   ],
-  "updated": "2026-08-11T10:05:00-04:00"
+  "updated": "2026-08-11T10:12:00-04:00"
 }
