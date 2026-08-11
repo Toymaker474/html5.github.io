@@ -15,7 +15,7 @@ export function terrainProbe(world,wx){
 
 export function traversalCost(p){
   const slopeCost=p.slope*p.slope*2.4;
-  const waterCost=p.water<1?.0:p.water<5?p.water*.12:p.water<11?.75+(p.water-5)*.32:4+(p.water-11)*.8;
+  const waterCost=p.water<1?0:p.water<5?p.water*.12:p.water<11?.75+(p.water-5)*.32:4+(p.water-11)*.8;
   return 1+slopeCost+waterCost+p.unstable*.55;
 }
 
@@ -35,7 +35,7 @@ export function planSurfaceRoute(world,startX,goalX,opts={}){
 
 function rawDrive(c){
   const m=c.mind;
-  return m.intent==='flee'?1.05:m.intent==='forage'?.68:m.intent==='drink'?.5:m.intent==='explore'?.4:0;
+  return m.intent==='flee'?1.2:m.intent==='forage'?.8:m.intent==='drink'?.58:m.intent==='explore'?.52:0;
 }
 
 export function updateNavigator(world,c,dt,goalX){
