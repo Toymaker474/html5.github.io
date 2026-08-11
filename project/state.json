@@ -3,84 +3,92 @@
   "project": "GENESIS",
   "product": "GENESIS Ecosystem Sandbox",
   "engineering_system": "GENESIS FORGE",
-  "phase": "scratch-offscreen-world",
+  "phase": "scratch-alife-organisms",
   "status": "IN_PROGRESS",
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
   "stable": {
-    "label": "scratch-offscreen-world-ci-pass",
+    "label": "scratch-alife-tested",
     "verified": false,
-    "note": "The active /genesis-codehood/ route was rebuilt from scratch and no longer imports the V100-V110 layered simulation. Codehood and Foundation CI pass. Deployed browser/iPhone behavior remains unverified."
+    "note": "The active scratch engine now has a deeper organism loop and local causal tests. Because sim-core, worker and main changed after the prior CI proof, the active scratch engine is downgraded to TESTED until fresh CI passes."
   },
   "active_experience": {
     "route": "/genesis-codehood/",
     "verification_level": "IMPLEMENTED",
-    "stack": ["scratch/main.js","scratch/worker.js","scratch/sim-core.js"],
-    "runtime": "vanilla JavaScript module + Worker + transferred OffscreenCanvas; no third-party runtime libraries",
+    "stack": ["scratch/main.js","scratch/worker.js","scratch/sim-core.js","scratch/alife.js"],
+    "runtime": "vanilla JavaScript modules + Worker + transferred OffscreenCanvas; no third-party runtime libraries",
     "simulation_changes": [
-      "deterministic continuous terrain heightfield with rock floor, basins, ocean shelf and inland ponds",
-      "conservative local-inertial shallow-water depth/discharge field with rain, infiltration and an ocean boundary reservoir",
-      "water-flow shear erodes soil into suspended sediment; slow water deposits sediment back into terrain",
-      "persistent soil moisture, nutrient and plant-root reinforcement fields",
-      "plants have persistent water, energy, biomass, growth, death and wind/rain bend state; their roots reinforce nearby soil",
-      "creatures have persistent five-node articulated bodies plus six two-segment legs using Verlet integration and distance constraints",
-      "creature movement uses authored body/leg actuation forces and physical terrain contacts rather than animation sprites",
-      "plant feeding requires the simulated mouth point to contact a plant before plant biomass transfers to creature energy",
-      "substantial water flow pushes creature bodies",
-      "the worker renders terrain, water, plants and creatures from the same simulation state on OffscreenCanvas",
-      "phone controls are drag, pinch, tap-select, pause, speed, rain, sound, regenerate and one-button clean view"
+      "deterministic terrain, shallow-water flow, erosion, sediment, soil moisture/nutrients and structural plants remain active",
+      "each crawler now has persistent hydration, fatigue, health, stomach contents, lifespan, corpse mass, fear/stress/curiosity and decaying spatial memories",
+      "creatures sense food and drinkable water only inside a finite radius and through a terrain line-of-sight approximation",
+      "drive arbitration uses persistent intentions for explore, forage, drink, rest and flee rather than changing target every tick",
+      "food contact transfers plant biomass into stomach state first; digestion releases energy gradually afterward",
+      "drinking requires the simulated mouth point to contact the simulated water surface",
+      "walking now uses persistent stance feet and planted-foot reaction forces with slower swing/stance cycles",
+      "two persistent physical feeler tips are attached to the active head and move from the sensor-sweep state",
+      "strong water flow increases fear and physically pushes the body",
+      "death produces a constrained ragdoll corpse instead of immediately removing the organism",
+      "corpse mass decays according to local soil moisture and returns nutrient/moisture to the local substrate",
+      "the OffscreenCanvas renderer shows live feeler motion, hydration-dependent body tone and persistent corpses",
+      "mobile telemetry exposes current intention, hydration, fatigue and stomach state"
     ],
     "approximations": [
-      "water is a one-dimensional side-view shallow-water approximation, not 2D/3D Navier-Stokes CFD",
-      "terrain is a continuous 1D heightfield extruded visually into 2.5D; it does not yet support caves or overhang collision",
-      "creature physics is 2D Verlet/distance-constraint articulation with authored gait actuation, not rigid-body biomechanics or muscle physiology",
-      "feeding currently transfers contacted plant biomass directly into energy; there is no stomach/digestion model yet",
-      "plants are structural/growth state rendered procedurally, but roots are currently a reinforcement field rather than explicit root geometry",
-      "2.5D foreground/background depth is presentation ordering, not full 3D collision",
-      "procedural audio is sonification of rain/water telemetry, not acoustic wave simulation"
+      "the ALife controller is authored drive arbitration with decaying memory; it is not learning or reinforcement learning",
+      "all current crawlers share one morphology and do not yet reproduce or evolve",
+      "sensing uses a finite-radius 2D terrain line-of-sight approximation, not optical/acoustic/chemical field simulation",
+      "water is still a one-dimensional side-view shallow-water approximation rather than 2D/3D Navier-Stokes CFD",
+      "creature physics is 2D Verlet/distance-constraint articulation with authored gait actuation, not muscle physiology",
+      "stomach digestion is a lumped mass/energy model rather than organ physiology",
+      "plant roots remain a reinforcement field rather than explicit root geometry",
+      "2.5D depth is presentation ordering rather than full 3D collision",
+      "procedural audio remains telemetry sonification rather than acoustic-wave simulation"
     ],
-    "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_SCRATCH_REBUILD","iphone_safari":"NOT_TESTED_AFTER_SCRATCH_REBUILD"}
+    "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_ALIFE_CHANGE","iphone_safari":"NOT_TESTED_AFTER_ALIFE_CHANGE"}
   },
   "scratch_engine": {
-    "verification_level": "CI_PASS",
-    "source": ["genesis-codehood/scratch/sim-core.js","genesis-codehood/scratch/worker.js","genesis-codehood/scratch/main.js","genesis-codehood/scratch/style.css"],
-    "tests": "genesis-codehood/tests/scratch_sim.test.mjs",
-    "ci": {
-      "status": "PASS",
-      "proof_pull_request": 92,
-      "codehood_run_id": 31505363249,
-      "codehood_job_id": 93825447507,
-      "foundation_run_id": 31505363250,
-      "foundation_job_id": 93825447589,
-      "cases": {
-        "deterministic_seed_reproduces_terrain_and_organisms": "PASS",
-        "closed_domain_water_mass_conservation": "PASS",
-        "free_surface_gradient_generates_directional_discharge": "PASS",
-        "plant_biomass_grows_from_water_nutrients_energy": "PASS",
-        "plants_reinforce_soil": "PASS",
-        "articulated_creature_rig_remains_constrained": "PASS"
-      },
-      "syntax_check": "PASS",
-      "forge_fail_closed_audit": "PASS"
-    },
+    "verification_level": "TESTED",
+    "source": ["genesis-codehood/scratch/sim-core.js","genesis-codehood/scratch/alife.js","genesis-codehood/scratch/worker.js","genesis-codehood/scratch/main.js","genesis-codehood/scratch/style.css"],
+    "tests": ["genesis-codehood/tests/scratch_sim.test.mjs","genesis-codehood/tests/scratch_alife.test.mjs"],
+    "prior_ci": {"status":"SUPERSEDED_BY_ALIFE_CHANGE","proof_pull_request":92,"codehood_run_id":31505363249,"foundation_run_id":31505363250},
     "live_browser": "NOT_TESTED",
     "iphone_safari": "NOT_TESTED"
+  },
+  "scratch_alife": {
+    "verification_level": "TESTED",
+    "source": "genesis-codehood/scratch/alife.js",
+    "tests": "genesis-codehood/tests/scratch_alife.test.mjs",
+    "local_tests": {
+      "status": "PASS",
+      "cases": {
+        "limited_food_sensing_and_decaying_memory": "PASS",
+        "thirst_selects_sensed_water": "PASS",
+        "mouth_contact_feeds_stomach_before_energy": "PASS",
+        "stomach_digestion_releases_energy_over_time": "PASS",
+        "drinking_requires_mouth_water_contact": "PASS",
+        "planted_foot_gait_produces_locomotion": "PASS",
+        "corpse_decomposition_returns_local_nutrients": "PASS",
+        "metadata_rejects_learning_claim": "PASS"
+      }
+    },
+    "ci": "PENDING"
   },
   "legacy_ecosystem_stack": {
     "status": "ARCHIVED_NOT_LOADED_BY_ACTIVE_ROUTE",
     "note": "Previous V100-V110 and patch layers remain in repository history/files for reference but are not imported by the current /genesis-codehood/ page."
   },
   "physical_creature_v1": {"status":"PRESERVED_PROOF_SLICE","verification_level":"CI_PASS","route":"/genesis-codehood/physical-creature-v1/"},
-  "active_objective": "Exercise the clean deployed OffscreenCanvas build on iPhone. If the visual result is still not acceptable, improve or replace this clean engine rather than reintroducing the archived layered stack.",
-  "next_gate": "LIVE_TESTED and DEVICE_TESTED require actual deployed browser/iPhone execution. CI_PASS alone is not sufficient.",
+  "active_objective": "Run fresh CI for the new ALife organism loop, then exercise the deployed OffscreenCanvas build on iPhone and judge whether movement, feeding, drinking, resting, fear, corpses and overall pacing read as more lifelike.",
+  "next_gate": "CI_PASS requires fresh Codehood and Foundation runs covering scratch_alife.test.mjs. LIVE_TESTED and DEVICE_TESTED still require deployed browser/iPhone execution afterward.",
   "invariants": [
     "IMPLEMENTATION > NAME",
     "Active route must not import archived V100-V110 layers",
     "No third-party runtime libraries in the scratch engine",
     "Rendering must run through transferred OffscreenCanvas in the worker",
-    "Do not call shallow-water full CFD",
-    "Do not call authored gait muscle physiology",
+    "Do not call the drive controller learning",
+    "Do not call authored stance gait muscle physiology",
+    "Food energy may only rise from stomach digestion after contact ingestion",
+    "Changed core code invalidates prior CI promotion",
     "CI_PASS does not imply LIVE_TESTED or DEVICE_TESTED",
     "Unknown runtime state remains NOT_TESTED"
   ],
-  "updated": "2026-08-11"
+  "updated": "2026-08-11T11:22:00-04:00"
 }
