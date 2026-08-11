@@ -1,12 +1,13 @@
+import {updateNavigator,NAV_META} from './navigation.js';
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
 export function makeMind(rng,x){
   return {
-    intent:'explore',intentAge:0,commitFor:rng.range(.8,2.8),targetX:x,
+    intent:'explore',intentAge:0,commitFor:rng.range(.8,2.8),targetX:x,goalX:x,
     curiosity:rng.range(.3,.9),caution:rng.range(.2,.85),social:rng.range(.15,.75),
     stress:rng.range(0,.12),fear:rng.range(0,.12),senseSweep:rng.range(0,Math.PI*2),
     memory:{foodX:x,foodC:0,waterX:x,waterC:0,dangerX:x,dangerC:0},
-    lastSense:{food:false,water:false,danger:false}
+    lastSense:{food:false,water:false,danger:false},nav:null
   };
 }
 
@@ -43,7 +44,7 @@ export function senseCreature(world,c){
 function remember(m,key,x,gain){m[key+'X']=x;m[key+'C']=clamp(m[key+'C']+gain,0,1);}
 
 export function updateMind(world,c,dt,sense){
-  const m=c.mind;m.intentAge+=dt;m.senseSweep+=dt*(.7+m.curiosity*1.4+m.fear*1.6);
+  const m=c.mind,body=c.nodes[2];m.intentAge+=dt;m.senseSweep+=dt*(.7+m.curiosity*1.4+m.fear*1.6);
   m.memory.foodC=Math.max(0,m.memory.foodC-dt*.018);
   m.memory.waterC=Math.max(0,m.memory.waterC-dt*.012);
   m.memory.dangerC=Math.max(0,m.memory.dangerC-dt*.03);
@@ -52,27 +53,35 @@ export function updateMind(world,c,dt,sense){
   if(sense.danger){remember(m.memory,'danger',sense.danger.x,.34);m.fear=clamp(m.fear+sense.danger.strength*dt*.9,0,1);m.stress=clamp(m.stress+dt*.25,0,1);m.lastSense.danger=true;}else{m.fear=Math.max(0,m.fear-dt*.07);m.stress=Math.max(0,m.stress-dt*.045);m.lastSense.danger=false;}
 
   const thirst=1-c.hydration,urgentFear=m.fear>.62||m.stress>.78;
-  let desired=m.intent,target=m.targetX;
-  if(urgentFear&&m.memory.dangerC>.05){desired='flee';target=clamp(c.nodes[2].x+Math.sign(c.nodes[2].x-m.memory.dangerX||c.dir)*180,12,world.n*world.dx-12);}
+  let desired=m.intent,target=m.goalX??m.targetX;
+  if(urgentFear&&m.memory.dangerC>.05){desired='flee';target=clamp(body.x+Math.sign(body.x-m.memory.dangerX||c.dir)*180,12,world.n*world.dx-12);}
   else if(thirst>.48){desired='drink';target=sense.water?.x??(m.memory.waterC>.08?m.memory.waterX:target);}
   else if(c.hunger>.48||c.energy<.38){desired='forage';target=sense.food?sense.food.x*world.dx:(m.memory.foodC>.08?m.memory.foodX:target);}
-  else if(c.fatigue>.72){desired='rest';target=c.nodes[2].x;}
-  else if(m.intentAge>=m.commitFor){desired=m.curiosity>.28?'explore':'rest';target=clamp(c.nodes[2].x+world.rng.range(-190,190),12,world.n*world.dx-12);}
+  else if(c.fatigue>.72){desired='rest';target=body.x;}
+  else if(m.intentAge>=m.commitFor){desired=m.curiosity>.28?'explore':'rest';target=clamp(body.x+world.rng.range(-190,190),12,world.n*world.dx-12);}
 
   const emergency=desired==='flee'||(desired==='drink'&&thirst>.72)||(desired==='forage'&&c.energy<.18);
   if(desired!==m.intent&&(emergency||m.intentAge>=m.commitFor)){
-    m.intent=desired;m.intentAge=0;m.commitFor=world.rng.range(desired==='rest'?1.2:.8,desired==='explore'?3.6:2.8);
+    m.intent=desired;m.intentAge=0;m.commitFor=world.rng.range(desired==='rest'?1.2:.8,desired==='explore'?3.6:2.8);m.nav=null;
   }
-  if(m.intent===desired)m.targetX=target;
-  c.targetX=m.targetX;
+  if(m.intent===desired)m.goalX=target;
+
+  let nav=updateNavigator(world,c,dt,m.goalX??body.x);
+  if(nav.blocked&&m.intentAge>.75&&m.intent!=='flee'&&m.intent!=='rest'){
+    if(m.intent==='forage')m.memory.foodC*=.25;
+    if(m.intent==='drink')m.memory.waterC*=.25;
+    const blockedDir=Math.sign((m.goalX??body.x)-body.x)||c.dir;
+    m.intent='explore';m.intentAge=0;m.commitFor=world.rng.range(1.2,2.6);m.goalX=clamp(body.x-blockedDir*world.rng.range(90,170),12,world.n*world.dx-12);m.nav=null;
+    nav=updateNavigator(world,c,dt,m.goalX);
+  }
+  m.targetX=nav.waypointX;c.targetX=nav.waypointX;
   return m.intent;
 }
 
 export function locomotionDemand(c){
-  const m=c.mind;
-  const speed=m.intent==='flee'?1.35:m.intent==='forage'?.82:m.intent==='drink'?.62:m.intent==='explore'?.52:0;
+  const m=c.mind,base=m.nav?.speed??0;
   const bodyFactor=clamp(Math.min(c.energy/.28,c.hydration/.3)*(1-c.fatigue*.55)*(1-m.stress*.28),0,.98);
-  return speed*bodyFactor;
+  return base*bodyFactor;
 }
 
 export function contactDrink(world,c,dt){
@@ -98,9 +107,10 @@ export function digest(c,dt){
 }
 
 export const ALIFE_META={
-  controller:'limited sensing + decaying memory + persistent drive arbitration',
+  controller:'limited sensing + decaying memory + persistent drive arbitration + terrain-aware waypoint navigation',
   learning:false,
   stomachDigestion:true,
   directPlantCalories:false,
-  authoredGait:true
+  authoredGait:true,
+  navigation:NAV_META
 };
