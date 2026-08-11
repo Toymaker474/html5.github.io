@@ -51,7 +51,7 @@ export function updateNavigator(world,c,dt,goalX){
   const look=Math.min(pts.length-1,n.index+1),wp=pts[look]||{x:bodyX};
   const desiredDir=Math.abs(wp.x-bodyX)<world.dx*1.2?0:Math.sign(wp.x-bodyX);
   const steerRate=1-Math.exp(-dt*(n.blocked?2.8:4.2));n.steer=lerp(n.steer,desiredDir,steerRate);
-  if(Math.abs(n.steer)<.12)n.steer=0;
+  if(desiredDir===0&&Math.abs(n.steer)<.12)n.steer=0;
   const committed=Math.abs(n.steer)>.42?Math.sign(n.steer):0;n.heading=committed;
   const probe=terrainProbe(world,bodyX+Math.sign(n.steer||c.dir)*world.dx*3);
   const hazardSlow=clamp(1-(probe.slope*.42+Math.max(0,probe.water-2)*.045+probe.unstable*.18),.2,1);
