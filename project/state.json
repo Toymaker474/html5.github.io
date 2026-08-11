@@ -3,124 +3,89 @@
   "project": "GENESIS",
   "product": "GENESIS Ecosystem Sandbox",
   "engineering_system": "GENESIS FORGE",
-  "phase": "ecosystem-articulated-rig-acoustic-ecology",
+  "phase": "ecosystem-hydro-geomorphology25",
   "status": "IN_PROGRESS",
   "canonical_directive": {"path":"project/CANONICAL_MASTER_DIRECTIVE.md","status":"IN_REPO"},
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
   "stable": {
-    "label": "ecosystem-sandbox-rig25-ci-pass",
+    "label": "ecosystem-hydro25-tested",
     "verified": false,
-    "note": "The ecosystem remains the primary GENESIS experience. The articulated crab/ragdoll/acoustic layer has Codehood and Foundation CI evidence. The deployed browser and iPhone behavior after this change are still not live/device verified."
+    "note": "The existing multi-creature ecosystem remains the main experience. hydro_geomorph25 has local causal tests only until GitHub Actions runs the new test. The deployed browser/iPhone route after this change remains unverified."
   },
   "active_experience": {
     "route": "/genesis-codehood/",
     "verification_level": "IMPLEMENTED",
-    "stack": ["v100_core","v100_ai","v101_mind","v100_render","v102_cycle","v103_hires_jelly","v104_material_world","v105_continuum","v106_bestiary","v107_morphology","v107_living_surface","v107_anatomy","v108_bioglass","v109_biosphere","v110_world_physics","old_sim_upgrade","fluid_refinement","creature_world_overhaul","feeding_truth","mobile_observer","rig25_sound"],
-    "current_change": "replace the crab's circle-and-derived-bend presentation with persistent articulated joints/claw tips, slower gait filtering, ragdoll behavior and simulation-driven acoustic events",
+    "stack": ["v100_core","v100_ai","v101_mind","v100_render","v102_cycle","v103_hires_jelly","v104_material_world","v105_continuum","v106_bestiary","v107_morphology","v107_living_surface","v107_anatomy","v108_bioglass","v109_biosphere","v110_world_physics","old_sim_upgrade","fluid_refinement","creature_world_overhaul","feeding_truth","mobile_observer","rig25_sound","hydro_geomorph25"],
+    "current_change": "shift focus from creature-tech-demo presentation to a deeper water/terrain substrate: pore moisture, compaction, root reinforcement, erosion, suspended sediment, deposition and bank collapse",
     "simulation_changes": [
-      "each legacy limb receives a persistent added mid-joint Node with terrain collision and distance constraints",
-      "crab arm rigs receive persistent dual claw-tip Nodes constrained to the physical hand endpoint",
-      "added joints stop receiving authored pose targets after death and continue under gravity/collision/constraints as ragdoll parts",
-      "crab desired locomotion speed is low-pass filtered and heavily reduced for slower deliberate movement",
-      "crab step phase uses its own slower gait clock instead of the previous fast simTick oscillator",
-      "foot-contact, jaw-latch and death transitions generate acoustic events at simulation coordinates",
-      "nearby creatures receive distance-attenuated sound memory plus arousal/nerves changes from those same acoustic events",
-      "rain and local refined-water state drive procedural ambient WebAudio after user interaction"
+      "three persistent depth lanes store moisture and suspended sediment with conservative cross-depth seepage/exchange",
+      "middle depth lane is authoritative for existing 2D collision/material terrain; front/rear lanes are storage/coupling lanes rather than fake 3D collision",
+      "wet-sediment strength rises at intermediate moisture and falls when waterlogged",
+      "refined-water velocity and volume generate erosion shear against exposed dirt/sand/mud/ash",
+      "erosion removes persistent soil mass and can convert exhausted terrain cells into air/water",
+      "suspended sediment advects with refined-water direction and deposits into actual sand/mud cells when flow slows over support",
+      "plant root state reinforces nearby soil against erosion",
+      "waterlogged weak unsupported banks can slump into lower cells",
+      "creature contact with wet loose substrate adds drag/sink and compacts the contacted soil",
+      "plant water state slowly couples to local hydro moisture",
+      "a conservative fine-water pressure-relaxation/velocity-smoothing pass reduces single-cell chatter without changing total water mass"
     ],
     "presentation_and_controls": [
-      "crab rendering uses a continuous oriented shell silhouette instead of exposing body-node circles",
-      "back/front legs are ordered from persistent depth state for a limited 2.5D appearance",
-      "wet shell highlight remains tied to local simulated wetness",
-      "mobile dock receives a sound toggle when the new acoustic layer is active",
-      "existing world-first hideable mobile observer controls remain active"
+      "hydro layer renders only visible consequences such as seep darkening/depositional shelves/root traces, never a debug grid",
+      "existing world-first mobile observer and sound toggle remain active"
     ],
     "approximations": [
-      "2.5D depth state currently affects render ordering/scale only; terrain/body collision is still 2D",
-      "the legacy body controller still contains authored direct body drive; locomotion is not yet a pure muscle-force biomechanics solver",
-      "added knee joints physically couple to anchor and hand but the original limb endpoint planner is still authored",
-      "WebAudio timbre is procedurally synthesized; it is driven by simulation events but is not physically modeled acoustics",
-      "V107 bite remains jaw-node to target-node contact threshold rather than tooth-shape penetration/fracture mechanics",
-      "corpse scavenging is contact-gated but still lacks stomach digestion",
-      "fluid_refinement remains a conservative 2x subcell volume-relaxation approximation, not CFD/SPH/FLIP/PBF/MPM"
+      "Sandcastle's exact implementation is not public; GENESIS does not claim to use its solver",
+      "hydro_geomorph25 is not CFD, SPH, FLIP, PBF, MPM or full 3D terrain physics",
+      "three depth lanes simulate storage and exchange, but only the middle lane owns collision/material terrain",
+      "fine-water solver remains a conservative cellular/finite-volume-like approximation with damped momentum proxy",
+      "bank collapse is a local stability rule, not continuum soil mechanics",
+      "creature locomotion still contains legacy authored body drive",
+      "feeding still lacks stomach digestion"
     ],
-    "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_RIG25_CHANGE","iphone_safari":"NOT_TESTED_AFTER_RIG25_CHANGE"}
+    "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_HYDRO25_CHANGE","iphone_safari":"NOT_TESTED_AFTER_HYDRO25_CHANGE"}
   },
-  "rig25_acoustic": {
-    "verification_level":"CI_PASS",
-    "source":"genesis-codehood/rig25_sound.js",
-    "tests":"genesis-codehood/tests/rig25_sound.test.mjs",
-    "local_tests":{"status":"PASS"},
-    "ci": {
+  "hydro_geomorph25": {
+    "verification_level":"TESTED",
+    "source":"genesis-codehood/hydro_geomorph25.js",
+    "tests":"genesis-codehood/tests/hydro_geomorph25.test.mjs",
+    "local_tests": {
       "status":"PASS",
-      "workflow":".github/workflows/genesis-codehood.yml",
-      "proof_pull_request":87,
-      "run_id":31495896158,
-      "job_id":93793389687,
-      "foundation_run_id":31495896000,
-      "foundation_job_id":93793388882,
       "cases": {
-        "crab_motion_filter_is_damped":"PASS",
-        "persistent_joint_geometry":"PASS",
-        "acoustic_attenuation":"PASS",
-        "bounded_depth_presentation":"PASS",
-        "persistent_crab_joint_and_claw_nodes":"PASS",
-        "bite_acoustic_event_changes_nearby_agent_state":"PASS",
-        "truth_metadata_rejects_full3d_and_pure_muscle_claims":"PASS"
-      },
-      "syntax_check":"PASS"
+        "three_depth_lanes_with_middle_authoritative":"PASS",
+        "water_pair_relaxation_conserves_mass":"PASS",
+        "cross_depth_exchange_conserves_mass":"PASS",
+        "wet_strength_peaks_before_waterlogging":"PASS",
+        "erosion_requires_excess_shear_and_roots_reduce_it":"PASS",
+        "runtime_state_stays_finite":"PASS",
+        "strong_flow_removes_soil_mass":"PASS",
+        "root_reinforcement_reduces_actual_soil_loss":"PASS",
+        "slow_flow_deposits_actual_sand_or_mud":"PASS",
+        "anti_jitter_water_stabilizer_conserves_total_water":"PASS",
+        "metadata_rejects_cfd_full3d_claims":"PASS"
+      }
     },
-    "prior_failed_foundation_run": {
-      "run_id":31495672343,
-      "reason":"FORGE audit still hard-coded the previous ecosystem-fluid-refinement phase name",
-      "repair":"forge/audit-core.js updated to current phase and current required rig/mobile/feeding files",
-      "repaired_foundation_run":31495896000
-    },
+    "ci":{"status":"PENDING"},
     "live_browser":"NOT_TESTED",
-    "iphone_safari":"NOT_TESTED_AFTER_CHANGE"
+    "iphone_safari":"NOT_TESTED"
   },
-  "feeding_truth": {
-    "verification_level":"CI_PASS",
-    "source":"genesis-codehood/feeding_truth.js",
-    "tests":"genesis-codehood/tests/feeding_truth.test.mjs",
-    "ci":{"status":"PASS","proof_pull_request":85,"run_id":31493769069,"job_id":93786300605}
-  },
-  "mobile_observer": {
-    "verification_level":"CI_PASS_SYNTAX_ONLY",
-    "source":["genesis-codehood/mobile_observer.js","genesis-codehood/mobile_observer.css"],
-    "behavioral_browser_test":"NOT_TESTED"
-  },
-  "creature_rig_overhaul": {
-    "verification_level":"CI_PASS",
-    "source":"genesis-codehood/creature_world_overhaul.js",
-    "tests":"genesis-codehood/tests/creature_rig_overhaul.test.mjs",
-    "ci":{"status":"PASS","proof_pull_request":84,"run_id":31491623456,"job_id":93779238092}
-  },
-  "fluid_refinement": {
-    "verification_level":"CI_PASS",
-    "source":"genesis-codehood/fluid_refinement.js",
-    "tests":"genesis-codehood/tests/fluid_refinement.test.mjs",
-    "representation":"2D subcell water-volume field with pairwise conservative transfer and damped momentum proxy",
-    "ci":{"status":"PASS","proof_pull_request":83,"run_id":31415020788,"job_id":93541872398},
-    "live_browser":"NOT_TESTED"
-  },
-  "physical_creature_v1": {
-    "status":"PRESERVED_PROOF_SLICE",
-    "verification_level":"CI_PASS",
-    "route":"/genesis-codehood/physical-creature-v1/"
-  },
-  "active_objective": "Exercise the deployed ecosystem on iPhone with rig25_sound active. If stable, deepen one crab further: explicit upper/lower limb lengths, joint limits, contact-force gait and physical ingestion rather than broadening into cosmetic species.",
-  "next_gate": "LIVE_TESTED requires actual deployed-browser execution of the ecosystem with rig25_sound.js active, including crab rendering, death ragdoll, sound unlock/toggle and absence of runtime errors. DEVICE_TESTED requires the iPhone run after that.",
+  "rig25_acoustic": {"verification_level":"CI_PASS","source":"genesis-codehood/rig25_sound.js","tests":"genesis-codehood/tests/rig25_sound.test.mjs","ci":{"status":"PASS","proof_pull_request":87,"run_id":31495896158,"job_id":93793389687,"foundation_run_id":31495896000,"foundation_job_id":93793388882}},
+  "feeding_truth": {"verification_level":"CI_PASS","source":"genesis-codehood/feeding_truth.js","tests":"genesis-codehood/tests/feeding_truth.test.mjs","ci":{"status":"PASS","proof_pull_request":85,"run_id":31493769069,"job_id":93786300605}},
+  "mobile_observer": {"verification_level":"CI_PASS_SYNTAX_ONLY","source":["genesis-codehood/mobile_observer.js","genesis-codehood/mobile_observer.css"],"behavioral_browser_test":"NOT_TESTED"},
+  "creature_rig_overhaul": {"verification_level":"CI_PASS","source":"genesis-codehood/creature_world_overhaul.js","tests":"genesis-codehood/tests/creature_rig_overhaul.test.mjs","ci":{"status":"PASS","proof_pull_request":84,"run_id":31491623456,"job_id":93779238092}},
+  "fluid_refinement": {"verification_level":"CI_PASS","source":"genesis-codehood/fluid_refinement.js","tests":"genesis-codehood/tests/fluid_refinement.test.mjs","representation":"2D subcell water-volume field with pairwise conservative transfer and damped momentum proxy","ci":{"status":"PASS","proof_pull_request":83,"run_id":31415020788,"job_id":93541872398},"live_browser":"NOT_TESTED"},
+  "physical_creature_v1": {"status":"PRESERVED_PROOF_SLICE","verification_level":"CI_PASS","route":"/genesis-codehood/physical-creature-v1/"},
+  "active_objective": "Run independent CI for hydro_geomorph25, then exercise the deployed ecosystem on iPhone and inspect whether water settles more smoothly and visibly carves/deposits terrain without unstable bank flicker or frame-time spikes.",
+  "next_gate": "hydro_geomorph25 can move from TESTED to CI_PASS only after GitHub Actions runs tests/hydro_geomorph25.test.mjs successfully and FORGE accepts the updated phase. LIVE_TESTED still requires actual deployed-browser execution.",
   "invariants": [
     "IMPLEMENTATION > NAME",
     "The ecosystem sandbox is the primary user-facing experience",
-    "2.5D presentation must not be called full 3D physics",
-    "Procedural WebAudio must not be called physically simulated acoustics",
-    "A visual mouth animation is not proof of feeding",
-    "Predator proximity alone must not damage prey",
-    "Contact-gated scavenging must not be called digestion",
-    "No authored controller may be called learning",
+    "Do not claim Sandcastle's private solver or copy its game design",
+    "hydro_geomorph25 must not be called CFD/full 3D",
+    "Water visuals must remain derived from simulation state",
+    "Erosion/deposition claims require terrain state changes, not decals",
     "CI_PASS does not imply live deployment PASS",
     "Unknown or unexercised runtime state remains UNKNOWN/NOT_TESTED"
   ],
-  "updated":"2026-08-11T09:24:00-04:00"
+  "updated":"2026-08-11T09:33:00-04:00"
 }
