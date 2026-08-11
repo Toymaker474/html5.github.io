@@ -8,9 +8,9 @@
   "canonical_directive": {"path":"project/CANONICAL_MASTER_DIRECTIVE.md","status":"IN_REPO"},
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
   "stable": {
-    "label": "ecosystem-hydro25-tested",
+    "label": "ecosystem-hydro25-ci-pass",
     "verified": false,
-    "note": "The existing multi-creature ecosystem remains the main experience. hydro_geomorph25 has local causal tests only until GitHub Actions runs the new test. The deployed browser/iPhone route after this change remains unverified."
+    "note": "The existing multi-creature ecosystem remains the main experience. hydro_geomorph25 has Codehood and Foundation CI evidence. The deployed browser/iPhone route after this change remains unverified."
   },
   "active_experience": {
     "route": "/genesis-codehood/",
@@ -46,11 +46,17 @@
     "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_HYDRO25_CHANGE","iphone_safari":"NOT_TESTED_AFTER_HYDRO25_CHANGE"}
   },
   "hydro_geomorph25": {
-    "verification_level":"TESTED",
+    "verification_level":"CI_PASS",
     "source":"genesis-codehood/hydro_geomorph25.js",
     "tests":"genesis-codehood/tests/hydro_geomorph25.test.mjs",
-    "local_tests": {
+    "local_tests":{"status":"PASS"},
+    "ci": {
       "status":"PASS",
+      "proof_pull_request":88,
+      "codehood_run_id":31497856402,
+      "codehood_job_id":93799976664,
+      "foundation_run_id":31497856394,
+      "foundation_job_id":93799976394,
       "cases": {
         "three_depth_lanes_with_middle_authoritative":"PASS",
         "water_pair_relaxation_conserves_mass":"PASS",
@@ -63,9 +69,9 @@
         "slow_flow_deposits_actual_sand_or_mud":"PASS",
         "anti_jitter_water_stabilizer_conserves_total_water":"PASS",
         "metadata_rejects_cfd_full3d_claims":"PASS"
-      }
+      },
+      "syntax_check":"PASS"
     },
-    "ci":{"status":"PENDING"},
     "live_browser":"NOT_TESTED",
     "iphone_safari":"NOT_TESTED"
   },
@@ -75,8 +81,8 @@
   "creature_rig_overhaul": {"verification_level":"CI_PASS","source":"genesis-codehood/creature_world_overhaul.js","tests":"genesis-codehood/tests/creature_rig_overhaul.test.mjs","ci":{"status":"PASS","proof_pull_request":84,"run_id":31491623456,"job_id":93779238092}},
   "fluid_refinement": {"verification_level":"CI_PASS","source":"genesis-codehood/fluid_refinement.js","tests":"genesis-codehood/tests/fluid_refinement.test.mjs","representation":"2D subcell water-volume field with pairwise conservative transfer and damped momentum proxy","ci":{"status":"PASS","proof_pull_request":83,"run_id":31415020788,"job_id":93541872398},"live_browser":"NOT_TESTED"},
   "physical_creature_v1": {"status":"PRESERVED_PROOF_SLICE","verification_level":"CI_PASS","route":"/genesis-codehood/physical-creature-v1/"},
-  "active_objective": "Run independent CI for hydro_geomorph25, then exercise the deployed ecosystem on iPhone and inspect whether water settles more smoothly and visibly carves/deposits terrain without unstable bank flicker or frame-time spikes.",
-  "next_gate": "hydro_geomorph25 can move from TESTED to CI_PASS only after GitHub Actions runs tests/hydro_geomorph25.test.mjs successfully and FORGE accepts the updated phase. LIVE_TESTED still requires actual deployed-browser execution.",
+  "active_objective": "Exercise the deployed ecosystem on iPhone and inspect whether water settles more smoothly and visibly carves/deposits terrain without unstable bank flicker or frame-time spikes. If stable, deepen hydrology with coherent channels and depth-aware standing water before returning to creature visuals.",
+  "next_gate": "LIVE_TESTED requires actual deployed-browser execution with hydro_geomorph25 active. DEVICE_TESTED requires the iPhone run after that. Do not promote based on CI alone.",
   "invariants": [
     "IMPLEMENTATION > NAME",
     "The ecosystem sandbox is the primary user-facing experience",
@@ -87,5 +93,5 @@
     "CI_PASS does not imply live deployment PASS",
     "Unknown or unexercised runtime state remains UNKNOWN/NOT_TESTED"
   ],
-  "updated":"2026-08-11T09:33:00-04:00"
+  "updated":"2026-08-11T09:47:00-04:00"
 }
