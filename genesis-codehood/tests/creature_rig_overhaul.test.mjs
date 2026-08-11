@@ -1,0 +1,15 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const code=fs.readFileSync(new URL('../creature_world_overhaul.js',import.meta.url),'utf8');
+const noop=()=>{};
+const X={beginPath:noop,moveTo:noop,lineTo:noop,quadraticCurveTo:noop,closePath:noop,fill:noop,stroke:noop,arc:noop,ellipse:noop,save:noop,restore:noop,translate:noop,rotate:noop,createLinearGradient:()=>({addColorStop:noop}),createRadialGradient:()=>({addColorStop:noop})};
+const context={window:{},innerWidth:390,drawCreature:noop,drawTerrain:noop,updateUI:noop,stepCreature:noop,worldToScreen:(x,y)=>({x,y}),Node:(x,y,r=2)=>({x,y,px:x,py:y,r,inv:1,contact:0}),integrateNode:noop,constrain:noop,lerp:(a,b,t)=>a+(b-a)*t,hash:n=>((Math.sin(n*12.9898)*43758.5453)%1+1)%1,camera:{zoom:1},X,TAU:Math.PI*2,stats:null};
+vm.createContext(context);vm.runInContext(code,context);
+const api=context.window.GENESIS_CREATURE_RIG;assert.ok(api);
+const c=(family,face=1,head={x:20,y:20},neck={x:10,y:20})=>({face,spec:{family},g:{size:1},nodes:[head,neck],head(){return this.nodes[0]},v107:{gape:.5}});
+const proj=(p,f)=>({forward:(p.x-f.hx)*f.fx+(p.y-f.hy)*f.fy,down:(p.x-f.hx)*f.dx+(p.y-f.hy)*f.dy});
+let p=api.mouthPose(c('hunter'),.5),q=proj(p.jaw,p.frame);assert.ok(q.forward>5&&q.down>2);console.log('PASS hunter mouth is forward + underside');
+p=api.mouthPose(c('crab'),.35);q=proj(p.jaw,p.frame);assert.ok(q.down>q.forward);console.log('PASS crab mouth is ventral, not side-mounted');
+p=api.mouthPose(c('reedscale',1,{x:20,y:10},{x:10,y:20}),.4);q=proj(p.jaw,p.frame);assert.ok(p.frame.fx>0&&p.frame.dy>0&&q.forward>5&&q.down>2);console.log('PASS tilted skull carries mouth frame with it');
+const fam=['crab','bug','mirekin','reedscale','hunter','winged','melt','bone'];const shapes=new Set(fam.map(f=>{const r=api.profileFor(c(f));return r.mouth+':'+r.snout}));assert.ok(shapes.size>=6);console.log('PASS major families use distinct head/mouth profiles');
