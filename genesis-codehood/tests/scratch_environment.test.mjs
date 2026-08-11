@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {World} from '../scratch/sim-core.js';
 import {Environment,ENV_META} from '../scratch/environment.js';
 const sum=a=>a.reduce((s,v)=>s+v,0);
+const liquidCY=e=>{let m=0,y=0;for(let i=0;i<e.water.length;i++){const v=e.water[i];m+=v;y+=v*Math.floor(i/e.cols);}return m?y/m:0;};
 {
  const w=new World({seed:44,n:160,dx:6,worldH:720,ocean:false}),e=new Environment(w,{cell:24,rows:30});
  let cave=0,sub=0;for(let y=0;y<e.rows;y++)for(let x=0;x<e.cols;x++){const i=e.idx(x,y),wy=e.wy(y),sy=w.surfaceY(e.wx(x));if(wy>sy){sub++;if(!e.solid[i])cave++;}}
@@ -11,7 +12,7 @@ const sum=a=>a.reduce((s,v)=>s+v,0);
  const w=new World({seed:2,n:100,dx:6,worldH:720,ocean:false}),e=new Environment(w);for(let i=0;i<e.o2.length;i++){if(!e.solid[i])e.o2[i]=0;}let a=-1,b=-1;outer:for(let y=1;y<e.rows-1;y++)for(let x=1;x<e.cols-2;x++){const i=e.idx(x,y),j=e.idx(x+1,y);if(!e.solid[i]&&!e.solid[j]){a=i;b=j;break outer;}}assert.ok(a>=0);e.o2[a]=1;const m0=sum(e.o2);for(let k=0;k<120;k++)e.stepGas(1/120);const m1=sum(e.o2);assert.ok(Math.abs(m1-m0)<1e-4);assert.ok(e.o2[b]>0);console.log('PASS cave oxygen diffuses between connected cells while conserving gas mass');
 }
 {
- const w=new World({seed:7,n:120,dx:6,worldH:720,ocean:false}),e=new Environment(w);e.water.fill(0);e.urine.fill(0);let top=-1,down=-1;outer:for(let y=1;y<e.rows-2;y++)for(let x=1;x<e.cols-1;x++){const i=e.idx(x,y),j=e.idx(x,y+1);if(!e.solid[i]&&!e.solid[j]){top=i;down=j;break outer;}}assert.ok(top>=0);e.water[top]=.8;const m0=sum(e.water);for(let k=0;k<50;k++)e.stepLiquids(1/120);const m1=sum(e.water);assert.ok(Math.abs(m1-m0)<1e-4);assert.ok(e.water[down]>0);console.log('PASS cave liquid falls under gravity without deleting water mass');
+ const w=new World({seed:7,n:120,dx:6,worldH:720,ocean:false}),e=new Environment(w);e.water.fill(0);e.urine.fill(0);let top=-1;outer:for(let y=1;y<e.rows-2;y++)for(let x=1;x<e.cols-1;x++){const i=e.idx(x,y),j=e.idx(x,y+1);if(!e.solid[i]&&!e.solid[j]){top=i;break outer;}}assert.ok(top>=0);e.water[top]=.8;const m0=sum(e.water),y0=liquidCY(e);for(let k=0;k<50;k++)e.stepLiquids(1/120);const m1=sum(e.water),y1=liquidCY(e);assert.ok(Math.abs(m1-m0)<1e-4);assert.ok(y1>y0+.1,`liquid center did not fall: ${y0} -> ${y1}`);console.log('PASS cave liquid center of mass falls under gravity without deleting water mass');
 }
 {
  const w=new World({seed:9,n:120,dx:6,worldH:720,ocean:false}),e=new Environment(w);e.co2.fill(0);let up=-1,dn=-1;outer:for(let y=1;y<e.rows-2;y++)for(let x=1;x<e.cols-1;x++){const a=e.idx(x,y),b=e.idx(x,y+1);if(!e.solid[a]&&!e.solid[b]){up=a;dn=b;break outer;}}assert.ok(up>=0);e.co2[up]=1;const before=e.co2[dn];for(let k=0;k<80;k++)e.stepGas(1/120);assert.ok(e.co2[dn]>before);console.log('PASS carbon dioxide preferentially transfers downward in connected cave air');
