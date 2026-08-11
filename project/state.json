@@ -7,9 +7,9 @@
   "status": "IN_PROGRESS",
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
   "stable": {
-    "label": "ecosystem-continuous-liquids-tested",
+    "label": "ecosystem-continuous-liquids-ci-pass",
     "verified": false,
-    "note": "The ecosystem remains the primary experience. The current open-surface water+lava implementation is locally TESTED only until the changed code receives fresh CI evidence."
+    "note": "The ecosystem remains the primary experience. The current open-surface water+lava implementation has fresh Codehood and Foundation CI evidence. Deployed-browser/iPhone behavior after this change is still unverified."
   },
   "active_experience": {
     "route": "/genesis-codehood/",
@@ -27,12 +27,17 @@
     "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_CONTINUOUS_LIQUID_CHANGE","iphone_safari":"NOT_TESTED_AFTER_CONTINUOUS_LIQUID_CHANGE"}
   },
   "surface_liquid": {
-    "verification_level": "TESTED",
+    "verification_level": "CI_PASS",
     "source": "genesis-codehood/surface_liquid.js",
     "tests": "genesis-codehood/tests/surface_liquid.test.mjs",
     "representation": "1D local-inertial shallow-water water plus high-friction viscous free-surface lava approximation over open terrain",
-    "local_tests": {
+    "ci": {
       "status": "PASS",
+      "proof_pull_request": 90,
+      "codehood_run_id": 31500424838,
+      "codehood_job_id": 93808671956,
+      "foundation_run_id": 31500424885,
+      "foundation_job_id": 93808672323,
       "cases": {
         "water_mass_conservation": "PASS",
         "water_surface_gradient_generates_momentum": "PASS",
@@ -43,9 +48,10 @@
         "lava_mass_conservation_and_redistribution": "PASS",
         "lava_is_slower_than_water_under_same_surface_slope": "PASS",
         "metadata_exposes_continuous_lava_conversion": "PASS"
-      }
+      },
+      "syntax_check": "PASS"
     },
-    "ci": {"status":"PENDING_AFTER_LAVA_CHANGE","prior_water_only_proof_pull_request":89,"prior_water_only_codehood_run_id":31499528916,"prior_water_only_foundation_run_id":31499529023},
+    "prior_water_only_proof": {"proof_pull_request":89,"codehood_run_id":31499528916,"foundation_run_id":31499529023,"status":"SUPERSEDED_BY_LAVA_CHANGE"},
     "live_browser": "NOT_TESTED",
     "iphone_safari": "NOT_TESTED"
   },
@@ -56,8 +62,8 @@
   "creature_rig_overhaul": {"verification_level":"CI_PASS","source":"genesis-codehood/creature_world_overhaul.js","tests":"genesis-codehood/tests/creature_rig_overhaul.test.mjs","ci":{"status":"PASS","proof_pull_request":84,"run_id":31491623456,"job_id":93779238092}},
   "mobile_observer": {"verification_level":"CI_PASS_SYNTAX_ONLY","source":["genesis-codehood/mobile_observer.js","genesis-codehood/mobile_observer.css"],"behavioral_browser_test":"NOT_TESTED"},
   "physical_creature_v1": {"status":"PRESERVED_PROOF_SLICE","verification_level":"CI_PASS","route":"/genesis-codehood/physical-creature-v1/"},
-  "active_objective": "Run fresh CI for the changed water+lava surface solver, then exercise the deployed ecosystem on iPhone and verify that both blue water and orange lava stop reading as falling-sand cell liquids. If stable, add connected-basin/cave-liquid handling without returning to pixel-liquid rendering.",
-  "next_gate": "surface_liquid returns to CI_PASS only after GitHub Actions executes the updated water+lava tests and syntax. LIVE_TESTED and DEVICE_TESTED remain separate later gates.",
+  "active_objective": "Exercise the deployed ecosystem on iPhone and verify that both blue water and orange lava now read as continuous settling free surfaces rather than falling-sand cell liquids. If stable, add connected-basin/cave-liquid handling without returning to pixel-liquid rendering.",
+  "next_gate": "LIVE_TESTED requires deployed-browser execution with the continuous water+lava layer active. DEVICE_TESTED requires the iPhone Safari run after that. CI_PASS alone is not sufficient.",
   "invariants": [
     "IMPLEMENTATION > NAME",
     "Do not call surface_liquid full 2D CFD or full 3D physics",
@@ -66,5 +72,5 @@
     "CI_PASS does not imply LIVE_TESTED",
     "Unknown runtime state remains NOT_TESTED"
   ],
-  "updated": "2026-08-11T10:12:00-04:00"
+  "updated": "2026-08-11T10:18:00-04:00"
 }
