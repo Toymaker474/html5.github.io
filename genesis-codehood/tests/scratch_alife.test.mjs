@@ -9,8 +9,8 @@ import {senseCreature,updateMind,contactFeed,contactDrink,digest,ALIFE_META} fro
   console.log('PASS scratch ALife uses local sensing and decaying food memory');
 }
 {
-  const w=new World({seed:102,n:100,dx:6,worldH:420,ocean:false,infiltrationScale:0});w.water.fill(0);w.q.fill(0);const c=w.creatures[0],ci=Math.max(2,Math.min(w.n-3,(c.nodes[2].x/w.dx)|0));w.water[ci+4]=6;c.hydration=.12;c.hunger=.1;c.mind.intentAge=9;c.mind.commitFor=0;const s=senseCreature(w,c);assert.ok(s.water);updateMind(w,c,1/60,s);assert.equal(c.mind.intent,'drink');assert.ok(Math.abs(c.targetX-s.water.x)<1e-6);
-  console.log('PASS scratch thirst causally selects sensed water');
+  const w=new World({seed:102,n:100,dx:6,worldH:420,ocean:false,infiltrationScale:0});w.water.fill(0);w.q.fill(0);const c=w.creatures[0],ci=Math.max(2,Math.min(w.n-3,(c.nodes[2].x/w.dx)|0));w.water[ci+4]=6;c.hydration=.12;c.hunger=.1;c.mind.intentAge=9;c.mind.commitFor=0;const s=senseCreature(w,c);assert.ok(s.water);updateMind(w,c,1/60,s);assert.equal(c.mind.intent,'drink');assert.ok(Math.abs(c.mind.goalX-s.water.x)<1e-6);assert.ok(c.mind.nav?.route?.points?.length>0);
+  console.log('PASS scratch thirst causally selects sensed water as a persistent routed goal');
 }
 {
   const w=new World({seed:103,n:90,dx:6,worldH:420,ocean:false});const c=w.creatures[0],p=w.plants[0];p.alive=true;p.biomass=.9;p.energy=.7;c.mind.intent='forage';c.stomach=0;c.energy=.3;const px=p.x*w.dx,py=w.surfaceY(px)-Math.min(28,8+p.biomass*12);c.mouth.x=px;c.mouth.y=py;const e0=c.energy,b=contactFeed(w,c,p,1);assert.ok(b>0);assert.ok(c.stomach>0);assert.equal(c.energy,e0);const st=c.stomach,d=digest(c,1);assert.ok(d>0&&c.stomach<st&&c.energy>e0);
