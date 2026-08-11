@@ -7,7 +7,7 @@ export function makeMind(rng,x){
     curiosity:rng.range(.3,.9),caution:rng.range(.2,.85),social:rng.range(.15,.75),
     stress:rng.range(0,.12),fear:rng.range(0,.12),senseSweep:rng.range(0,Math.PI*2),
     memory:{foodX:x,foodC:0,waterX:x,waterC:0,dangerX:x,dangerC:0},
-    lastSense:{food:false,water:false,danger:false},nav:null
+    lastSense:{food:false,water:false,danger:false},nav:null,navHeading:0
   };
 }
 
@@ -42,6 +42,10 @@ export function senseCreature(world,c){
 }
 
 function remember(m,key,x,gain){m[key+'X']=x;m[key+'C']=clamp(m[key+'C']+gain,0,1);}
+function releaseForTurn(c,heading){
+  c.phase=0;c.dir=heading;
+  for(const leg of c.legs){leg.stance=false;leg.contactX=leg.foot.x;leg.foot.px=leg.foot.x;leg.foot.py=leg.foot.y;leg.knee.px=leg.knee.x;leg.knee.py=leg.knee.y;}
+}
 
 export function updateMind(world,c,dt,sense){
   const m=c.mind,body=c.nodes[2];m.intentAge+=dt;m.senseSweep+=dt*(.7+m.curiosity*1.4+m.fear*1.6);
@@ -62,7 +66,7 @@ export function updateMind(world,c,dt,sense){
 
   const emergency=desired==='flee'||(desired==='drink'&&thirst>.72)||(desired==='forage'&&c.energy<.18);
   if(desired!==m.intent&&(emergency||m.intentAge>=m.commitFor)){
-    m.intent=desired;m.intentAge=0;m.commitFor=world.rng.range(desired==='rest'?1.2:.8,desired==='explore'?3.6:2.8);m.nav=null;
+    m.intent=desired;m.intentAge=0;m.commitFor=world.rng.range(desired==='rest'?1.2:.8,desired==='explore'?3.6:2.8);m.nav=null;m.navHeading=0;
   }
   if(m.intent===desired)m.goalX=target;
 
@@ -71,15 +75,18 @@ export function updateMind(world,c,dt,sense){
     if(m.intent==='forage')m.memory.foodC*=.25;
     if(m.intent==='drink')m.memory.waterC*=.25;
     const blockedDir=Math.sign((m.goalX??body.x)-body.x)||c.dir;
-    m.intent='explore';m.intentAge=0;m.commitFor=world.rng.range(1.2,2.6);m.goalX=clamp(body.x-blockedDir*world.rng.range(90,170),12,world.n*world.dx-12);m.nav=null;
+    m.intent='explore';m.intentAge=0;m.commitFor=world.rng.range(1.2,2.6);m.goalX=clamp(body.x-blockedDir*world.rng.range(90,170),12,world.n*world.dx-12);m.nav=null;m.navHeading=0;
     nav=updateNavigator(world,c,dt,m.goalX);
   }
-  m.targetX=nav.waypointX;c.targetX=nav.waypointX;
+  if(nav.heading&&nav.heading!==m.navHeading){releaseForTurn(c,nav.heading);m.navHeading=nav.heading;}
+  const moveTarget=nav.heading?nav.waypointX:body.x;
+  m.targetX=moveTarget;c.targetX=moveTarget;
   return m.intent;
 }
 
 export function locomotionDemand(c){
-  const m=c.mind,base=m.nav?.speed??0;
+  const m=c.mind;if(m.intent!=='rest'&&!m.nav?.heading)return 0;
+  const base=m.nav?.speed??0;
   const bodyFactor=clamp(Math.min(c.energy/.28,c.hydration/.3)*(1-c.fatigue*.55)*(1-m.stress*.28),0,.98);
   return base*bodyFactor;
 }
