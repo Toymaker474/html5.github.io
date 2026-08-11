@@ -3,41 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#04100d">
+<meta name="theme-color" content="#030807">
 <title>GENESIS</title>
-<link rel="stylesheet" href="./v100.css">
-<link rel="stylesheet" href="./v108_bioglass.css">
-<link rel="stylesheet" href="./old_sim_upgrade.css">
-<link rel="stylesheet" href="./mobile_observer.css">
+<link rel="stylesheet" href="./scratch/style.css">
 </head>
 <body>
-<canvas id="game"></canvas>
-<div id="hud" class="glass"><div id="brand">GENESIS // ECOSYSTEM SANDBOX</div><div id="stats"></div></div>
-<div id="inspect" class="glass"></div>
-<div id="dock" class="glass"><button id="pause">Ⅱ</button><button id="speed">×1</button><button id="follow">◎</button><button id="storm">☂</button><button id="debug">BODY</button><button id="reset">↻</button></div>
-<script src="./v100_core.js"></script>
-<script src="./v100_ai.js"></script>
-<script src="./v101_mind.js"></script>
-<script src="./v100_render.js"></script>
-<script src="./v102_cycle.js"></script>
-<script src="./v103_hires_jelly.js"></script>
-<script src="./v104_material_world.js"></script>
-<script src="./v105_continuum.js"></script>
-<script src="./v106_bestiary.js"></script>
-<script src="./v107_morphology.js"></script>
-<script src="./v107_living_surface.js"></script>
-<script src="./v107_anatomy.js"></script>
-<script src="./v108_bioglass.js"></script>
-<script src="./v109_biosphere.js"></script>
-<script src="./v110_world_physics.js"></script>
-<script src="./old_sim_upgrade.js"></script>
-<script src="./fluid_refinement.js"></script>
-<script src="./creature_world_overhaul.js"></script>
-<script src="./feeding_truth.js"></script>
-<script src="./mobile_observer.js"></script>
-<script src="./rig25_sound.js"></script>
-<script src="./hydro_geomorph25.js"></script>
-<script src="./surface_liquid.js"></script>
-<script src="./flip_ocean.js"></script>
+<canvas id="sim"></canvas>
+<div id="hud"><div class="pill brand"><b>GENESIS</b> // WORLD</div><div class="pill" id="info">starting worker…</div></div>
+<div id="selected">Drag to explore · pinch to zoom · tap organism</div>
+<div id="dock">
+<button id="toggleUI" aria-label="Hide UI">◉</button>
+<button id="pause" aria-label="Pause">Ⅱ</button>
+<button id="speed" aria-label="Speed">×1</button>
+<button id="weather" aria-label="Rain">☂</button>
+<button id="sound" aria-label="Sound">♪</button>
+<button id="reset" aria-label="New world">↻</button>
+</div>
+<script type="module" src="./scratch/main.js"></script>
 </body>
 </html>
