@@ -40,7 +40,7 @@ function rawDrive(c){
 
 export function updateNavigator(world,c,dt,goalX){
   const m=c.mind,bodyX=c.nodes[2].x;
-  if(!m.nav)m.nav={route:null,index:0,replan:0,waypointX:bodyX,steer:0,speed:0,blocked:false,lastGoal:goalX};
+  if(!m.nav)m.nav={route:null,index:0,replan:0,waypointX:bodyX,steer:0,speed:0,blocked:false,lastGoal:goalX,heading:0};
   const n=m.nav;n.replan-=dt;
   const changed=Math.abs((n.lastGoal??goalX)-goalX)>world.dx*3;
   if(!n.route||changed||n.replan<=0){
@@ -51,13 +51,14 @@ export function updateNavigator(world,c,dt,goalX){
   const look=Math.min(pts.length-1,n.index+1),wp=pts[look]||{x:bodyX};
   const desiredDir=Math.abs(wp.x-bodyX)<world.dx*1.2?0:Math.sign(wp.x-bodyX);
   const steerRate=1-Math.exp(-dt*(n.blocked?2.8:4.2));n.steer=lerp(n.steer,desiredDir,steerRate);
-  if(Math.abs(n.steer)<.18)n.steer=0;
+  if(Math.abs(n.steer)<.12)n.steer=0;
+  const committed=Math.abs(n.steer)>.42?Math.sign(n.steer):0;n.heading=committed;
   const probe=terrainProbe(world,bodyX+Math.sign(n.steer||c.dir)*world.dx*3);
   const hazardSlow=clamp(1-(probe.slope*.42+Math.max(0,probe.water-2)*.045+probe.unstable*.18),.2,1);
   const targetSpeed=rawDrive(c)*hazardSlow*(n.blocked?.45:1);
   n.speed=lerp(n.speed,targetSpeed,1-Math.exp(-dt*3.1));
   n.waypointX=wp.x;
-  return {waypointX:n.waypointX,steer:n.steer,speed:n.speed,blocked:n.blocked,reachable:n.route.reachable};
+  return {waypointX:n.waypointX,steer:n.steer,speed:n.speed,heading:n.heading,blocked:n.blocked,reachable:n.route.reachable};
 }
 
 export const NAV_META={
@@ -65,5 +66,6 @@ export const NAV_META={
   general2DNavmesh:false,
   hazards:['slope','water_depth','waterlogged_instability'],
   persistentWaypoints:true,
-  smoothedSteering:true
+  smoothedSteering:true,
+  committedHeadingTurns:true
 };
