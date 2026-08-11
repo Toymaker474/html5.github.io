@@ -3,74 +3,88 @@
   "project": "GENESIS",
   "product": "GENESIS Ecosystem Sandbox",
   "engineering_system": "GENESIS FORGE",
-  "phase": "ecosystem-hydro-geomorphology25",
+  "phase": "ecosystem-flip-ocean",
   "status": "IN_PROGRESS",
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
   "stable": {
-    "label": "ecosystem-continuous-liquids-ci-pass",
+    "label": "ecosystem-flip-ocean-tested",
     "verified": false,
-    "note": "The ecosystem remains the primary experience. The current open-surface water+lava implementation has fresh Codehood and Foundation CI evidence. Deployed-browser/iPhone behavior after this change is still unverified."
+    "note": "The ecosystem remains the primary experience. A camera-local 2D FLIP/PIC water solver is now wired last, but only local deterministic tests have passed so far. CI and deployed iPhone behavior are not yet promoted."
   },
   "active_experience": {
     "route": "/genesis-codehood/",
     "verification_level": "IMPLEMENTED",
-    "stack": ["v100_core","v100_ai","v101_mind","v100_render","v102_cycle","v103_hires_jelly","v104_material_world","v105_continuum","v106_bestiary","v107_morphology","v107_living_surface","v107_anatomy","v108_bioglass","v109_biosphere","v110_world_physics","old_sim_upgrade","fluid_refinement","creature_world_overhaul","feeding_truth","mobile_observer","rig25_sound","hydro_geomorph25","surface_liquid"],
-    "current_change": "replace visible open-surface falling-cell water and lava with continuous free-surface depth/momentum fields; water uses a local-inertial shallow-water approximation and lava uses a much more strongly damped viscous approximation",
-    "approximations": [
-      "surface_liquid is one-dimensional along the side-view terrain surface and is not full 2D CFD",
-      "lava is a high-friction free-surface approximation, not a temperature-dependent Navier-Stokes viscosity model",
-      "enclosed cave liquids remain outside the verified scope of this open-surface solver",
-      "legacy fine/coarse open water and V104 open lava are absorbed as source/reservoir state rather than displayed as primary liquid cells",
-      "creature locomotion still contains legacy authored body drive",
-      "feeding still lacks stomach digestion"
+    "stack": ["v100_core","v100_ai","v101_mind","v100_render","v102_cycle","v103_hires_jelly","v104_material_world","v105_continuum","v106_bestiary","v107_morphology","v107_living_surface","v107_anatomy","v108_bioglass","v109_biosphere","v110_world_physics","old_sim_upgrade","fluid_refinement","creature_world_overhaul","feeding_truth","mobile_observer","rig25_sound","hydro_geomorph25","surface_liquid","flip_ocean"],
+    "current_change": "replace camera-near visible water motion with continuous particles transferred to/from a MAC velocity grid, pressure-projected for approximate incompressibility, then advected with FLIP/PIC blending; add an anchored ocean boundary with wave/tide forcing",
+    "simulation_changes": [
+      "camera-near water is represented by persistent particles with continuous positions and velocities instead of falling-cell moves",
+      "particle velocity is transferred to a staggered MAC grid, gravity is applied, and a pressure Poisson solve reduces divergence before velocity is transferred back to particles",
+      "FLIP/PIC blending preserves more motion detail than pure PIC while retaining damping for stability",
+      "water particles collide against the authoritative V104 2D terrain material field",
+      "existing visible V104 water, refined subcell water, and surface_liquid water depth are absorbed into a per-column deferred reservoir and respawned into FLIP particles near the camera instead of being rendered as the primary water",
+      "particles leaving the active camera window are converted back into the deferred per-column reservoir rather than simply deleted when they remain inside the world",
+      "the ocean reservoir is anchored to an actual world edge rather than the screen edge and injects tracked water area plus oscillatory wave/tide momentum only when that coast is inside the active solve window",
+      "submerged creature nodes receive drag and current coupling from the solved velocity field",
+      "high solved water speed couples back into hydro_geomorph25 soil mass so moving water can erode actual terrain state"
     ],
-    "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_CONTINUOUS_LIQUID_CHANGE","iphone_safari":"NOT_TESTED_AFTER_CONTINUOUS_LIQUID_CHANGE"}
+    "approximations": [
+      "flip_ocean is a 2D camera-local free-surface FLIP/PIC approximation, not full 3D water physics",
+      "the pressure solve uses a finite Jacobi iteration count and therefore only approximately enforces incompressibility",
+      "the active liquid solve runs at about 30 Hz on mobile while rendering can run faster",
+      "offscreen/far water remains in older reservoir representations and is converted approximately by conserved 2D area when it enters the active window",
+      "the ocean boundary is an external source/sink reservoir; total closed-world mass conservation therefore does not apply while the ocean boundary is active, but source/sink area is tracked",
+      "the visible water surface is reconstructed from particle positions; it is not a level-set or VOF interface reconstruction",
+      "terrain collision is still 2D and the world depth layers are not full 3D fluid obstacles",
+      "this implementation is CPU typed-array JavaScript, not WebGPU compute yet",
+      "lava remains on the older continuous surface_liquid approximation",
+      "creature locomotion still contains legacy authored body drive and feeding still lacks stomach digestion"
+    ],
+    "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_FLIP_OCEAN_CHANGE","iphone_safari":"NOT_TESTED_AFTER_FLIP_OCEAN_CHANGE"}
   },
-  "surface_liquid": {
-    "verification_level": "CI_PASS",
-    "source": "genesis-codehood/surface_liquid.js",
-    "tests": "genesis-codehood/tests/surface_liquid.test.mjs",
-    "representation": "1D local-inertial shallow-water water plus high-friction viscous free-surface lava approximation over open terrain",
-    "ci": {
+  "flip_ocean": {
+    "verification_level": "TESTED",
+    "source": "genesis-codehood/flip_ocean.js",
+    "tests": "genesis-codehood/tests/flip_ocean.test.mjs",
+    "representation": "camera-local 2D FLIP/PIC incompressible free-surface liquid with staggered MAC grid pressure projection and an external ocean boundary reservoir",
+    "local_tests": {
       "status": "PASS",
-      "proof_pull_request": 90,
-      "codehood_run_id": 31500424838,
-      "codehood_job_id": 93808671956,
-      "foundation_run_id": 31500424885,
-      "foundation_job_id": 93808672323,
       "cases": {
-        "water_mass_conservation": "PASS",
-        "water_surface_gradient_generates_momentum": "PASS",
-        "contained_pool_relaxes_toward_flat_surface": "PASS",
-        "surface_water_changes_submerged_body_motion": "PASS",
-        "surface_flow_couples_to_real_terrain_erosion": "PASS",
-        "metadata_rejects_full2d_cfd_and_full3d_claims": "PASS",
-        "lava_mass_conservation_and_redistribution": "PASS",
-        "lava_is_slower_than_water_under_same_surface_slope": "PASS",
-        "metadata_exposes_continuous_lava_conversion": "PASS"
-      },
-      "syntax_check": "PASS"
+        "particle_mass_conserved_without_sources_or_sinks": "PASS",
+        "pressure_projection_reduces_divergence": "PASS",
+        "gravity_accelerates_fluid_particles": "PASS",
+        "terrain_collision_ejects_particles_from_solids": "PASS",
+        "open_ocean_boundary_injects_coherent_wave_momentum": "PASS",
+        "metadata_rejects_falling_sand_and_full3d_claims": "PASS"
+      }
     },
-    "prior_water_only_proof": {"proof_pull_request":89,"codehood_run_id":31499528916,"foundation_run_id":31499529023,"status":"SUPERSEDED_BY_LAVA_CHANGE"},
+    "ci": {"status":"PENDING"},
     "live_browser": "NOT_TESTED",
     "iphone_safari": "NOT_TESTED"
   },
-  "hydro_geomorph25": {"verification_level":"CI_PASS","source":"genesis-codehood/hydro_geomorph25.js","tests":"genesis-codehood/tests/hydro_geomorph25.test.mjs","ci":{"status":"PASS","proof_pull_request":88,"codehood_run_id":31497856402,"codehood_job_id":93799976664,"foundation_run_id":31497856394,"foundation_job_id":93799976394}},
-  "fluid_refinement": {"verification_level":"CI_PASS","source":"genesis-codehood/fluid_refinement.js","tests":"genesis-codehood/tests/fluid_refinement.test.mjs","representation":"2D subcell water-volume field with pairwise conservative transfer and damped momentum proxy","ci":{"status":"PASS","proof_pull_request":83,"run_id":31415020788,"job_id":93541872398}},
-  "rig25_acoustic": {"verification_level":"CI_PASS","source":"genesis-codehood/rig25_sound.js","tests":"genesis-codehood/tests/rig25_sound.test.mjs","ci":{"status":"PASS","proof_pull_request":87,"run_id":31495896158,"job_id":93793389687,"foundation_run_id":31495896000,"foundation_job_id":93793388882}},
-  "feeding_truth": {"verification_level":"CI_PASS","source":"genesis-codehood/feeding_truth.js","tests":"genesis-codehood/tests/feeding_truth.test.mjs","ci":{"status":"PASS","proof_pull_request":85,"run_id":31493769069,"job_id":93786300605}},
-  "creature_rig_overhaul": {"verification_level":"CI_PASS","source":"genesis-codehood/creature_world_overhaul.js","tests":"genesis-codehood/tests/creature_rig_overhaul.test.mjs","ci":{"status":"PASS","proof_pull_request":84,"run_id":31491623456,"job_id":93779238092}},
+  "surface_liquid": {
+    "verification_level": "CI_PASS",
+    "status": "SUPERSEDED_FOR_CAMERA_NEAR_WATER",
+    "source": "genesis-codehood/surface_liquid.js",
+    "note": "Still retained as a far-field/reservoir and for current continuous lava handling; flip_ocean drains camera-near visible water from it before rendering."
+  },
+  "hydro_geomorph25": {"verification_level":"CI_PASS","source":"genesis-codehood/hydro_geomorph25.js","tests":"genesis-codehood/tests/hydro_geomorph25.test.mjs"},
+  "fluid_refinement": {"verification_level":"CI_PASS","source":"genesis-codehood/fluid_refinement.js","tests":"genesis-codehood/tests/fluid_refinement.test.mjs","status":"RESERVOIR_COUPLING_FOR_FLIP_OCEAN_NEAR_CAMERA"},
+  "rig25_acoustic": {"verification_level":"CI_PASS","source":"genesis-codehood/rig25_sound.js","tests":"genesis-codehood/tests/rig25_sound.test.mjs"},
+  "feeding_truth": {"verification_level":"CI_PASS","source":"genesis-codehood/feeding_truth.js","tests":"genesis-codehood/tests/feeding_truth.test.mjs"},
+  "creature_rig_overhaul": {"verification_level":"CI_PASS","source":"genesis-codehood/creature_world_overhaul.js","tests":"genesis-codehood/tests/creature_rig_overhaul.test.mjs"},
   "mobile_observer": {"verification_level":"CI_PASS_SYNTAX_ONLY","source":["genesis-codehood/mobile_observer.js","genesis-codehood/mobile_observer.css"],"behavioral_browser_test":"NOT_TESTED"},
   "physical_creature_v1": {"status":"PRESERVED_PROOF_SLICE","verification_level":"CI_PASS","route":"/genesis-codehood/physical-creature-v1/"},
-  "active_objective": "Exercise the deployed ecosystem on iPhone and verify that both blue water and orange lava now read as continuous settling free surfaces rather than falling-sand cell liquids. If stable, add connected-basin/cave-liquid handling without returning to pixel-liquid rendering.",
-  "next_gate": "LIVE_TESTED requires deployed-browser execution with the continuous water+lava layer active. DEVICE_TESTED requires the iPhone Safari run after that. CI_PASS alone is not sufficient.",
+  "active_objective": "Run independent CI on flip_ocean, then exercise the deployed route on iPhone. The device check must verify that the old falling-cell water is no longer visibly dominant, ocean waves remain stable, pressure solve frame cost is acceptable, and camera panning does not teleport water because particle coordinates are re-based when the active window moves.",
+  "next_gate": "CI_PASS requires both Codehood and Foundation workflows to pass from a marker-only proof branch. LIVE_TESTED and DEVICE_TESTED still require actual browser/iPhone execution afterward.",
   "invariants": [
     "IMPLEMENTATION > NAME",
-    "Do not call surface_liquid full 2D CFD or full 3D physics",
-    "Continuous water/lava rendering must derive from simulated depth fields",
-    "Changed code invalidates prior CI promotion until fresh CI runs",
-    "CI_PASS does not imply LIVE_TESTED",
+    "Do not call flip_ocean full 3D water physics",
+    "Do not call the private Sandcastle solver copied or reproduced",
+    "FLIP/PIC claims require particle-grid-particle transfer plus pressure projection",
+    "Ocean source/sink mass must be reported separately from closed-domain conservation",
+    "Old falling-cell water must not remain the primary visible camera-near liquid",
+    "CI_PASS does not imply LIVE_TESTED or DEVICE_TESTED",
     "Unknown runtime state remains NOT_TESTED"
   ],
-  "updated": "2026-08-11T10:18:00-04:00"
+  "updated": "2026-08-11T10:24:00-04:00"
 }
