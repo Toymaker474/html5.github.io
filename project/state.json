@@ -7,9 +7,9 @@
   "status": "IN_PROGRESS",
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
   "stable": {
-    "label": "scratch-offscreen-world-tested",
+    "label": "scratch-offscreen-world-ci-pass",
     "verified": false,
-    "note": "The active /genesis-codehood/ route was rebuilt from scratch and no longer imports the V100-V110 layered simulation. Local deterministic tests pass; CI and deployed iPhone behavior are not yet promoted."
+    "note": "The active /genesis-codehood/ route was rebuilt from scratch and no longer imports the V100-V110 layered simulation. Codehood and Foundation CI pass. Deployed browser/iPhone behavior remains unverified."
   },
   "active_experience": {
     "route": "/genesis-codehood/",
@@ -41,11 +41,16 @@
     "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_SCRATCH_REBUILD","iphone_safari":"NOT_TESTED_AFTER_SCRATCH_REBUILD"}
   },
   "scratch_engine": {
-    "verification_level": "TESTED",
+    "verification_level": "CI_PASS",
     "source": ["genesis-codehood/scratch/sim-core.js","genesis-codehood/scratch/worker.js","genesis-codehood/scratch/main.js","genesis-codehood/scratch/style.css"],
     "tests": "genesis-codehood/tests/scratch_sim.test.mjs",
-    "local_tests": {
+    "ci": {
       "status": "PASS",
+      "proof_pull_request": 92,
+      "codehood_run_id": 31505363249,
+      "codehood_job_id": 93825447507,
+      "foundation_run_id": 31505363250,
+      "foundation_job_id": 93825447589,
       "cases": {
         "deterministic_seed_reproduces_terrain_and_organisms": "PASS",
         "closed_domain_water_mass_conservation": "PASS",
@@ -53,9 +58,10 @@
         "plant_biomass_grows_from_water_nutrients_energy": "PASS",
         "plants_reinforce_soil": "PASS",
         "articulated_creature_rig_remains_constrained": "PASS"
-      }
+      },
+      "syntax_check": "PASS",
+      "forge_fail_closed_audit": "PASS"
     },
-    "ci": {"status":"PENDING"},
     "live_browser": "NOT_TESTED",
     "iphone_safari": "NOT_TESTED"
   },
@@ -64,8 +70,8 @@
     "note": "Previous V100-V110 and patch layers remain in repository history/files for reference but are not imported by the current /genesis-codehood/ page."
   },
   "physical_creature_v1": {"status":"PRESERVED_PROOF_SLICE","verification_level":"CI_PASS","route":"/genesis-codehood/physical-creature-v1/"},
-  "active_objective": "Run independent CI on the clean scratch engine, then exercise the deployed OffscreenCanvas build on iPhone. If the visual result is still not acceptable, improve this clean engine rather than reintroducing the archived layered stack.",
-  "next_gate": "CI_PASS requires both Codehood and Foundation workflows against the scratch engine. LIVE_TESTED and DEVICE_TESTED require actual deployed browser/iPhone execution after that.",
+  "active_objective": "Exercise the clean deployed OffscreenCanvas build on iPhone. If the visual result is still not acceptable, improve or replace this clean engine rather than reintroducing the archived layered stack.",
+  "next_gate": "LIVE_TESTED and DEVICE_TESTED require actual deployed browser/iPhone execution. CI_PASS alone is not sufficient.",
   "invariants": [
     "IMPLEMENTATION > NAME",
     "Active route must not import archived V100-V110 layers",
@@ -76,5 +82,5 @@
     "CI_PASS does not imply LIVE_TESTED or DEVICE_TESTED",
     "Unknown runtime state remains NOT_TESTED"
   ],
-  "updated": "2026-08-11T10:55:00-04:00"
+  "updated": "2026-08-11"
 }
