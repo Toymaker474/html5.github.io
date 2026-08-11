@@ -5,93 +5,64 @@
   "engineering_system": "GENESIS FORGE",
   "phase": "ecosystem-hydro-geomorphology25",
   "status": "IN_PROGRESS",
-  "canonical_directive": {"path":"project/CANONICAL_MASTER_DIRECTIVE.md","status":"IN_REPO"},
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
   "stable": {
-    "label": "ecosystem-hydro25-ci-pass",
+    "label": "ecosystem-surface-liquid-tested",
     "verified": false,
-    "note": "The existing multi-creature ecosystem remains the main experience. hydro_geomorph25 has Codehood and Foundation CI evidence. The deployed browser/iPhone route after this change remains unverified."
+    "note": "The ecosystem remains the primary experience. The new continuous open-surface water layer is locally TESTED only until CI and deployed-browser evidence exist."
   },
   "active_experience": {
     "route": "/genesis-codehood/",
     "verification_level": "IMPLEMENTED",
-    "stack": ["v100_core","v100_ai","v101_mind","v100_render","v102_cycle","v103_hires_jelly","v104_material_world","v105_continuum","v106_bestiary","v107_morphology","v107_living_surface","v107_anatomy","v108_bioglass","v109_biosphere","v110_world_physics","old_sim_upgrade","fluid_refinement","creature_world_overhaul","feeding_truth","mobile_observer","rig25_sound","hydro_geomorph25"],
-    "current_change": "shift focus from creature-tech-demo presentation to a deeper water/terrain substrate: pore moisture, compaction, root reinforcement, erosion, suspended sediment, deposition and bank collapse",
-    "simulation_changes": [
-      "three persistent depth lanes store moisture and suspended sediment with conservative cross-depth seepage/exchange",
-      "middle depth lane is authoritative for existing 2D collision/material terrain; front/rear lanes are storage/coupling lanes rather than fake 3D collision",
-      "wet-sediment strength rises at intermediate moisture and falls when waterlogged",
-      "refined-water velocity and volume generate erosion shear against exposed dirt/sand/mud/ash",
-      "erosion removes persistent soil mass and can convert exhausted terrain cells into air/water",
-      "suspended sediment advects with refined-water direction and deposits into actual sand/mud cells when flow slows over support",
-      "plant root state reinforces nearby soil against erosion",
-      "waterlogged weak unsupported banks can slump into lower cells",
-      "creature contact with wet loose substrate adds drag/sink and compacts the contacted soil",
-      "plant water state slowly couples to local hydro moisture",
-      "a conservative fine-water pressure-relaxation/velocity-smoothing pass reduces single-cell chatter without changing total water mass"
-    ],
-    "presentation_and_controls": [
-      "hydro layer renders only visible consequences such as seep darkening/depositional shelves/root traces, never a debug grid",
-      "existing world-first mobile observer and sound toggle remain active"
-    ],
+    "stack": ["v100_core","v100_ai","v101_mind","v100_render","v102_cycle","v103_hires_jelly","v104_material_world","v105_continuum","v106_bestiary","v107_morphology","v107_living_surface","v107_anatomy","v108_bioglass","v109_biosphere","v110_world_physics","old_sim_upgrade","fluid_refinement","creature_world_overhaul","feeding_truth","mobile_observer","rig25_sound","hydro_geomorph25","surface_liquid"],
+    "current_change": "replace visible open-surface falling-cell water with a continuous conservative free-surface heightfield solver that carries depth and momentum, couples to bodies, and drives erosion",
     "approximations": [
-      "Sandcastle's exact implementation is not public; GENESIS does not claim to use its solver",
-      "hydro_geomorph25 is not CFD, SPH, FLIP, PBF, MPM or full 3D terrain physics",
-      "three depth lanes simulate storage and exchange, but only the middle lane owns collision/material terrain",
-      "fine-water solver remains a conservative cellular/finite-volume-like approximation with damped momentum proxy",
-      "bank collapse is a local stability rule, not continuum soil mechanics",
+      "surface_liquid is a 1D local-inertial shallow-water approximation over the open terrain surface, not full 2D CFD",
+      "enclosed cave water is not represented by the shallow-water field and remains outside this solver's verified scope",
+      "legacy fine/coarse water state is absorbed as a source/reservoir rather than displayed as the primary visible liquid",
+      "lava still uses the older material solver and has not yet been converted to a continuous viscous free-surface model",
       "creature locomotion still contains legacy authored body drive",
       "feeding still lacks stomach digestion"
     ],
-    "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_HYDRO25_CHANGE","iphone_safari":"NOT_TESTED_AFTER_HYDRO25_CHANGE"}
+    "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_SURFACE_LIQUID_CHANGE","iphone_safari":"NOT_TESTED_AFTER_SURFACE_LIQUID_CHANGE"}
   },
-  "hydro_geomorph25": {
-    "verification_level":"CI_PASS",
-    "source":"genesis-codehood/hydro_geomorph25.js",
-    "tests":"genesis-codehood/tests/hydro_geomorph25.test.mjs",
-    "local_tests":{"status":"PASS"},
-    "ci": {
-      "status":"PASS",
-      "proof_pull_request":88,
-      "codehood_run_id":31497856402,
-      "codehood_job_id":93799976664,
-      "foundation_run_id":31497856394,
-      "foundation_job_id":93799976394,
+  "surface_liquid": {
+    "verification_level": "TESTED",
+    "source": "genesis-codehood/surface_liquid.js",
+    "tests": "genesis-codehood/tests/surface_liquid.test.mjs",
+    "representation": "1D local-inertial shallow-water free-surface approximation over open terrain",
+    "local_tests": {
+      "status": "PASS",
       "cases": {
-        "three_depth_lanes_with_middle_authoritative":"PASS",
-        "water_pair_relaxation_conserves_mass":"PASS",
-        "cross_depth_exchange_conserves_mass":"PASS",
-        "wet_strength_peaks_before_waterlogging":"PASS",
-        "erosion_requires_excess_shear_and_roots_reduce_it":"PASS",
-        "runtime_state_stays_finite":"PASS",
-        "strong_flow_removes_soil_mass":"PASS",
-        "root_reinforcement_reduces_actual_soil_loss":"PASS",
-        "slow_flow_deposits_actual_sand_or_mud":"PASS",
-        "anti_jitter_water_stabilizer_conserves_total_water":"PASS",
-        "metadata_rejects_cfd_full3d_claims":"PASS"
-      },
-      "syntax_check":"PASS"
+        "mass_conservation_without_sources": "PASS",
+        "surface_gradient_generates_momentum": "PASS",
+        "contained_pool_relaxes_toward_flat_surface": "PASS",
+        "surface_water_changes_submerged_body_motion": "PASS",
+        "surface_flow_couples_to_real_terrain_erosion": "PASS",
+        "metadata_rejects_full2d_cfd_and_full3d_claims": "PASS"
+      }
     },
-    "live_browser":"NOT_TESTED",
-    "iphone_safari":"NOT_TESTED"
+    "ci": {"status":"PENDING"},
+    "live_browser": "NOT_TESTED",
+    "iphone_safari": "NOT_TESTED"
   },
+  "hydro_geomorph25": {"verification_level":"CI_PASS","source":"genesis-codehood/hydro_geomorph25.js","tests":"genesis-codehood/tests/hydro_geomorph25.test.mjs","ci":{"status":"PASS","proof_pull_request":88,"codehood_run_id":31497856402,"codehood_job_id":93799976664,"foundation_run_id":31497856394,"foundation_job_id":93799976394}},
+  "fluid_refinement": {"verification_level":"CI_PASS","source":"genesis-codehood/fluid_refinement.js","tests":"genesis-codehood/tests/fluid_refinement.test.mjs","representation":"2D subcell water-volume field with pairwise conservative transfer and damped momentum proxy","ci":{"status":"PASS","proof_pull_request":83,"run_id":31415020788,"job_id":93541872398}},
   "rig25_acoustic": {"verification_level":"CI_PASS","source":"genesis-codehood/rig25_sound.js","tests":"genesis-codehood/tests/rig25_sound.test.mjs","ci":{"status":"PASS","proof_pull_request":87,"run_id":31495896158,"job_id":93793389687,"foundation_run_id":31495896000,"foundation_job_id":93793388882}},
   "feeding_truth": {"verification_level":"CI_PASS","source":"genesis-codehood/feeding_truth.js","tests":"genesis-codehood/tests/feeding_truth.test.mjs","ci":{"status":"PASS","proof_pull_request":85,"run_id":31493769069,"job_id":93786300605}},
-  "mobile_observer": {"verification_level":"CI_PASS_SYNTAX_ONLY","source":["genesis-codehood/mobile_observer.js","genesis-codehood/mobile_observer.css"],"behavioral_browser_test":"NOT_TESTED"},
   "creature_rig_overhaul": {"verification_level":"CI_PASS","source":"genesis-codehood/creature_world_overhaul.js","tests":"genesis-codehood/tests/creature_rig_overhaul.test.mjs","ci":{"status":"PASS","proof_pull_request":84,"run_id":31491623456,"job_id":93779238092}},
-  "fluid_refinement": {"verification_level":"CI_PASS","source":"genesis-codehood/fluid_refinement.js","tests":"genesis-codehood/tests/fluid_refinement.test.mjs","representation":"2D subcell water-volume field with pairwise conservative transfer and damped momentum proxy","ci":{"status":"PASS","proof_pull_request":83,"run_id":31415020788,"job_id":93541872398},"live_browser":"NOT_TESTED"},
+  "mobile_observer": {"verification_level":"CI_PASS_SYNTAX_ONLY","source":["genesis-codehood/mobile_observer.js","genesis-codehood/mobile_observer.css"],"behavioral_browser_test":"NOT_TESTED"},
   "physical_creature_v1": {"status":"PRESERVED_PROOF_SLICE","verification_level":"CI_PASS","route":"/genesis-codehood/physical-creature-v1/"},
-  "active_objective": "Exercise the deployed ecosystem on iPhone and inspect whether water settles more smoothly and visibly carves/deposits terrain without unstable bank flicker or frame-time spikes. If stable, deepen hydrology with coherent channels and depth-aware standing water before returning to creature visuals.",
-  "next_gate": "LIVE_TESTED requires actual deployed-browser execution with hydro_geomorph25 active. DEVICE_TESTED requires the iPhone run after that. Do not promote based on CI alone.",
+  "active_objective": "Run independent CI for surface_liquid, then exercise the deployed ecosystem on iPhone and verify that open water now forms continuous pools/streams rather than visible falling-cell liquid. After that, convert lava separately to a viscous continuous free-surface model if the water approach is stable.",
+  "next_gate": "surface_liquid may move from TESTED to CI_PASS only after GitHub Actions executes tests/surface_liquid.test.mjs and syntax successfully. LIVE_TESTED still requires the deployed browser route; DEVICE_TESTED requires iPhone Safari after that.",
   "invariants": [
     "IMPLEMENTATION > NAME",
-    "The ecosystem sandbox is the primary user-facing experience",
-    "Do not claim Sandcastle's private solver or copy its game design",
-    "hydro_geomorph25 must not be called CFD/full 3D",
-    "Water visuals must remain derived from simulation state",
-    "Erosion/deposition claims require terrain state changes, not decals",
-    "CI_PASS does not imply live deployment PASS",
-    "Unknown or unexercised runtime state remains UNKNOWN/NOT_TESTED"
+    "Do not call surface_liquid full 2D CFD or full 3D physics",
+    "Continuous water rendering must derive from the simulated depth field",
+    "Open-water legacy cells are source/reservoir inputs, not the primary visible liquid",
+    "Erosion claims require authoritative terrain state changes",
+    "CI_PASS does not imply LIVE_TESTED",
+    "Unknown runtime state remains NOT_TESTED"
   ],
-  "updated":"2026-08-11T09:47:00-04:00"
+  "updated": "2026-08-11T09:52:00-04:00"
 }
