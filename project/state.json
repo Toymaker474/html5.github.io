@@ -8,9 +8,9 @@
   "canonical_directive": {"path":"project/CANONICAL_MASTER_DIRECTIVE.md","status":"IN_REPO"},
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
   "stable": {
-    "label": "ecosystem-sandbox-rig25-local-tested",
+    "label": "ecosystem-sandbox-rig25-ci-pass",
     "verified": false,
-    "note": "The ecosystem remains the primary GENESIS experience. The new articulated crab/ragdoll/acoustic layer passed local deterministic tests and is wired on main, but CI and deployed browser/device verification for this layer are still pending."
+    "note": "The ecosystem remains the primary GENESIS experience. The articulated crab/ragdoll/acoustic layer has Codehood and Foundation CI evidence. The deployed browser and iPhone behavior after this change are still not live/device verified."
   },
   "active_experience": {
     "route": "/genesis-codehood/",
@@ -46,11 +46,18 @@
     "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_RIG25_CHANGE","iphone_safari":"NOT_TESTED_AFTER_RIG25_CHANGE"}
   },
   "rig25_acoustic": {
-    "verification_level":"TESTED",
+    "verification_level":"CI_PASS",
     "source":"genesis-codehood/rig25_sound.js",
     "tests":"genesis-codehood/tests/rig25_sound.test.mjs",
-    "local_tests": {
+    "local_tests":{"status":"PASS"},
+    "ci": {
       "status":"PASS",
+      "workflow":".github/workflows/genesis-codehood.yml",
+      "proof_pull_request":87,
+      "run_id":31495896158,
+      "job_id":93793389687,
+      "foundation_run_id":31495896000,
+      "foundation_job_id":93793388882,
       "cases": {
         "crab_motion_filter_is_damped":"PASS",
         "persistent_joint_geometry":"PASS",
@@ -59,9 +66,15 @@
         "persistent_crab_joint_and_claw_nodes":"PASS",
         "bite_acoustic_event_changes_nearby_agent_state":"PASS",
         "truth_metadata_rejects_full3d_and_pure_muscle_claims":"PASS"
-      }
+      },
+      "syntax_check":"PASS"
     },
-    "ci":{"status":"PENDING"},
+    "prior_failed_foundation_run": {
+      "run_id":31495672343,
+      "reason":"FORGE audit still hard-coded the previous ecosystem-fluid-refinement phase name",
+      "repair":"forge/audit-core.js updated to current phase and current required rig/mobile/feeding files",
+      "repaired_foundation_run":31495896000
+    },
     "live_browser":"NOT_TESTED",
     "iphone_safari":"NOT_TESTED_AFTER_CHANGE"
   },
@@ -95,8 +108,8 @@
     "verification_level":"CI_PASS",
     "route":"/genesis-codehood/physical-creature-v1/"
   },
-  "active_objective": "Run CI for rig25_sound, then exercise the deployed ecosystem on iPhone. If stable, deepen one crab further: explicit upper/lower limb lengths, joint limits, contact-force gait and physical ingestion rather than broadening into more cosmetic species.",
-  "next_gate": "rig25_acoustic can move to CI_PASS only after GitHub Actions runs tests/rig25_sound.test.mjs successfully. LIVE_TESTED still requires the deployed browser route to execute with the new layer and sound unlock behavior.",
+  "active_objective": "Exercise the deployed ecosystem on iPhone with rig25_sound active. If stable, deepen one crab further: explicit upper/lower limb lengths, joint limits, contact-force gait and physical ingestion rather than broadening into cosmetic species.",
+  "next_gate": "LIVE_TESTED requires actual deployed-browser execution of the ecosystem with rig25_sound.js active, including crab rendering, death ragdoll, sound unlock/toggle and absence of runtime errors. DEVICE_TESTED requires the iPhone run after that.",
   "invariants": [
     "IMPLEMENTATION > NAME",
     "The ecosystem sandbox is the primary user-facing experience",
@@ -109,5 +122,5 @@
     "CI_PASS does not imply live deployment PASS",
     "Unknown or unexercised runtime state remains UNKNOWN/NOT_TESTED"
   ],
-  "updated":"2026-08-11T09:08:00-04:00"
+  "updated":"2026-08-11T09:24:00-04:00"
 }
