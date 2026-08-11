@@ -7,9 +7,9 @@
   "status": "IN_PROGRESS",
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
   "stable": {
-    "label": "scratch-alife-tested",
+    "label": "scratch-alife-ci-pass",
     "verified": false,
-    "note": "The active scratch engine now has a deeper organism loop and local causal tests. Because sim-core, worker and main changed after the prior CI proof, the active scratch engine is downgraded to TESTED until fresh CI passes."
+    "note": "The clean OffscreenCanvas scratch engine and its deeper organism loop now have fresh Codehood and Foundation CI evidence. Deployed browser/iPhone behavior after the ALife change is still unverified."
   },
   "active_experience": {
     "route": "/genesis-codehood/",
@@ -18,13 +18,13 @@
     "runtime": "vanilla JavaScript modules + Worker + transferred OffscreenCanvas; no third-party runtime libraries",
     "simulation_changes": [
       "deterministic terrain, shallow-water flow, erosion, sediment, soil moisture/nutrients and structural plants remain active",
-      "each crawler now has persistent hydration, fatigue, health, stomach contents, lifespan, corpse mass, fear/stress/curiosity and decaying spatial memories",
+      "each crawler has persistent hydration, fatigue, health, stomach contents, lifespan, corpse mass, fear/stress/curiosity and decaying spatial memories",
       "creatures sense food and drinkable water only inside a finite radius and through a terrain line-of-sight approximation",
       "drive arbitration uses persistent intentions for explore, forage, drink, rest and flee rather than changing target every tick",
       "food contact transfers plant biomass into stomach state first; digestion releases energy gradually afterward",
       "drinking requires the simulated mouth point to contact the simulated water surface",
-      "walking now uses persistent stance feet and planted-foot reaction forces with slower swing/stance cycles",
-      "two persistent physical feeler tips are attached to the active head and move from the sensor-sweep state",
+      "walking uses persistent stance feet and planted-foot reaction forces with slower swing/stance cycles",
+      "two persistent physical feeler tips are attached to the active head and move from sensor-sweep state",
       "strong water flow increases fear and physically pushes the body",
       "death produces a constrained ragdoll corpse instead of immediately removing the organism",
       "corpse mass decays according to local soil moisture and returns nutrient/moisture to the local substrate",
@@ -35,7 +35,7 @@
       "the ALife controller is authored drive arbitration with decaying memory; it is not learning or reinforcement learning",
       "all current crawlers share one morphology and do not yet reproduce or evolve",
       "sensing uses a finite-radius 2D terrain line-of-sight approximation, not optical/acoustic/chemical field simulation",
-      "water is still a one-dimensional side-view shallow-water approximation rather than 2D/3D Navier-Stokes CFD",
+      "water is a one-dimensional side-view shallow-water approximation rather than 2D/3D Navier-Stokes CFD",
       "creature physics is 2D Verlet/distance-constraint articulation with authored gait actuation, not muscle physiology",
       "stomach digestion is a lumped mass/energy model rather than organ physiology",
       "plant roots remain a reinforcement field rather than explicit root geometry",
@@ -45,19 +45,25 @@
     "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_ALIFE_CHANGE","iphone_safari":"NOT_TESTED_AFTER_ALIFE_CHANGE"}
   },
   "scratch_engine": {
-    "verification_level": "TESTED",
+    "verification_level": "CI_PASS",
     "source": ["genesis-codehood/scratch/sim-core.js","genesis-codehood/scratch/alife.js","genesis-codehood/scratch/worker.js","genesis-codehood/scratch/main.js","genesis-codehood/scratch/style.css"],
     "tests": ["genesis-codehood/tests/scratch_sim.test.mjs","genesis-codehood/tests/scratch_alife.test.mjs"],
+    "ci": {"status":"PASS","proof_pull_request":93,"codehood_run_id":31508130245,"codehood_job_id":93834822822,"foundation_run_id":31508130305,"foundation_job_id":93834823100,"syntax_check":"PASS","forge_fail_closed_audit":"PASS"},
     "prior_ci": {"status":"SUPERSEDED_BY_ALIFE_CHANGE","proof_pull_request":92,"codehood_run_id":31505363249,"foundation_run_id":31505363250},
     "live_browser": "NOT_TESTED",
     "iphone_safari": "NOT_TESTED"
   },
   "scratch_alife": {
-    "verification_level": "TESTED",
+    "verification_level": "CI_PASS",
     "source": "genesis-codehood/scratch/alife.js",
     "tests": "genesis-codehood/tests/scratch_alife.test.mjs",
-    "local_tests": {
+    "ci": {
       "status": "PASS",
+      "proof_pull_request": 93,
+      "codehood_run_id": 31508130245,
+      "codehood_job_id": 93834822822,
+      "foundation_run_id": 31508130305,
+      "foundation_job_id": 93834823100,
       "cases": {
         "limited_food_sensing_and_decaying_memory": "PASS",
         "thirst_selects_sensed_water": "PASS",
@@ -69,15 +75,16 @@
         "metadata_rejects_learning_claim": "PASS"
       }
     },
-    "ci": "PENDING"
+    "live_browser": "NOT_TESTED",
+    "iphone_safari": "NOT_TESTED"
   },
   "legacy_ecosystem_stack": {
     "status": "ARCHIVED_NOT_LOADED_BY_ACTIVE_ROUTE",
     "note": "Previous V100-V110 and patch layers remain in repository history/files for reference but are not imported by the current /genesis-codehood/ page."
   },
   "physical_creature_v1": {"status":"PRESERVED_PROOF_SLICE","verification_level":"CI_PASS","route":"/genesis-codehood/physical-creature-v1/"},
-  "active_objective": "Run fresh CI for the new ALife organism loop, then exercise the deployed OffscreenCanvas build on iPhone and judge whether movement, feeding, drinking, resting, fear, corpses and overall pacing read as more lifelike.",
-  "next_gate": "CI_PASS requires fresh Codehood and Foundation runs covering scratch_alife.test.mjs. LIVE_TESTED and DEVICE_TESTED still require deployed browser/iPhone execution afterward.",
+  "active_objective": "Exercise the deployed ALife scratch build on iPhone and judge whether movement, drinking, stomach feeding, resting, fear, feeler motion, corpses and pacing read as more lifelike. Improve this clean engine in place based on the device result.",
+  "next_gate": "LIVE_TESTED and DEVICE_TESTED require actual deployed browser/iPhone execution after this ALife change. CI_PASS alone is not sufficient.",
   "invariants": [
     "IMPLEMENTATION > NAME",
     "Active route must not import archived V100-V110 layers",
@@ -86,9 +93,8 @@
     "Do not call the drive controller learning",
     "Do not call authored stance gait muscle physiology",
     "Food energy may only rise from stomach digestion after contact ingestion",
-    "Changed core code invalidates prior CI promotion",
     "CI_PASS does not imply LIVE_TESTED or DEVICE_TESTED",
     "Unknown runtime state remains NOT_TESTED"
   ],
-  "updated": "2026-08-11T11:22:00-04:00"
+  "updated": "2026-08-11"
 }
