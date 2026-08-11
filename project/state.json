@@ -3,100 +3,112 @@
   "project": "GENESIS",
   "product": "GENESIS Ecosystem Sandbox",
   "engineering_system": "GENESIS FORGE",
-  "phase": "ecosystem-fluid-refinement",
+  "phase": "ecosystem-mobile-observer-feeding-truth",
   "status": "IN_PROGRESS",
   "canonical_directive": {"path":"project/CANONICAL_MASTER_DIRECTIVE.md","status":"IN_REPO"},
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
   "stable": {
-    "label": "ecosystem-sandbox-creature-rig-ci-pass",
+    "label": "ecosystem-sandbox-mobile-feeding-ci-pass",
     "verified": false,
-    "note": "The multi-creature ecosystem remains the primary GENESIS experience. Fluid refinement and the new morphology-aware creature/head rig both have GitHub Actions CI evidence. The deployed ecosystem route is still not live/device verified."
+    "note": "The ecosystem remains the primary GENESIS experience. Fluid refinement, creature-rig math, and feeding-truth regression tests have GitHub Actions evidence. The newly wired phone UI and deployed route have not yet been exercised after this change, so user-facing LIVE_TESTED remains false."
   },
   "active_experience": {
     "route": "/genesis-codehood/",
     "verification_level": "IMPLEMENTED",
-    "stack": ["v100_core","v100_ai","v101_mind","v100_render","v102_cycle","v103_hires_jelly","v104_material_world","v105_continuum","v106_bestiary","v107_morphology","v107_living_surface","v107_anatomy","v108_bioglass","v109_biosphere","v110_world_physics","old_sim_upgrade","fluid_refinement","creature_world_overhaul"],
-    "current_change": "improve creature anatomy presentation and mouth placement while preserving the existing ecosystem and finer fluid layer",
+    "stack": ["v100_core","v100_ai","v101_mind","v100_render","v102_cycle","v103_hires_jelly","v104_material_world","v105_continuum","v106_bestiary","v107_morphology","v107_living_surface","v107_anatomy","v108_bioglass","v109_biosphere","v110_world_physics","old_sim_upgrade","fluid_refinement","creature_world_overhaul","feeding_truth","mobile_observer"],
+    "current_change": "remove the legacy predator proximity-damage shortcut and replace the phone-first observer layout with hideable world-first controls",
     "simulation_changes": [
-      "morphology-aware head frame computed from actual head/neck body nodes and facing",
-      "one persistent snout guide node per creature added by creature_world_overhaul",
-      "existing V107 jaw and tongue nodes re-anchored into the local head frame instead of fixed screen-horizontal cheek placement",
-      "family-specific jaw geometry for crab, bug, silkborn, mirekin, scavenger, reedscale, hunter, grazer, climber, amphib, burrower, winged, melt and bone families",
+      "legacy predator head-distance damage/grab path in handleInteractions is bypassed",
+      "predator tissue damage is now left to the existing V107 articulated jaw-node contact gate",
+      "corpse scavenging requires jaw-node overlap with a corpse body node before meat/energy transfer",
       "2x-per-axis refined water field and existing creature-water coupling remain active"
     ],
-    "presentation_changes": [
-      "thicker two-segment articulated limb rendering around existing limb anchors and hand nodes",
-      "family-dependent torso proportions and shell/skin envelopes around actual body nodes",
-      "front/underside mouth silhouettes with mandibles, chelicerae, snouts or beaks depending on family",
-      "eyes moved to upper/front skull positions",
-      "wet highlights continue to derive from simulated local saturation",
-      "additional terrain surface relief derived from actual material boundary samples"
+    "presentation_and_controls": [
+      "phone default view hides the previous giant HUD/observer sheet",
+      "compact selected-creature strip and six-button touch dock",
+      "single-tap creature selection",
+      "single-finger world pan",
+      "two-finger pinch zoom",
+      "on-demand inspector via info button",
+      "look mode hides all simulation UI except one restore button",
+      "truth chip explicitly reports JAW CONTACT / DIGESTION APPROX"
     ],
     "approximations": [
-      "creature_world_overhaul is procedural Canvas2D rendering over the existing point/constraint body simulation; it is not a new biomechanics solver",
-      "the new snout node and jaw re-anchoring are authored morphology constraints rather than anatomical muscle simulation",
-      "limb mid-joints in the visual overlay are derived bend points because the old core limb representation stores an anchor and hand end-effector rather than a full two-bone limb chain",
-      "terrain relief is presentation derived from actual material surfaces, not additional terrain physics",
-      "fluid_refinement remains a conservative 2x subcell volume-relaxation approximation and is not CFD/SPH/FLIP/PBF/MPM"
+      "V107 predator bite is a jaw-node to target-node distance/contact threshold, not tooth-shape penetration or collision-manifold biting",
+      "predator bite damage is localized to the nearest contacted body node but does not simulate material fracture/tearing mechanics",
+      "corpse scavenging is contact-gated but calories still move directly to energy; the ecosystem stack has no stomach/digestion pipeline",
+      "herbivore plant feeding and intelligent-creature plant gathering remain proximity-based resource transfer",
+      "V107 loose-gut scavenging still uses an older proximity/resource shortcut",
+      "the old body controller still applies authored direct body drive in several locomotion paths; movement is not a pure muscle-force biomechanics solver",
+      "limb mid-joints in the visual overhaul are derived bend points because the legacy limb model stores anchor + end-effector rather than explicit upper/lower limb bones",
+      "fluid_refinement is a conservative 2x subcell volume-relaxation approximation, not CFD/SPH/FLIP/PBF/MPM",
+      "biome labels and atmospheric layers are presentation/classification, not independent simulated biome agents"
     ],
-    "browser_exercise": {"live_pages":"NOT_TESTED","iphone_safari":"NOT_TESTED"}
+    "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_CHANGE","iphone_safari":"NOT_TESTED_AFTER_CHANGE"}
   },
-  "creature_rig_overhaul": {
-    "verification_level": "CI_PASS",
-    "source": "genesis-codehood/creature_world_overhaul.js",
-    "tests": "genesis-codehood/tests/creature_rig_overhaul.test.mjs",
-    "local_tests": {"status":"PASS"},
+  "feeding_truth": {
+    "verification_level":"CI_PASS",
+    "source":"genesis-codehood/feeding_truth.js",
+    "tests":"genesis-codehood/tests/feeding_truth.test.mjs",
     "ci": {
       "status":"PASS",
       "workflow":".github/workflows/genesis-codehood.yml",
-      "proof_pull_request":84,
-      "run_id":31491623456,
-      "job_id":93779238092,
-      "tested_pr_head":"1c37d94ac61f8faa8b2cd2a2fcdf11ce011b4a8f",
-      "tested_merge_ref":"4788ed9586d40fe860beb781231cbfc1c43a50f2",
-      "simulation_source_changed_on_proof_branch":false,
+      "proof_pull_request":85,
+      "run_id":31493769069,
+      "job_id":93786300605,
       "cases": {
-        "hunter_mouth_forward_and_underside":"PASS",
-        "crab_mouth_ventral_not_side_mounted":"PASS",
-        "tilted_skull_rotates_mouth_frame":"PASS",
-        "major_families_have_distinct_head_mouth_profiles":"PASS"
+        "predator_proximity_alone_cannot_damage_prey":"PASS",
+        "corpse_consumption_requires_jaw_contact":"PASS",
+        "no_corpse_calories_without_jaw_contact":"PASS",
+        "truth_metadata_exposes_missing_digestion":"PASS"
       },
       "syntax_check":"PASS"
     },
     "live_browser":"NOT_TESTED"
   },
+  "mobile_observer": {
+    "verification_level":"CI_PASS_SYNTAX_ONLY",
+    "source":["genesis-codehood/mobile_observer.js","genesis-codehood/mobile_observer.css"],
+    "ci":{"status":"PASS","run_id":31493769069,"job_id":93786300605,"javascript_syntax_check":"PASS"},
+    "behavioral_browser_test":"NOT_TESTED",
+    "iphone_safari":"NOT_TESTED_AFTER_CHANGE"
+  },
+  "creature_rig_overhaul": {
+    "verification_level":"CI_PASS",
+    "source":"genesis-codehood/creature_world_overhaul.js",
+    "tests":"genesis-codehood/tests/creature_rig_overhaul.test.mjs",
+    "ci":{"status":"PASS","proof_pull_request":84,"run_id":31491623456,"job_id":93779238092}
+  },
   "fluid_refinement": {
-    "verification_level": "CI_PASS",
-    "source": "genesis-codehood/fluid_refinement.js",
-    "tests": "genesis-codehood/tests/fluid_refinement.test.mjs",
-    "coarse_cell_world_size": 7,
-    "refined_cell_world_size": 3.5,
-    "resolution_scale_per_axis": 2,
-    "representation": "2D subcell water-volume field with pairwise conservative transfer and damped momentum proxy",
-    "ci": {"status":"PASS","workflow":".github/workflows/genesis-codehood.yml","proof_pull_request":83,"run_id":31415020788,"job_id":93541872398,"tested_pr_head":"a87e841f5624286286c19254e928d6151257456f","tested_merge_ref":"84915c57525103364f7e4273e79629f0f945d3b0","simulation_source_changed_on_proof_branch":false,"syntax_check":"PASS"},
+    "verification_level":"CI_PASS",
+    "source":"genesis-codehood/fluid_refinement.js",
+    "tests":"genesis-codehood/tests/fluid_refinement.test.mjs",
+    "coarse_cell_world_size":7,
+    "refined_cell_world_size":3.5,
+    "resolution_scale_per_axis":2,
+    "representation":"2D subcell water-volume field with pairwise conservative transfer and damped momentum proxy",
+    "ci":{"status":"PASS","proof_pull_request":83,"run_id":31415020788,"job_id":93541872398},
     "live_browser":"NOT_TESTED"
   },
   "physical_creature_v1": {
     "status":"PRESERVED_PROOF_SLICE",
     "verification_level":"CI_PASS",
     "route":"/genesis-codehood/physical-creature-v1/",
-    "model":"genesis-physical-creature-2d-v1",
-    "ci":{"status":"PASS","workflow":".github/workflows/physical-creature-v1.yml","proof_pull_request":82,"run_id":31407465956,"job_id":93517163075,"artifact_id":9070180368,"artifact_sha256":"c0f798577d949f3a088bf3f65a438ffa998bb6d91d25098945bae29261616f36"},
-    "browser_exercise":{"live_pages":"NOT_TESTED","iphone_safari":"NOT_TESTED"}
+    "note":"Preserved causal-body lab; not the primary user-facing ecosystem."
   },
-  "legacy_snapshot": {"route":"/genesis-codehood/legacy-stack.html","status":"PRESERVED_SNAPSHOT","note":"Pre-restoration V100-V110 snapshot without the current upgrade layers."},
-  "active_objective": "Exercise the deployed ecosystem in a functioning browser and visually inspect mouth placement, silhouette readability, frame cost and interaction with the refined water layer before promoting the user-facing route beyond IMPLEMENTED.",
-  "next_gate": "LIVE_TESTED requires actual deployed browser execution of the ecosystem with creature_world_overhaul.js and fluid_refinement.js active. CI proves the deterministic contracts and syntax only.",
+  "active_objective": "Exercise the newly wired phone UI and feeding changes in iPhone Safari. If the controls behave correctly, the next simulation change is physical ingestion: mouth capture -> swallowed food mass -> stomach contents -> timed digestion, eliminating the remaining direct-calorie feeding shortcut for the selected vertical slice.",
+  "next_gate": "A fresh iPhone/browser run must verify hide/show UI, drag, pinch, selection, inspector, and lack of runtime errors. Feeding CI_PASS does not prove the deployed browser behavior. The next causal simulation gate is stomach ingestion/digestion rather than more visual polish.",
   "invariants": [
     "IMPLEMENTATION > NAME",
     "The ecosystem sandbox is the primary user-facing experience",
+    "A visual mouth animation is not proof of feeding",
+    "Predator proximity alone must not damage prey",
+    "Contact-gated scavenging must not be called digestion",
     "Presentation layers must not be described as physics",
     "No authored controller may be called learning",
-    "No mutation-only system may be called evolution",
-    "Head-local jaw placement must remain tied to actual creature head/neck state",
     "fluid_refinement must not be called CFD/SPH/FLIP/PBF/MPM",
     "CI_PASS does not imply live deployment PASS",
     "Unknown or unexercised runtime state remains UNKNOWN/NOT_TESTED"
   ],
-  "updated":"2026-08-11T08:32:00-04:00"
+  "updated":"2026-08-11T08:59:00-04:00"
 }
