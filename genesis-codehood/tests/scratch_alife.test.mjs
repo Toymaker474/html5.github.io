@@ -21,8 +21,8 @@ import {senseCreature,updateMind,contactFeed,contactDrink,digest,ALIFE_META} fro
   console.log('PASS scratch drinking requires mouth contact with simulated water');
 }
 {
-  const w=new World({seed:105,n:120,dx:6,worldH:420,ocean:false,infiltrationScale:0});w.rain=0;w.water.fill(0);for(const p of w.plants)p.alive=false;const c=w.creatures[0];c.mind.intent='explore';c.mind.intentAge=0;c.mind.commitFor=999;c.mind.targetX=c.nodes[2].x+200;c.targetX=c.mind.targetX;c.hunger=.1;c.hydration=.9;c.energy=.9;c.fatigue=0;const x0=c.nodes[2].x;for(let k=0;k<600;k++)w.stepCreatures(1/120);assert.ok(c.nodes[2].x-x0>20,`displacement ${c.nodes[2].x-x0}`);assert.ok(c.legs.some(l=>l.stance));
-  console.log('PASS scratch planted-foot gait produces sustained locomotion');
+  const w=new World({seed:105,n:120,dx:6,worldH:420,ocean:false,infiltrationScale:0});w.rain=0;w.water.fill(0);for(const p of w.plants)p.alive=false;const c=w.creatures[0];c.mind.intent='explore';c.mind.intentAge=0;c.mind.commitFor=999;c.mind.goalX=c.nodes[2].x+200;c.mind.targetX=c.mind.goalX;c.mind.nav=null;c.targetX=c.mind.goalX;c.hunger=.1;c.hydration=.9;c.energy=.9;c.fatigue=0;const x0=c.nodes[2].x;for(let k=0;k<600;k++)w.stepCreatures(1/120);assert.ok(c.nodes[2].x-x0>20,`displacement ${c.nodes[2].x-x0}`);assert.ok(c.legs.some(l=>l.stance));
+  console.log('PASS scratch planted-foot gait produces sustained locomotion through persistent navigation goal');
 }
 {
   const w=new World({seed:106,n:100,dx:6,worldH:420,ocean:false});const c=w.creatures[0];c.alive=false;c.corpseMass=.05;const i=Math.max(0,Math.min(w.n-1,(c.nodes[2].x/w.dx)|0));w.moisture[i]=1;const n0=w.nutrient[i];for(let k=0;k<1200;k++)w.stepCorpse(c,1/60);assert.ok(w.nutrient[i]>n0);assert.equal(c.gone,true);
