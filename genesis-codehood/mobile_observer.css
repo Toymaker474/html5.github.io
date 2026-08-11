@@ -1,0 +1,28 @@
+/* GENESIS mobile observer UI: world-first, panels on demand. */
+html,body{overscroll-behavior:none}
+#game{touch-action:none}
+#mobileObserver{position:fixed;inset:0;z-index:30;pointer-events:none;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#eaf7f0}
+#mobileObserver button{pointer-events:auto;-webkit-tap-highlight-color:transparent;touch-action:manipulation;border:1px solid rgba(171,255,218,.22);background:rgba(5,20,18,.76);backdrop-filter:blur(16px) saturate(130%);color:#edf9f3;box-shadow:0 10px 30px #0008,inset 0 1px 0 rgba(255,255,255,.05)}
+#mobLook{position:absolute;right:12px;top:max(12px,env(safe-area-inset-top));width:46px;height:46px;border-radius:50%;font-size:19px}
+#mobStatus{position:absolute;left:10px;right:66px;top:max(12px,env(safe-area-inset-top));height:46px;padding:0 13px;border:1px solid rgba(171,255,218,.18);border-radius:16px;background:rgba(5,20,18,.62);backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:space-between;gap:10px;pointer-events:none;box-shadow:0 10px 28px #0006}
+#mobStatus b{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:58%}#mobStatus span{font-size:9px;color:#9ec2b3;white-space:nowrap}
+#mobDock{position:absolute;left:9px;right:9px;bottom:max(8px,env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(6,1fr);gap:6px;padding:6px;border:1px solid rgba(171,255,218,.18);border-radius:20px;background:rgba(3,14,13,.68);backdrop-filter:blur(18px);box-shadow:0 18px 38px #000b}
+#mobDock button{height:50px;border-radius:14px;font-size:16px;display:flex;align-items:center;justify-content:center}
+#mobDock button[data-on="1"]{background:rgba(37,83,65,.78);border-color:rgba(175,255,220,.36)}
+#mobTruth{position:absolute;left:50%;transform:translateX(-50%);bottom:78px;padding:5px 9px;border-radius:999px;border:1px solid rgba(255,202,116,.16);background:rgba(17,17,12,.52);color:#d8c89b;font-size:8px;letter-spacing:.05em;white-space:nowrap;pointer-events:none}
+body.mob-look #hud,body.mob-look #oldSimTop,body.mob-look #bioObserver,body.mob-look #bioHint,body.mob-look #dock,body.mob-look #mobDock,body.mob-look #mobStatus,body.mob-look #mobTruth{display:none!important}
+body.mob-look #mobLook{display:block!important;opacity:.72}
+@media(max-width:760px){
+  #dock{display:none!important}
+  #hud{display:none!important}
+  #oldSimTop{display:none!important}
+  #bioHint{display:none!important}
+  #bioObserver{display:none!important}
+  body.mob-details #bioObserver{display:block!important;position:fixed!important;left:8px!important;right:8px!important;bottom:76px!important;top:auto!important;max-height:52vh!important;overflow:auto!important;z-index:28!important;opacity:1!important;transform:none!important;pointer-events:auto!important}
+  body.mob-details #bioCard{max-height:50vh;overflow:auto;padding:10px!important;border-radius:18px!important}
+  body.mob-details #bioSpec{display:none!important}
+  body.mob-details #bioName{position:sticky;top:0;background:rgba(4,19,17,.96);padding:7px 2px;z-index:2}
+  body.mob-details .bioRow{height:25px!important;font-size:9px!important}
+  body.mob-details .bioValue{font-size:10px!important;max-width:42vw!important}
+}
+@media(min-width:761px){#mobileObserver{display:none}}
