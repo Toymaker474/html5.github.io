@@ -1,0 +1,9 @@
+import fs from 'node:fs';import vm from 'node:vm';
+const src=fs.readFileSync(new URL('../feeding_truth.js',import.meta.url),'utf8');
+const ctx={window:{},creatures:[],simTick:8,handleInteractions(){},handleCulture(){},cultureInteraction(){},spring(){},nearest(){return null},dist(){return 999},rnd(){return 1},spawnCreature(){throw Error('unexpected spawn')}};vm.createContext(ctx);vm.runInContext(src,ctx);
+function assert(ok,msg){if(!ok)throw Error(msg)}
+const preyNode={x:1,y:0,r:3},prey={alive:true,nodes:[preyNode],health:100};
+const pred={id:8,alive:true,biteCooldown:0,stun:0,grab:null,state:'STALK',energy:50,age:0,mateCooldown:9,spec:{role:'pred'},g:{size:1,grip:1,fertility:1},head(){return{x:0,y:0}},v107:{jaw:{x:100,y:100,r:2},gape:.8},aiTarget:prey};ctx.handleInteractions(pred);assert(prey.health===100,'legacy close-head predator damage still active');console.log('PASS predator proximity alone cannot damage prey');
+const corpse={alive:false,meat:4,nodes:[{x:0,y:0,r:3}]};const scav={id:8,alive:true,biteCooldown:0,stun:0,state:'SCAVENGE',energy:10,age:0,mateCooldown:9,spec:{role:'scav'},g:{size:1,grip:1,fertility:1},head(){return{x:20,y:20}},v107:{jaw:{x:0,y:0,r:2},gape:.7},aiTarget:corpse};ctx.handleInteractions(scav);assert(corpse.meat<4&&scav.energy>10,'jaw-contact scavenging did not transfer food');console.log('PASS corpse consumption requires jaw contact');
+const corpse2={alive:false,meat:4,nodes:[{x:0,y:0,r:3}]};const scav2={...scav,energy:10,v107:{jaw:{x:50,y:50,r:2},gape:.7},aiTarget:corpse2};ctx.handleInteractions(scav2);assert(corpse2.meat===4&&scav2.energy===10,'non-contact corpse still transferred food');console.log('PASS no corpse calories without jaw contact');
+assert(ctx.window.GENESIS_FEED_TRUTH.stomachDigestion===false,'truth metadata must not claim digestion');console.log('PASS feeding truth metadata exposes missing digestion');
