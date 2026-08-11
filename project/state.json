@@ -8,9 +8,9 @@
   "canonical_directive": {"path":"project/CANONICAL_MASTER_DIRECTIVE.md","status":"IN_REPO"},
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
   "stable": {
-    "label": "ecosystem-sandbox-creature-rig-local-tested",
+    "label": "ecosystem-sandbox-creature-rig-ci-pass",
     "verified": false,
-    "note": "The multi-creature ecosystem remains the primary GENESIS experience. Fluid refinement retains CI_PASS. A new morphology-aware creature/head rendering and jaw re-anchoring layer is source-wired and locally tested, but the deployed ecosystem route is still not live/device verified."
+    "note": "The multi-creature ecosystem remains the primary GENESIS experience. Fluid refinement and the new morphology-aware creature/head rig both have GitHub Actions CI evidence. The deployed ecosystem route is still not live/device verified."
   },
   "active_experience": {
     "route": "/genesis-codehood/",
@@ -42,19 +42,27 @@
     "browser_exercise": {"live_pages":"NOT_TESTED","iphone_safari":"NOT_TESTED"}
   },
   "creature_rig_overhaul": {
-    "verification_level": "TESTED",
+    "verification_level": "CI_PASS",
     "source": "genesis-codehood/creature_world_overhaul.js",
     "tests": "genesis-codehood/tests/creature_rig_overhaul.test.mjs",
-    "local_tests": {
+    "local_tests": {"status":"PASS"},
+    "ci": {
       "status":"PASS",
+      "workflow":".github/workflows/genesis-codehood.yml",
+      "proof_pull_request":84,
+      "run_id":31491623456,
+      "job_id":93779238092,
+      "tested_pr_head":"1c37d94ac61f8faa8b2cd2a2fcdf11ce011b4a8f",
+      "tested_merge_ref":"4788ed9586d40fe860beb781231cbfc1c43a50f2",
+      "simulation_source_changed_on_proof_branch":false,
       "cases": {
         "hunter_mouth_forward_and_underside":"PASS",
         "crab_mouth_ventral_not_side_mounted":"PASS",
         "tilted_skull_rotates_mouth_frame":"PASS",
         "major_families_have_distinct_head_mouth_profiles":"PASS"
-      }
+      },
+      "syntax_check":"PASS"
     },
-    "ci": {"status":"PENDING","workflow":".github/workflows/genesis-codehood.yml","run_id":null},
     "live_browser":"NOT_TESTED"
   },
   "fluid_refinement": {
@@ -65,18 +73,7 @@
     "refined_cell_world_size": 3.5,
     "resolution_scale_per_axis": 2,
     "representation": "2D subcell water-volume field with pairwise conservative transfer and damped momentum proxy",
-    "local_tests": {"status":"PASS"},
-    "ci": {
-      "status":"PASS",
-      "workflow":".github/workflows/genesis-codehood.yml",
-      "proof_pull_request":83,
-      "run_id":31415020788,
-      "job_id":93541872398,
-      "tested_pr_head":"a87e841f5624286286c19254e928d6151257456f",
-      "tested_merge_ref":"84915c57525103364f7e4273e79629f0f945d3b0",
-      "simulation_source_changed_on_proof_branch":false,
-      "syntax_check":"PASS"
-    },
+    "ci": {"status":"PASS","workflow":".github/workflows/genesis-codehood.yml","proof_pull_request":83,"run_id":31415020788,"job_id":93541872398,"tested_pr_head":"a87e841f5624286286c19254e928d6151257456f","tested_merge_ref":"84915c57525103364f7e4273e79629f0f945d3b0","simulation_source_changed_on_proof_branch":false,"syntax_check":"PASS"},
     "live_browser":"NOT_TESTED"
   },
   "physical_creature_v1": {
@@ -87,13 +84,9 @@
     "ci":{"status":"PASS","workflow":".github/workflows/physical-creature-v1.yml","proof_pull_request":82,"run_id":31407465956,"job_id":93517163075,"artifact_id":9070180368,"artifact_sha256":"c0f798577d949f3a088bf3f65a438ffa998bb6d91d25098945bae29261616f36"},
     "browser_exercise":{"live_pages":"NOT_TESTED","iphone_safari":"NOT_TESTED"}
   },
-  "legacy_snapshot": {
-    "route":"/genesis-codehood/legacy-stack.html",
-    "status":"PRESERVED_SNAPSHOT",
-    "note":"Pre-restoration V100-V110 snapshot without the current upgrade layers."
-  },
-  "active_objective": "Obtain independent CI evidence for creature_world_overhaul, then exercise the deployed ecosystem in a functioning browser and visually inspect mouth placement, silhouette readability, frame cost and interaction with the refined water layer.",
-  "next_gate": "CI_PASS for creature_rig_overhaul requires the Codehood workflow to execute tests/creature_rig_overhaul.test.mjs. LIVE_TESTED still requires actual deployed browser execution; source wiring and CI alone are insufficient.",
+  "legacy_snapshot": {"route":"/genesis-codehood/legacy-stack.html","status":"PRESERVED_SNAPSHOT","note":"Pre-restoration V100-V110 snapshot without the current upgrade layers."},
+  "active_objective": "Exercise the deployed ecosystem in a functioning browser and visually inspect mouth placement, silhouette readability, frame cost and interaction with the refined water layer before promoting the user-facing route beyond IMPLEMENTED.",
+  "next_gate": "LIVE_TESTED requires actual deployed browser execution of the ecosystem with creature_world_overhaul.js and fluid_refinement.js active. CI proves the deterministic contracts and syntax only.",
   "invariants": [
     "IMPLEMENTATION > NAME",
     "The ecosystem sandbox is the primary user-facing experience",
@@ -105,5 +98,5 @@
     "CI_PASS does not imply live deployment PASS",
     "Unknown or unexercised runtime state remains UNKNOWN/NOT_TESTED"
   ],
-  "updated":"2026-08-11T08:21:00-04:00"
+  "updated":"2026-08-11T08:32:00-04:00"
 }
