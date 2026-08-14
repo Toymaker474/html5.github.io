@@ -22,7 +22,8 @@ jobs:
           test -f world-weather/index.html
           test -f world-weather/weather-view.js
           test -f world-weather/weather.wasm.manifest.json
-          for n in 0 1 2 3; do test -s "world-weather/weather.wasm.part${n}.b64"; done
+          for f in weather.wasm.part0.b64 weather.wasm.part1.b64 weather.wasm.part2.b64 weather.wasm.part3a.b64 weather.wasm.part3b.b64 weather.wasm.part3c.b64 weather.wasm.part3d.b64; do test -s "world-weather/$f"; done
+          ! test -e world-weather/weather.wasm.part3.b64
           ! grep -R -E '#include[[:space:]]*[<"](bullet|box2d|jolt|physx|three|babylon|unity|unreal|glm|eigen)' world-weather
           grep -q '192×128' world-weather/MODEL.md
           grep -q 'not spawned or animated by a timer' world-weather/MODEL.md
@@ -48,7 +49,15 @@ jobs:
       - name: Reconstruct and prove exact promoted browser payload
         run: |
           set -euo pipefail
-          cat world-weather/weather.wasm.part0.b64 world-weather/weather.wasm.part1.b64 world-weather/weather.wasm.part2.b64 world-weather/weather.wasm.part3.b64 > /tmp/weather-promoted.b64
+          cat \
+            world-weather/weather.wasm.part0.b64 \
+            world-weather/weather.wasm.part1.b64 \
+            world-weather/weather.wasm.part2.b64 \
+            world-weather/weather.wasm.part3a.b64 \
+            world-weather/weather.wasm.part3b.b64 \
+            world-weather/weather.wasm.part3c.b64 \
+            world-weather/weather.wasm.part3d.b64 \
+            > /tmp/weather-promoted.b64
           echo "promoted_b64_chars=$(wc -c < /tmp/weather-promoted.b64)"
           base64 -d /tmp/weather-promoted.b64 > /tmp/weather-promoted.wasm
           PROMOTED_BYTES="$(wc -c < /tmp/weather-promoted.wasm)"
