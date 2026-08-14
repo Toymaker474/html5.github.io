@@ -1,0 +1,8 @@
+(()=>{'use strict';
+function unpack(state,i){const v=state[i]>>>0;return{mat:v&255,wet:(v>>>8)&255,sed:(v>>>16)&255};}
+function column(state,meta,x,z){let solid=-1,solidMat=0,wet=0,water=-1,sed=0;for(let y=meta.h-1;y>=0;y--){const q=unpack(state,(y*meta.d+z)*meta.w+x);if(q.mat===2&&water<0){water=y;sed=q.sed;}else if(q.mat!==0&&q.mat!==2&&solid<0){solid=y;solidMat=q.mat;wet=q.wet;}if(solid>=0&&water>=0)break;}return{solid,solidMat,wet,water,sed};}
+function normal(h00,h10,h11,h01){const dx=((h10+h11)-(h00+h01))*.5,dz=((h01+h11)-(h00+h10))*.5;let nx=-dx,ny=1,nz=-dz;const l=Math.hypot(nx,ny,nz)||1;return{nx:nx/l,ny:ny/l,nz:nz/l};}
+function build(state,meta){if(!state||!meta||meta.w<2||meta.d<2)return{terrain:[],water:[],columns:[]};const cols=new Array(meta.w*meta.d);for(let z=0;z<meta.d;z++)for(let x=0;x<meta.w;x++)cols[z*meta.w+x]=column(state,meta,x,z);const terrain=[],water=[];for(let z=0;z<meta.d-1;z++)for(let x=0;x<meta.w-1;x++){const a=cols[z*meta.w+x],b=cols[z*meta.w+x+1],c=cols[(z+1)*meta.w+x+1],d=cols[(z+1)*meta.w+x];if(a.solid>=0&&b.solid>=0&&c.solid>=0&&d.solid>=0){const h00=a.solid+1,h10=b.solid+1,h11=c.solid+1,h01=d.solid+1,span=Math.max(h00,h10,h11,h01)-Math.min(h00,h10,h11,h01);if(span<=6){terrain.push({x,z,h00,h10,h11,h01,mat:a.solidMat,wet:(a.wet+b.wet+c.wet+d.wet)*.25,...normal(h00,h10,h11,h01)});}}const waters=[a.water,b.water,c.water,d.water];if(waters.every(v=>v>=0)){const h00=a.water+1,h10=b.water+1,h11=c.water+1,h01=d.water+1;water.push({x,z,h00,h10,h11,h01,sed:(a.sed+b.sed+c.sed+d.sed)*.25,...normal(h00,h10,h11,h01)});}}
+return{terrain,water,columns:cols};}
+const api={build,unpack};if(typeof module!=='undefined'&&module.exports)module.exports=api;globalThis.GENESIS_SURFACE=api;
+})();
