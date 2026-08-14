@@ -13,6 +13,7 @@ function checkState(state){return[
 {id:'state.deepLevel',label:'Deep world verification is explicit',pass:levels.includes(state?.deep_world?.verification_level),actual:state?.deep_world?.verification_level},
 {id:'state.nav',label:'Navigation state exists',pass:!!state?.scratch_navigation,actual:state?.scratch_navigation?.verification_level||'missing'},
 {id:'state.navTruth',label:'Deep routing requires compatible body',pass:typeof state?.scratch_navigation?.truth==='string'&&state.scratch_navigation.truth.includes('explicitly compatible volume locomotion body'),actual:state?.scratch_navigation?.truth||'missing'},
+{id:'state.navMode',label:'Current crawler mode is surface',pass:state?.scratch_navigation?.current_crawler_mode==='surface',actual:state?.scratch_navigation?.current_crawler_mode||'missing'},
 {id:'state.scratch',label:'Scratch engine state exists',pass:!!state?.scratch_engine,actual:state?.scratch_engine?.verification_level||'missing'},
 {id:'state.legacy',label:'Legacy stack is archived',pass:state?.legacy_ecosystem_stack?.status==='ARCHIVED_NOT_LOADED_BY_ACTIVE_ROUTE',actual:state?.legacy_ecosystem_stack?.status||'missing'},
 {id:'state.proof',label:'Physical Creature proof remains preserved',pass:state?.physical_creature_v1?.verification_level==='CI_PASS',actual:state?.physical_creature_v1?.verification_level||'missing'},
