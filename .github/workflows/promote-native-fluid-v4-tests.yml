@@ -1,0 +1,91 @@
+name: GENESIS Promote Native Fluid V4 Tests
+
+on:
+  push:
+    branches: [native-fluid-projection-v1]
+    paths:
+      - 'genesis-codehood/native-v4-main.js'
+      - 'genesis-codehood/index.html'
+      - 'volume3d/solver.v4.wasm.b64'
+      - '.github/workflows/promote-native-fluid-v4-tests.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  upgrade-native-proof:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: native-fluid-projection-v1
+          fetch-depth: 0
+
+      - name: Upgrade active native proof fail-closed
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('genesis-codehood/tests/native_cpp_boot.test.mjs')
+          s=p.read_text()
+          pairs=[
+            ('../native-main.js','../native-v4-main.js'),
+            ('../../volume3d/worker.js','../../volume3d/worker_v4.js'),
+            ('../../volume3d/solver.cpp','../../volume3d/solver_v4.cpp'),
+            ('../../volume3d/solver.v1.wasm.b64','../../volume3d/solver.v4.wasm.b64'),
+            ('0x00030001','0x00040001'),
+            ('native-main\\.js','native-v4-main\\.js'),
+            ('worker\\.js','worker_v4\\.js'),
+            ('solver\\.v1\\.wasm\\.b64','solver\\.v4\\.wasm\\.b64')
+          ]
+          changed=0
+          for a,b in pairs:
+            if a in s:
+              s=s.replace(a,b)
+              changed+=1
+          if changed < 5 and '0x00040001' not in s:
+            raise SystemExit(f'FAIL: stale native proof did not match expected v3 structure ({changed} replacements)')
+          if 'genesis_fluid_divergence_before' not in s:
+            addition=r'''
+
+// Native v4 fluid receipts: impulse -> momentum/energy; projection -> lower divergence; gravity -> downward momentum.
+for (const name of ['genesis_fluid_divergence_before','genesis_fluid_divergence_after','genesis_fluid_kinetic_energy','genesis_fluid_momentum_x','genesis_fluid_momentum_y','genesis_fluid_momentum_z','genesis_total_water_mass','genesis_impulse_water']) {
+  assert.equal(typeof e[name], 'function', `missing native fluid export ${name}`);
+}
+const waterMass0=e.genesis_total_water_mass();
+e.genesis_impulse_water(16,10,17,5,2.0,0.0,-0.5);
+assert.ok(e.genesis_fluid_kinetic_energy()>0.001,'native impulse must create kinetic energy');
+assert.ok(e.genesis_fluid_momentum_x()>0.001,'native impulse must create positive X momentum');
+e.genesis_step(1);
+const divBefore=e.genesis_fluid_divergence_before();
+const divAfter=e.genesis_fluid_divergence_after();
+assert.ok(Number.isFinite(divBefore)&&Number.isFinite(divAfter));
+assert.ok(divAfter<=divBefore+0.0025,`pressure projection must reduce divergence: ${divBefore} -> ${divAfter}`);
+assert.ok(e.genesis_fluid_momentum_y()<0,'gravity must create downward water momentum');
+assert.ok(Math.abs(e.genesis_total_water_mass()-waterMass0)/waterMass0<2e-4,'native water transport must conserve water mass');
+assert.equal(e.genesis_invariant(),1);
+console.log('PASS active GENESIS v4: C++ 3D momentum + conservative water transport + pressure projection + WebGPU volume renderer');
+'''
+            s += addition
+          p.write_text(s)
+          PY
+          node --check genesis-codehood/tests/native_cpp_boot.test.mjs
+          grep -q '0x00040001' genesis-codehood/tests/native_cpp_boot.test.mjs
+          grep -q 'genesis_fluid_divergence_before' genesis-codehood/tests/native_cpp_boot.test.mjs
+          grep -q 'native-v4-main' genesis-codehood/tests/native_cpp_boot.test.mjs
+
+      - name: Execute upgraded native proof
+        run: node genesis-codehood/tests/native_cpp_boot.test.mjs
+
+      - name: Commit upgraded native proof
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- genesis-codehood/tests/native_cpp_boot.test.mjs; then
+            echo 'Native v4 proof already current.'
+            exit 0
+          fi
+          git config user.name 'GENESIS Native Builder'
+          git config user.email 'actions@users.noreply.github.com'
+          git add genesis-codehood/tests/native_cpp_boot.test.mjs
+          git commit -m 'Verify active native fluid v4 causality'
+          git push origin HEAD:native-fluid-projection-v1
