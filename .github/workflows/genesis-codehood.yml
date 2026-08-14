@@ -31,7 +31,7 @@ jobs:
           WebAssembly.instantiate(bin,{}).then(({instance})=>{
             const e=instance.exports;
             if((e.genesis_model_version()>>>0)!==0x00030002) throw Error('wrong native model version');
-            e.genesis_init(24,20,24,123,72); e.genesis_seed_scene();
+            e.genesis_init(32,24,32,123456,72); e.genesis_seed_scene();
             if(!e.genesis_pressure_sum || e.genesis_pressure_sum()===0) throw Error('pressure state missing');
             e.genesis_step(2);
             if(!e.genesis_water_momentum || e.genesis_water_momentum()===0) throw Error('momentum state missing');
