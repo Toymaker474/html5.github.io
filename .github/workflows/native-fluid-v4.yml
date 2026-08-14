@@ -1,0 +1,76 @@
+name: GENESIS Native Fluid V4
+
+on:
+  push:
+    branches: [native-fluid-projection-v1]
+    paths:
+      - 'volume3d/solver_v4.cpp'
+      - 'volume3d/fluid_v4_semantic_test.mjs'
+      - 'volume3d/solver.v4.wasm.b64'
+      - '.github/workflows/native-fluid-v4.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'volume3d/solver_v4.cpp'
+      - 'volume3d/fluid_v4_semantic_test.mjs'
+      - 'volume3d/solver.v4.wasm.b64'
+      - '.github/workflows/native-fluid-v4.yml'
+      - 'volume3d/worker_v4.js'
+      - 'genesis-codehood/native-v4-main.js'
+      - 'genesis-codehood/tests/native_cpp_v4_fluid.test.mjs'
+      - 'genesis-codehood/index.html'
+
+permissions:
+  contents: write
+
+jobs:
+  native-fluid-v4:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'push' && github.ref || github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Compile C++ fluid kernel to WebAssembly
+        run: |
+          set -euo pipefail
+          clang++ --target=wasm32 -std=c++20 -O3 -nostdlib -fno-exceptions -fno-rtti \
+            -Wl,--no-entry -Wl,--export-memory \
+            -Wl,--initial-memory=16777216 -Wl,--max-memory=67108864 \
+            -Wl,--strip-all \
+            volume3d/solver_v4.cpp -o /tmp/solver.v4.wasm
+          test -s /tmp/solver.v4.wasm
+
+      - name: Execute native causal fluid verification
+        run: node volume3d/fluid_v4_semantic_test.mjs /tmp/solver.v4.wasm
+
+      - name: Generate deterministic browser WASM payload
+        run: |
+          set -euo pipefail
+          base64 -w 0 /tmp/solver.v4.wasm > /tmp/solver.v4.wasm.b64
+          printf '\n' >> /tmp/solver.v4.wasm.b64
+          sha256sum /tmp/solver.v4.wasm
+          wc -c /tmp/solver.v4.wasm
+
+      - name: Verify committed browser payload matches fresh C++ build
+        if: github.event_name == 'pull_request'
+        run: |
+          set -euo pipefail
+          test -f volume3d/solver.v4.wasm.b64
+          cmp /tmp/solver.v4.wasm.b64 volume3d/solver.v4.wasm.b64
+
+      - name: Commit freshly compiled payload on source branch
+        if: github.event_name == 'push'
+        run: |
+          set -euo pipefail
+          if test -f volume3d/solver.v4.wasm.b64 && cmp -s /tmp/solver.v4.wasm.b64 volume3d/solver.v4.wasm.b64; then
+            echo 'Committed payload already matches fresh C++ build.'
+            exit 0
+          fi
+          cp /tmp/solver.v4.wasm.b64 volume3d/solver.v4.wasm.b64
+          git config user.name 'GENESIS Native Builder'
+          git config user.email 'actions@users.noreply.github.com'
+          git add volume3d/solver.v4.wasm.b64
+          git commit -m 'Regenerate native fluid v4 WASM from C++ source'
+          git push origin HEAD:native-fluid-projection-v1
