@@ -150,7 +150,7 @@ jobs:
         run: |
           set -euo pipefail
           test ! -f lab/experiment.json
-          git fetch origin genesis-lab:refs/remotes/origin/genesis-lab
+          git fetch origin +refs/heads/genesis-lab:refs/remotes/origin/genesis-lab
           git show origin/genesis-lab:lab/experiment.json > lab-manifest.json
           node <<'NODE'
           const fs=require('node:fs'),crypto=require('node:crypto'),gate=require('./forge/promotion-core.js');
