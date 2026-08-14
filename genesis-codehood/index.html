@@ -4,21 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#030807">
-<title>GENESIS</title>
+<title>GENESIS — Native C++ World</title>
 <link rel="stylesheet" href="./scratch/style.css">
 </head>
 <body>
 <canvas id="sim"></canvas>
-<div id="hud"><div class="pill brand"><b>GENESIS</b> // WORLD</div><div class="pill" id="info">starting worker…</div></div>
-<div id="selected">Drag to explore · pinch to zoom · tap organism</div>
+<div id="hud"><div class="pill brand"><b>GENESIS</b> // C++ NATIVE WORLD</div><div class="pill" id="info">loading compiled kernel…</div></div>
+<div id="selected">C++ owns the material state · drag to orbit · pinch to zoom</div>
 <div id="dock">
 <button id="toggleUI" aria-label="Hide UI">◉</button>
 <button id="pause" aria-label="Pause">Ⅱ</button>
 <button id="speed" aria-label="Speed">×1</button>
-<button id="weather" aria-label="Rain">☂</button>
-<button id="sound" aria-label="Sound">♪</button>
-<button id="reset" aria-label="New world">↻</button>
+<button id="weather" aria-label="Inject water">☂</button>
+<button id="reset" aria-label="Reset native world">↻</button>
 </div>
-<script type="module" src="./scratch/main.js"></script>
+<script src="./native-main.js?v=cpp-native-1"></script>
 </body>
 </html>
