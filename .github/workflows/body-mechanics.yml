@@ -1,0 +1,36 @@
+name: GENESIS Native Body Mechanics
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and execute native mechanics tests
+        run: |
+          set -euo pipefail
+          test -f volume3d/body.cpp
+          test -f volume3d/body_test.cpp
+          clang++ -std=c++17 -O2 -Wall -Wextra -pedantic volume3d/body_test.cpp -o /tmp/genesis-body-test
+          /tmp/genesis-body-test | tee body-mechanics-test.txt
+          grep -q 'PASS GENESIS native 3D articulated body mechanics tests' body-mechanics-test.txt
+      - name: Verify clean-room mechanics contract
+        run: |
+          set -euo pipefail
+          ! grep -E '#include[[:space:]]*[<"](bullet|box2d|jolt|physx|ode|chipmunk|reactphysics3d)' volume3d/body.cpp
+          grep -q 'compliance' volume3d/body.cpp
+          grep -q 'yieldStrain' volume3d/body.cpp
+          grep -q 'genesis_body_joint_error' volume3d/body.cpp
+          grep -q 'genesis_body_max_penetration' volume3d/body.cpp
+          grep -q 'genesis_body_yield_events' volume3d/body.cpp
+      - name: Preserve mechanics evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: genesis-native-body-mechanics-${{ github.run_id }}
+          path: body-mechanics-test.txt
+          if-no-files-found: error
