@@ -1,0 +1,58 @@
+name: GENESIS Native Fluid V4 Main Gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'volume3d/solver_v4.cpp'
+      - 'volume3d/solver.v4.wasm.b64'
+      - 'volume3d/fluid_v4_semantic_test.mjs'
+      - 'volume3d/worker_v4.js'
+      - 'genesis-codehood/native-v4-main.js'
+      - 'genesis-codehood/index.html'
+      - '.github/workflows/native-fluid-v4-main.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'volume3d/solver_v4.cpp'
+      - 'volume3d/solver.v4.wasm.b64'
+      - 'volume3d/fluid_v4_semantic_test.mjs'
+      - 'volume3d/worker_v4.js'
+      - 'genesis-codehood/native-v4-main.js'
+      - 'genesis-codehood/index.html'
+      - '.github/workflows/native-fluid-v4-main.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  source-binary-causality:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fresh C++ to WebAssembly build
+        run: |
+          set -euo pipefail
+          clang++ --target=wasm32 -std=c++20 -O3 -nostdlib -fno-exceptions -fno-rtti \
+            -Wl,--no-entry -Wl,--export-memory \
+            -Wl,--initial-memory=16777216 -Wl,--max-memory=67108864 \
+            -Wl,--strip-all \
+            volume3d/solver_v4.cpp -o /tmp/solver.v4.wasm
+          test -s /tmp/solver.v4.wasm
+      - name: Require browser bytes to equal fresh C++ build
+        run: |
+          set -euo pipefail
+          base64 -d volume3d/solver.v4.wasm.b64 > /tmp/committed.v4.wasm
+          cmp /tmp/solver.v4.wasm /tmp/committed.v4.wasm
+          sha256sum /tmp/solver.v4.wasm
+      - name: Run native fluid causal verification
+        run: node volume3d/fluid_v4_semantic_test.mjs /tmp/solver.v4.wasm
+      - name: Verify active route stays native v4 and true 3D
+        run: |
+          set -euo pipefail
+          grep -q 'native-v4-main.js' genesis-codehood/index.html
+          grep -q 'worker_v4.js' genesis-codehood/native-v4-main.js
+          grep -q 'native-ray-volume.js' genesis-codehood/index.html
+          ! grep -q "getContext('2d')" genesis-codehood/native-v4-main.js
+          node --check genesis-codehood/native-v4-main.js
+          node --check volume3d/worker_v4.js
