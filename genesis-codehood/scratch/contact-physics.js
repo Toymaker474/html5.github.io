@@ -13,8 +13,8 @@ export function terrainMaterial(world,x){
   const moisture=mix(world.moisture),root=mix(world.rootStrength),sediment=mix(world.sediment);
   const wet=clamp(moisture+Math.min(1,mix(world.water)/8)*.65,0,1);
   const loose=clamp(sediment*.18+(1-root*.28),0,1);
-  const muStatic=clamp(.92-root*.04-wet*.5-loose*.16,.18,.92);
-  const muKinetic=clamp(muStatic*.72,.12,.72);
+  const muStatic=clamp(.78+root*.16-wet*.46-loose*.18,.18,.96);
+  const muKinetic=clamp(muStatic*.72,.12,.74);
   return{moisture,root,sediment,wet,loose,muStatic,muKinetic};
 }
 
@@ -36,20 +36,21 @@ export function solveTerrainContact(world,p,dt,opts={}){
 }
 
 export function stanceTraction(world,c,leg,demand,dt,opts={}){
-  if(!leg.stance||demand<=0)return{applied:false,impulse:0,limit:0};
+  if(!leg.stance||demand<=0)return{applied:false,impulse:0,limit:0,slipping:false,slipRatio:0};
   const anchor=c.nodes[leg.anchor],foot=leg.foot,frame=terrainFrame(world,foot.x),mat=terrainMaterial(world,foot.x),stanceCount=Math.max(1,c.legs.reduce((n,l)=>n+(l.stance?1:0),0));
-  const bodyMass=c.nodes.reduce((s,n)=>s+(n.m??1),0)+c.legs.length*.55;
+  const bodyMass=c.nodes.reduce((s,n)=>s+(n.m??1),0)+c.legs.reduce((s,l)=>s+(l.footMass??.55),0),anchorMass=Math.max(EPS,anchor.m??1),footMass=Math.max(EPS,leg.footMass??.55);
   const supportForce=bodyMass*(opts.gravity??110)/stanceCount;
   const muscleForce=(opts.muscleForce??54)*clamp(demand,0,1.25)*clamp(.35+.65*c.energy,0,1)*clamp(1-c.fatigue*.62,.2,1);
-  const frictionLimit=mat.muStatic*supportForce,force=Math.min(muscleForce,frictionLimit),impulse=force*dt;
-  const dir=c.dir||1,dvx=frame.tx*dir*impulse,dvy=frame.ty*dir*impulse;
-  applyVelocityDelta(anchor,dvx,dvy,dt);applyVelocityDelta(foot,-dvx,-dvy,dt);
-  return{applied:true,impulse,limit:frictionLimit*dt,muStatic:mat.muStatic,supportForce,muscleForce,tx:frame.tx*dir,ty:frame.ty*dir};
+  const staticLimit=mat.muStatic*supportForce,kineticLimit=mat.muKinetic*supportForce,slipping=muscleForce>staticLimit;
+  const force=slipping?kineticLimit:muscleForce,slipRatio=slipping?clamp((muscleForce-staticLimit)/Math.max(EPS,muscleForce),0,1):0,impulse=force*dt;
+  const dir=c.dir||1,jx=frame.tx*dir*impulse,jy=frame.ty*dir*impulse;
+  applyVelocityDelta(anchor,jx/anchorMass,jy/anchorMass,dt);applyVelocityDelta(foot,-jx/footMass,-jy/footMass,dt);
+  return{applied:true,impulse,limit:staticLimit*dt,kineticLimit:kineticLimit*dt,muStatic:mat.muStatic,muKinetic:mat.muKinetic,supportForce,muscleForce,appliedForce:force,slipping,slipRatio,anchorMass,footMass,momentumX:jx,momentumY:jy,tx:frame.tx*dir,ty:frame.ty*dir};
 }
 
 export const CONTACT_PHYSICS_META={
   solver:'Verlet point-mass terrain contact with slope-normal projection, restitution and Coulomb static/kinetic friction',
-  traction:'equal-and-opposite stance impulses capped by muscle force and friction-limited support force',
+  traction:'mass-correct equal-and-opposite stance impulse with static-friction breakaway, kinetic slip and explicit slip ratio',
   terrainCoupling:['surface_slope','moisture','surface_water','roots','sediment'],
   externalPhysicsLibrary:false,
   rigidBodyClaim:false
