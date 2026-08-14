@@ -1,10 +1,10 @@
 name: GENESIS World Weather V1
 on:
   push:
-    paths: ['world-weather/**','.github/workflows/world-weather-v1.yml']
+    paths: ['world-weather/**','.github/workflows/world-weather-v1.yml','index.html']
   pull_request:
     branches: [main]
-    paths: ['world-weather/**','.github/workflows/world-weather-v1.yml']
+    paths: ['world-weather/**','.github/workflows/world-weather-v1.yml','index.html']
 jobs:
   verify-world-weather:
     runs-on: ubuntu-latest
@@ -16,12 +16,18 @@ jobs:
           test -f world-weather/weather.cpp
           test -f world-weather/weather_test.cpp
           test -f world-weather/weather_wasm.test.mjs
+          test -f world-weather/browser_contract.test.mjs
           test -f world-weather/wasm_runtime.cpp
           test -f world-weather/MODEL.md
+          test -f world-weather/index.html
+          test -f world-weather/weather-view.js
+          test -f world-weather/weather.wasm.manifest.json
+          for n in 0 1 2 3; do test -s "world-weather/weather.wasm.part${n}.b64"; done
           ! grep -R -E '#include[[:space:]]*[<"](bullet|box2d|jolt|physx|three|babylon|unity|unreal|glm|eigen)' world-weather
           grep -q '192×128' world-weather/MODEL.md
           grep -q 'not spawned or animated by a timer' world-weather/MODEL.md
           grep -q 'not DNS' world-weather/MODEL.md
+          grep -q 'VISUAL INTERPOLATION ONLY' world-weather/index.html
       - name: Compile native atmosphere and hydrology
         run: |
           set -euo pipefail
@@ -36,14 +42,30 @@ jobs:
           set -euo pipefail
           clang++ --target=wasm32 -std=c++17 -O3 -nostdlib -fno-exceptions -fno-rtti world-weather/weather.cpp world-weather/wasm_runtime.cpp \
             -Wl,--no-entry -Wl,--export-all -Wl,--export-memory -Wl,--initial-memory=8388608 -Wl,--max-memory=8388608 \
-            -o world-weather/genesis-world-weather-v1.wasm
-          test -s world-weather/genesis-world-weather-v1.wasm
-          sha256sum world-weather/genesis-world-weather-v1.wasm | tee world-weather-wasm.sha256
-      - name: Verify native WASM semantic parity
+            -o /tmp/genesis-world-weather-v1.wasm
+          test -s /tmp/genesis-world-weather-v1.wasm
+          sha256sum /tmp/genesis-world-weather-v1.wasm | tee world-weather-wasm.sha256
+      - name: Reconstruct and prove exact promoted browser payload
         run: |
           set -euo pipefail
-          node world-weather/weather_wasm.test.mjs world-weather/genesis-world-weather-v1.wasm | tee world-weather-wasm.txt
+          cat world-weather/weather.wasm.part0.b64 world-weather/weather.wasm.part1.b64 world-weather/weather.wasm.part2.b64 world-weather/weather.wasm.part3.b64 > /tmp/weather-promoted.b64
+          base64 -d /tmp/weather-promoted.b64 > /tmp/weather-promoted.wasm
+          test "$(wc -c < /tmp/weather-promoted.wasm)" = "10669"
+          test "$(sha256sum /tmp/weather-promoted.wasm | cut -d' ' -f1)" = "d95d030df7ca6594d1d8641c483fec234d185d5ad7de6ef0ded56207b627929c"
+          cmp -s /tmp/genesis-world-weather-v1.wasm /tmp/weather-promoted.wasm
+          node -e "const m=require('./world-weather/weather.wasm.manifest.json'); if(m.compiled_bytes!==10669||m.sha256!=='d95d030df7ca6594d1d8641c483fec234d185d5ad7de6ef0ded56207b627929c'||m.cells!==24576)process.exit(1)"
+      - name: Verify native and promoted WASM semantics
+        run: |
+          set -euo pipefail
+          node world-weather/weather_wasm.test.mjs /tmp/genesis-world-weather-v1.wasm | tee world-weather-wasm.txt
           grep -q 'PASS GENESIS world weather C++ -> WASM semantic parity' world-weather-wasm.txt
+          node world-weather/weather_wasm.test.mjs /tmp/weather-promoted.wasm | tee world-weather-promoted.txt
+          grep -q 'PASS GENESIS world weather C++ -> WASM semantic parity' world-weather-promoted.txt
+      - name: Verify browser native-state contract
+        run: |
+          set -euo pipefail
+          node world-weather/browser_contract.test.mjs | tee world-weather-browser.txt
+          grep -q 'PASS GENESIS browser payload contract' world-weather-browser.txt
       - name: Preserve weather evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -52,6 +74,7 @@ jobs:
           path: |
             world-weather-native.txt
             world-weather-wasm.txt
+            world-weather-promoted.txt
+            world-weather-browser.txt
             world-weather-wasm.sha256
-            world-weather/genesis-world-weather-v1.wasm
-          if-no-files-found: error
+          if-no-files-found: ignore
