@@ -3,43 +3,28 @@
   "project": "GENESIS",
   "product": "GENESIS Ecosystem Sandbox",
   "engineering_system": "GENESIS FORGE",
-  "phase": "native-cpp-webgpu-volume",
+  "phase": "native-water-momentum-pressure-v2",
   "status": "IN_PROGRESS",
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
-  "stable": {
-    "label": "native-cpp-kernel-ci-pass",
-    "verified": false,
-    "note": "The active C++/WebAssembly material kernel and WebGPU volumetric route have GitHub-hosted Codehood/Foundation evidence. Browser execution and iPhone execution remain unverified."
-  },
+  "stable": {"label":"native-cpp-webgpu-volume-ci-pass","verified":false,"note":"The prior active C++/WebAssembly material kernel and state-derived WebGPU volume renderer are CI-proven. This momentum/pressure increment is not promoted until branch CI passes; browser and iPhone execution remain unverified."},
   "active_experience": {
     "route": "/genesis-codehood/",
     "verification_level": "IMPLEMENTED",
-    "stack": ["native-ray-volume.js","native-main.js","../volume3d/worker.js","../volume3d/solver.v1.wasm.b64","../volume3d/solver.cpp"],
-    "runtime": "from-scratch C++ compiled to WebAssembly owns material state; a JavaScript Worker transfers packed 3D state to a from-scratch WebGPU volume ray marcher; no third-party game, physics, rendering, or simulation libraries",
-    "simulated_state": ["3D voxel material occupancy","sand gravity/collapse","water gravity/lateral cellular transport","sand moisture/cohesion","suspended sediment","erosion/deposition","deterministic seeded state evolution"],
-    "render_coupling": ["3D solid and water density come directly from native material occupancy","surface normals come from gradients of the uploaded native 3D field","sand appearance consumes simulated wetness","water absorption/scattering consumes simulated suspended sediment","water shape comes from simulated water occupancy rather than an animated height function"],
-    "approximations": ["water is cellular occupancy transport, not Navier-Stokes CFD and has no explicit velocity or pressure field","ray marching interpolates the discrete native field for presentation but does not increase simulation resolution","lighting, sky, tone mapping and position texture are presentation only","active native route has no native articulated creature physics","active native route has no learning/evolution system"],
-    "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_NATIVE_VOLUME_SWITCH","iphone_safari":"NOT_TESTED_AFTER_NATIVE_VOLUME_SWITCH"}
+    "stack": ["native-ray-volume.js","native-main.js","../volume3d/worker.js","../volume3d/solver.v2.wasm.b64","../volume3d/solver.cpp"],
+    "runtime": "from-scratch C++ compiled to WebAssembly owns material and water momentum/pressure-proxy state; a JavaScript Worker transfers packed 3D state to a from-scratch WebGPU volume ray marcher",
+    "simulated_state": ["3D voxel material occupancy","sand gravity/collapse","water occupancy transport","signed per-water-cell momentum proxy","local hydrostatic/compression pressure proxy","pressure-gradient acceleration","gravity acceleration","momentum-biased water transport","sand moisture/cohesion","suspended sediment","erosion/deposition","deterministic seeded state evolution"],
+    "render_coupling": ["3D solid/water density derive from native material occupancy","surface normals derive from native field gradients","sand wetness and water sediment feed material appearance","water shape is simulation-state-derived"],
+    "approximations": ["this is not Navier-Stokes CFD","water remains one occupancy quantum per voxel rather than a continuous mass fraction","pressure is a local discrete proxy, not a Poisson-projected incompressible pressure solve","momentum is clamped signed cell-space state, not SI-unit velocity","ray marching is presentation only","no native articulated creatures or learning/evolution yet"],
+    "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_MOMENTUM_INCREMENT","iphone_safari":"NOT_TESTED_AFTER_MOMENTUM_INCREMENT"}
   },
-  "native_cpp_kernel": {
-    "verification_level": "CI_PASS",
-    "model_version": "0x00030001",
-    "source": "volume3d/solver.cpp",
-    "compiled_payload": "volume3d/solver.v1.wasm.b64",
-    "ci": {"status":"PASS","head_sha":"83cc705dd6cf3377d87df3b727fffce0acab4296","codehood_run_id":31841068052,"foundation_run_id":31841068035,"native_state_advances":"PASS","native_invariant":"PASS"}
-  },
-  "native_volume_renderer": {
-    "verification_level": "TESTED",
-    "status": "PENDING_BRANCH_CI_AFTER_STATE_DERIVED_WATER_FIX",
-    "truth": "WebGPU ray marching is presentation over native 3D state; it does not feed back into physics. Time-driven fake water-normal animation is forbidden; water normals derive from the native water-density gradient and turbidity derives from native suspended sediment.",
-    "tests": ["active route requires WebGPU 3D volume renderer","flat Canvas projection forbidden","water normal must derive from native 3D water gradient","native sediment must reach GPU water turbidity input","time-driven sine/cosine water motion forbidden"]
-  },
+  "native_cpp_kernel": {"verification_level":"TESTED","model_version":"0x00030002","source":"volume3d/solver.cpp","compiled_payload":"volume3d/solver.v2.wasm.b64","status":"PENDING_BRANCH_CI","tests":["water count conserved under momentum transport","pressure state nonzero in water body","water momentum becomes nonzero under gravity/pressure update","explicit positive-x impulse produces positive center-of-mass shift","deterministic replay includes momentum/pressure state","material invariant remains closed"]},
+  "native_volume_renderer": {"verification_level":"CI_PASS","truth":"WebGPU ray marching is presentation over native 3D state; time-driven fake water-normal animation is forbidden; water normals derive from native density gradient and turbidity from native sediment."},
   "scratch_engine": {"status":"PRESERVED_NOT_LOADED_BY_ACTIVE_ROUTE","verification_level":"CI_PASS"},
   "legacy_ecosystem_stack": {"status":"ARCHIVED_NOT_LOADED_BY_ACTIVE_ROUTE"},
   "physical_creature_v1": {"status":"PRESERVED_PROOF_SLICE","verification_level":"CI_PASS","route":"/genesis-codehood/physical-creature-v1/"},
-  "active_objective": "Promote the state-derived volumetric renderer only after independent branch CI, then deepen the native fluid model rather than adding cosmetic motion.",
-  "next_gate": "Codehood and Foundation must pass with the new volumetric truth checks. LIVE_TESTED and DEVICE_TESTED require actual deployed browser/device execution.",
-  "next_scientific_blocker": "Native water transports occupancy but has no explicit velocity, pressure, or momentum field. The next bounded physics system should add native fluid momentum/pressure state with conservation and stability tests before any CFD-like claim.",
-  "invariants": ["IMPLEMENTATION > NAME","C++/WASM owns active material state","WebGPU geometry/optics must derive from native state when presented as simulation","do not call cellular water CFD","do not present interpolation or time-driven shader motion as physics","Stable vs Lab isolation must remain fail-closed","CI_PASS does not imply LIVE_TESTED or DEVICE_TESTED"],
+  "active_objective": "Promote the bounded native water momentum/pressure-proxy increment only after independent GitHub-hosted CI and keep renderer truth tied to simulation state.",
+  "next_gate": "Compile and run native C++ tests in GitHub Actions, verify committed WASM model v2 boots, preserve Stable vs Lab fail-closed isolation, then merge only if green.",
+  "next_scientific_blocker": "Replace the local pressure proxy with a mass-fraction/velocity formulation and a discrete divergence/pressure projection or other conservation-controlled incompressibility solve before any CFD claim.",
+  "invariants": ["IMPLEMENTATION > NAME","C++/WASM owns active material state","no external game/physics/render/simulation libraries","do not call momentum proxy CFD","Stable vs Lab isolation remains fail-closed","CI_PASS does not imply LIVE_TESTED or DEVICE_TESTED"],
   "updated": "2026-08-14"
 }
