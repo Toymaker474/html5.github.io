@@ -3,40 +3,51 @@
   "project": "GENESIS",
   "product": "GENESIS Ecosystem Sandbox",
   "engineering_system": "GENESIS FORGE",
-  "phase": "scratch-deep-world-nav-capability-fix",
+  "phase": "native-cpp-state-surface",
   "status": "IN_PROGRESS",
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
-  "stable": {"label":"deep-world-nav-capability-ci-pass","verified":false,"note":"Deep-world and the corrected navigation/render integration have fresh Codehood and Foundation CI evidence. Deployed browser/iPhone behavior after this fix remains untested."},
+  "stable": {
+    "label": "native-cpp-kernel-ci-pass",
+    "verified": false,
+    "note": "The active C++/WebAssembly material kernel on main has fresh Codehood, Foundation, and Pages deployment passes. The state-derived surface-mesh increment is implemented with deterministic tests but remains pending CI until its branch workflow passes. No live browser or iPhone runtime verification is claimed."
+  },
   "active_experience": {
     "route": "/genesis-codehood/",
     "verification_level": "IMPLEMENTED",
-    "stack": ["scratch/main.js","scratch/environment-worker.js","scratch/deep-world.js","scratch/deep-bind.js","scratch/deep-nav.js","scratch/deep-render.js","scratch/alife.js","scratch/navigation.js","scratch/sim-core.js","scratch/environment.js","scratch/organic-render.js"],
-    "runtime": "vanilla JavaScript modules + Worker + transferred OffscreenCanvas; no third-party runtime libraries",
-    "simulation_changes": ["persistent deep-world material state remains active","cave/terrain/liquid cells render through extracted smoothed contours instead of visible blocks","surface crawlers use persistent terrain-aware routes with smoothed steering and speed","deep A* is capability-gated and current crawlers remain surface locomotors","render pose smoothing is presentation-only"],
-    "approximations": ["current crawler motor cannot execute arbitrary vertical cave traversal","surface route planning is a side-view corridor planner rather than a general 2D navmesh","deep liquid transport is not CFD","smooth contour rendering does not increase simulation resolution","ALife drive arbitration is authored and not learning"],
-    "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_NAV_CAPABILITY_FIX","iphone_safari":"NOT_TESTED_AFTER_NAV_CAPABILITY_FIX"}
+    "stack": ["genesis-codehood/native-surface.js","genesis-codehood/native-main.js","volume3d/worker.js","volume3d/solver.v1.wasm.b64","volume3d/solver.cpp"],
+    "runtime": "from-scratch C++ compiled to WebAssembly owns material state; JavaScript Worker bridge transfers packed state; Canvas renderer reconstructs procedural surface geometry; no third-party game, physics, rendering, or simulation libraries",
+    "simulated_state": ["3D voxel material occupancy","sand gravity/collapse","water gravity/lateral cellular transport","sand moisture and cohesion","suspended sediment","erosion and deposition","deterministic seeded state evolution"],
+    "render_coupling": ["terrain surface heights come from highest occupied native solid cells","surface normals come from neighboring native column heights","terrain shading consumes simulated moisture","water turbidity consumes simulated suspended sediment","water surface height comes from native water occupancy"],
+    "approximations": ["water is a cellular occupancy transport model, not Navier-Stokes CFD and has no explicit velocity/pressure field","surface meshing is presentation geometry and does not increase simulation resolution","active native route currently has no native articulated creature physics","active native route currently has no learning or evolution system","Canvas projection is software presentation, not a 3D rigid-body renderer"],
+    "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_NATIVE_SWITCH","iphone_safari":"NOT_TESTED_AFTER_NATIVE_SWITCH"}
   },
-  "scratch_engine": {
-    "verification_level":"CI_PASS",
-    "ci":{"status":"PASS","proof_pull_request":107,"codehood_run_id":31826377727,"codehood_job_id":94851389956,"foundation_run_id":31826377711,"foundation_job_id":94851389811,"syntax_check":"PASS","forge_fail_closed_audit":"PASS"},
-    "prior_ci":{"status":"SUPERSEDED_FOR_ACTIVE_INTEGRATION","proof_pull_request":106,"codehood_run_id":31816167495,"foundation_run_id":31816167365},
-    "live_browser":"NOT_TESTED",
-    "iphone_safari":"NOT_TESTED"
+  "native_cpp_kernel": {
+    "verification_level": "CI_PASS",
+    "model_version": "0x00030001",
+    "source": "volume3d/solver.cpp",
+    "compiled_payload": "volume3d/solver.v1.wasm.b64",
+    "ci": {
+      "status": "PASS",
+      "head_sha": "b380838bd651cc6470c098c9e9099c9e7b223dc8",
+      "codehood_run_id": 31839851901,
+      "foundation_run_id": 31839851915,
+      "pages_run_id": 31839851834,
+      "native_state_advances": "PASS",
+      "native_invariant": "PASS"
+    }
   },
-  "deep_world": {"verification_level":"CI_PASS","ci":{"status":"PASS","proof_pull_request":106,"codehood_run_id":31816167495,"codehood_job_id":94818255947,"foundation_run_id":31816167365,"foundation_job_id":94818255473}},
-  "scratch_navigation": {
-    "verification_level":"CI_PASS",
-    "truth":"surface crawlers use surface routes; deep A* requires an explicitly compatible volume locomotion body",
-    "current_crawler_mode":"surface",
-    "ci":{"status":"PASS","proof_pull_request":107,"codehood_run_id":31826377727,"codehood_job_id":94851389956,"cases":{"sustained_surface_locomotion":"PASS","surface_crawler_refuses_incompatible_cave_astar":"PASS","steering_commit_and_speed_ramp":"PASS","route_reversal_hysteresis":"PASS","deep_water_route_block":"PASS","excessive_slope_route_block":"PASS"}}
+  "native_surface_render": {
+    "verification_level": "TESTED",
+    "status": "PENDING_GITHUB_CI",
+    "truth": "procedural surface geometry and material appearance are reconstructed from packed native simulation state; the renderer does not feed back into physics",
+    "tests": ["native occupancy changes generated geometry","height differences generate non-flat normals","simulated moisture reaches terrain appearance input","simulated sediment reaches water turbidity input","fake sine-wave water animation forbidden by active-route gate"]
   },
-  "scratch_render": {"verification_level":"CI_PASS","ci":{"status":"PASS","proof_pull_request":107,"codehood_run_id":31826377727,"case":"organic renderer hides environment grid and derives smooth fields from simulation state"}},
-  "scratch_alife": {"verification_level":"CI_PASS","note":"Fresh regression CI passed with the corrected locomotion-compatible navigation boundary."},
-  "scratch_environment": {"verification_level":"CI_PASS","note":"Standalone environment subsystem evidence remains valid."},
+  "scratch_engine": {"status":"PRESERVED_NOT_LOADED_BY_ACTIVE_ROUTE","verification_level":"CI_PASS"},
   "legacy_ecosystem_stack": {"status":"ARCHIVED_NOT_LOADED_BY_ACTIVE_ROUTE"},
   "physical_creature_v1": {"status":"PRESERVED_PROOF_SLICE","verification_level":"CI_PASS","route":"/genesis-codehood/physical-creature-v1/"},
-  "active_objective": "Exercise the deployed iPhone build for smooth route following and non-blocky cave/liquid presentation, then deepen physical locomotion before enabling true cave traversal.",
-  "next_gate": "LIVE_TESTED and DEVICE_TESTED require actual deployed browser/iPhone execution. Do not enable deep/cave A* for current crawlers until their physical motor can execute vertical/cave traversal.",
-  "invariants": ["IMPLEMENTATION > NAME","Do not render simulation cells as visible block tiles","Do not give an agent a path its body locomotion cannot execute","Do not call the surface planner a general 2D navmesh","Do not call presentation interpolation physics","Do not call authored ALife learning","CI_PASS does not imply LIVE_TESTED or DEVICE_TESTED"],
+  "active_objective": "Promote the state-derived native surface renderer only after independent GitHub CI, then add physically meaningful native fluid momentum/pressure state rather than cosmetic water animation.",
+  "next_gate": "Native surface branch must pass deterministic Codehood verification before merge. LIVE_TESTED and DEVICE_TESTED require actual deployed browser/iPhone execution.",
+  "next_scientific_blocker": "The native water model transports occupancy but does not yet represent a velocity field, pressure, or momentum conservation. A bounded next physics increment should add explicit native fluid momentum/pressure state with conservation/stability tests before claiming CFD-like behavior.",
+  "invariants": ["IMPLEMENTATION > NAME","C++/WASM owns active material state","renderer geometry must derive from native state","do not call cellular water CFD","do not present presentation interpolation as physics","no fake scripted wave motion presented as fluid simulation","Stable vs Lab isolation must remain fail-closed","CI_PASS does not imply LIVE_TESTED or DEVICE_TESTED"],
   "updated": "2026-08-14"
 }
