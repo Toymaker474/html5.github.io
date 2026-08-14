@@ -2,8 +2,6 @@ import assert from 'node:assert/strict';
 import {World} from '../scratch/sim-core.js';
 import {senseCreature,updateMind,contactFeed,contactDrink,digest,ALIFE_META} from '../scratch/alife.js';
 import {planSurfaceRoute} from '../scratch/navigation.js';
-import {DeepWorld} from '../scratch/deep-world.js';
-import {bindDeepToWorld} from '../scratch/deep-bind.js';
 {
   const w=new World({seed:101,n:100,dx:6,worldH:420,ocean:false});w.water.fill(0);w.q.fill(0);
   const c=w.creatures[0],body=c.nodes[2];for(const p of w.plants)p.alive=false;const p=w.plants[0];p.alive=true;p.biomass=.8;p.x=(body.x+55)/w.dx;c.hunger=.9;c.hydration=.9;c.mind.intentAge=9;c.mind.commitFor=0;
@@ -23,16 +21,16 @@ import {bindDeepToWorld} from '../scratch/deep-bind.js';
   console.log('PASS scratch drinking requires mouth contact with simulated water');
 }
 {
-  const w=new World({seed:105,n:120,dx:6,worldH:420,ocean:false,infiltrationScale:0});w.rain=0;w.water.fill(0);for(const p of w.plants)p.alive=false;w.deep=bindDeepToWorld(new DeepWorld({seed:105,cell:8,cols:Math.ceil(w.n*w.dx/8),rows:53,chunkSize:16}),w);const c=w.creatures[0],x0=c.nodes[2].x;
+  const w=new World({seed:105,n:120,dx:6,worldH:420,ocean:false,infiltrationScale:0});w.rain=0;w.water.fill(0);for(const p of w.plants)p.alive=false;const c=w.creatures[0],x0=c.nodes[2].x;
   const candidates=[200,-200,150,-150,110,-110].map(d=>({goal:x0+d,dir:Math.sign(d)})).filter(v=>v.goal>12&&v.goal<w.n*w.dx-12);
-  const chosen=candidates.find(v=>planSurfaceRoute(w,x0,v.goal).reachable);assert.ok(chosen,'expected at least one traversable route');
+  const chosen=candidates.find(v=>planSurfaceRoute(w,x0,v.goal).reachable);assert.ok(chosen,'expected at least one traversable surface route');
   c.mind.intent='explore';c.mind.intentAge=0;c.mind.commitFor=999;c.mind.goalX=chosen.goal;c.mind.targetX=chosen.goal;c.mind.nav=null;c.mind.navHeading=0;c.targetX=chosen.goal;c.hunger=.1;c.hydration=.9;c.energy=.9;c.fatigue=0;
-  for(let k=0;k<900;k++)w.stepCreatures(1/120);const displacement=(c.nodes[2].x-x0)*chosen.dir;assert.ok(displacement>20,`deep-route displacement ${displacement}`);assert.ok(c.legs.some(l=>l.stance));
-  console.log('PASS scratch planted-foot gait advances along active deep-world route');
+  for(let k=0;k<900;k++)w.stepCreatures(1/120);const displacement=(c.nodes[2].x-x0)*chosen.dir;assert.ok(displacement>20,`surface-route displacement ${displacement}`);assert.ok(c.legs.some(l=>l.stance));
+  console.log('PASS scratch planted-foot gait advances along compatible surface route');
 }
 {
   const w=new World({seed:106,n:100,dx:6,worldH:420,ocean:false});const c=w.creatures[0];c.alive=false;c.corpseMass=.05;const i=Math.max(0,Math.min(w.n-1,(c.nodes[2].x/w.dx)|0));w.moisture[i]=1;const n0=w.nutrient[i];for(let k=0;k<1200;k++)w.stepCorpse(c,1/60);assert.ok(w.nutrient[i]>n0);assert.equal(c.gone,true);
   console.log('PASS scratch corpse decomposition returns nutrients to local soil');
 }
-assert.equal(ALIFE_META.learning,false);assert.equal(ALIFE_META.stomachDigestion,true);assert.equal(ALIFE_META.directPlantCalories,false);assert.equal(ALIFE_META.navigation.straightLineTargeting,false);
-console.log('PASS scratch ALife metadata refuses learning claim and direct-target navigation');
+assert.equal(ALIFE_META.learning,false);assert.equal(ALIFE_META.stomachDigestion,true);assert.equal(ALIFE_META.directPlantCalories,false);assert.equal(ALIFE_META.navigation.straightLineTargeting,false);assert.equal(ALIFE_META.navigation.deepRoutingRequiresCompatibleBody,true);
+console.log('PASS scratch ALife metadata refuses learning claim and mismatched cave routing');
