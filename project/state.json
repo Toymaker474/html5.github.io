@@ -6,15 +6,19 @@
   "phase": "native-body-mechanics-v1",
   "status": "IN_PROGRESS",
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
-  "stable": {"label":"native-fluid-projection-v3-ci-pass","verified":false,"note":"Native pressure-projection v3 remains the active browser stable slice. The new body-mechanics v1 kernel is a separately CI-passed native candidate and is not yet loaded by the active route. Browser execution and iPhone execution remain unverified."},
+  "stable": {
+    "label": "native-fluid-projection-v3-ci-pass",
+    "verified": false,
+    "note": "Native fluid pressure-projection v3 remains the active browser stable slice. Fixed-point native body v1 is the one authoritative standalone body candidate and is not loaded by the active route. Browser execution and iPhone execution of body mechanics remain unverified."
+  },
   "active_experience": {
     "route": "/genesis-codehood/",
     "verification_level": "CI_PASS",
     "stack": ["native-ray-volume.js","native-main.js","../volume3d/worker.js","../volume3d/solver.v3.manifest.json","../volume3d/solver.cpp"],
-    "runtime": "from-scratch C++ compiled to WebAssembly owns 3D material occupancy, signed water velocity, divergence and pressure-projection state; a JavaScript Worker verifies the exact compiler-proven WASM payload and transfers packed native state to a from-scratch WebGPU volume ray marcher",
+    "runtime": "from-scratch C++/WASM owns the active 3D material and fluid state; JavaScript only verifies/transfers native state and drives the from-scratch WebGPU volume renderer",
     "simulated_state": ["3D voxel material occupancy","sand gravity/collapse","signed per-water-cell vx/vy/vz","gravity and bounded velocity damping","measured discrete velocity divergence","iterative native pressure relaxation","pressure-gradient velocity projection","solid/boundary normal-velocity constraints","momentum-directed conservative water-voxel advection","native kinetic energy and signed XYZ momentum","sand moisture/cohesion and saturation weakening","suspended sediment","flow-speed-driven erosion/deposition","deterministic seeded state evolution including velocity/pressure"],
-    "render_coupling": ["3D solid/water density derives from native occupancy","surface normals derive from native field gradients","sand wetness derives from native moisture","water turbidity derives from native suspended sediment","native pressure is dynamics/telemetry and is not relabeled as visual sediment","water shape derives from simulated water occupancy rather than animated geometry"],
-    "approximations": ["not validated Navier-Stokes CFD/SPH/MPM/FLIP/LBM","water remains a coarse binary occupancy quantum per voxel","pressure projection is a discrete voxel-scale incompressibility constraint","advection moves a water voxel at most one neighboring cell per substep rather than continuous characteristic tracing","viscosity is approximated by bounded damping","ray marching interpolates simulation state for presentation only","native body-mechanics v1 exists as a standalone CI-passed candidate but is not loaded by the active browser route","no active native learning/evolution yet"],
+    "render_coupling": ["3D solid/water density derives from native occupancy","surface normals derive from native field gradients","sand wetness derives from native moisture","water turbidity derives from native suspended sediment","native pressure is dynamics/telemetry and never relabeled as sediment","water shape derives from simulated occupancy rather than animated geometry"],
+    "approximations": ["not validated Navier-Stokes CFD/SPH/MPM/FLIP/LBM","water is coarse binary voxel occupancy","pressure projection is a voxel-scale incompressibility constraint","advection moves water at most one neighboring voxel per substep","viscosity uses bounded damping","ray marching interpolates only for presentation","native body v1 is not loaded by the active browser route","no active native learning/evolution yet"],
     "browser_exercise": {"live_pages":"DEPLOYED_NOT_EXECUTED_AFTER_PROJECTION_PROMOTION","iphone_safari":"NOT_DEVICE_TESTED_AFTER_PROJECTION_PROMOTION"}
   },
   "native_cpp_kernel": {
@@ -25,26 +29,34 @@
     "compiled_payload_sha256": "573eea6bccc8ef38ab828ccfa57d7d91861e5ac04254ca5aea523c3438bb55c0",
     "status": "PASS",
     "ci": {"status":"PASS","head_sha":"7fee49a5bbddd7087f0e5187898e41c67849bc1a","codehood_run_id":31848627662,"foundation_run_id":31848627845,"physical_creature_run_id":31848627238,"pages_workflow_run_id":31848628037,"pages_native_run_id":31848621159,"stable_lab_isolation":"PASS","exact_wasm_rebuild":"PASS","pages_deploy":"PASS"},
-    "tests": ["fresh native C++ projection fixture passes","water voxel count conserved","sand mass conserved through erosion/deposition","explicit impulse produces signed native momentum and kinetic energy","pressure projection does not increase measured divergence","reference fixture reduced divergence from 16457 to 12340","gravity produces downward native momentum","fixed-seed plus fixed-impulse replay includes velocity/pressure state","exact browser payload hash equals fresh compiler output","material invariant forbids motion/pressure on non-water cells"]
+    "tests": ["fresh native C++ projection fixture passes","water voxel count conserved","sand mass conserved through erosion/deposition","impulse creates signed momentum and kinetic energy","reference divergence reduced 16457 to 12340","gravity produces downward native momentum","fixed-seed plus fixed-impulse replay includes velocity/pressure","exact browser payload equals fresh compiler SHA-256","material invariant forbids motion/pressure on non-water cells"]
   },
   "native_body_mechanics": {
     "verification_level": "CI_PASS",
     "status": "PASS_STANDALONE_NATIVE_CANDIDATE",
-    "source": "volume3d/body.cpp",
-    "test": "volume3d/body_test.cpp",
+    "model_version": "0x00010001",
+    "source": "native-body/body.cpp",
+    "test": "native-body/body_test.cpp",
+    "wasm_test": "native-body/body_wasm.test.mjs",
+    "wasm_runtime": "native-body/wasm_runtime.cpp",
+    "workflow": ".github/workflows/native-body-v1.yml",
+    "compatibility_shims": ["volume3d/body.cpp","volume3d/body_test.cpp"],
     "loaded_by_active_route": false,
-    "mechanics": ["per-particle mass and 3D position/velocity","gravity integration","XPBD-style compliant distance joints","iterative floor non-penetration contact","bounded Coulomb-style tangential friction","impulse-to-motion response","predicted-strain telemetry","yield threshold with plastic rest-length change","deterministic state hashing"],
-    "approximations": ["particle-and-distance-joint mechanics, not rigid-body angular inertia tensors","contact is currently a flat floor plane, not native voxel material geometry","friction uses a bounded velocity-drop approximation rather than a full complementarity contact solve","plasticity changes joint rest length after predicted strain exceeds yield; no fracture topology yet","not compiled into the active browser WASM payload and not rendered in the active experience"],
-    "ci": {"status":"PASS","head_sha":"96e25f235feb2acca5ff2760e32002c2b0d5ef2f","native_body_run_id":31849208403,"first_failed_run_id":31849088614,"first_failure":"yield telemetry was sampled before external-load prediction","fix":"sample strain/yield after integration and before elastic constraint relaxation"},
-    "tests": ["gravity lowers a free mass","floor prevents persistent penetration","compliant joint error remains bounded under load","impulse creates measured translation","contact friction does not accelerate tangential motion and dissipates it","strain above yield changes rest length and increments yield telemetry","fixed setup and impulses replay to identical native hash"]
+    "numeric_model": "signed Q16.16 fixed-point at approximately 120 Hz",
+    "reference_fixture": {"nodes":18,"structural_links":22,"bend_ranges":4,"hash":3632292203,"com_y_q16":147608,"kinetic":346792},
+    "wasm": {"imports":0,"bytes":26250,"sha256":"b48c15ff1e504f5e78deaba846661aa4d95415132a6202e6c4452ffe32f8755f","semantic_parity":"PASS"},
+    "mechanics": ["explicit node mass and inverse mass","3D position and velocity","inverse-mass-weighted structural distance constraints","geometric bend/range constraints","sphere-vs-voxel-AABB contact","normal response","Coulomb-bounded tangential friction","strain telemetry","plastic rest-length drift after yield","accumulated damage","permanent structural-link breakage","deterministic whole-body state hashing"],
+    "approximations": ["mass-node articulated mechanics, not a complete six-DOF rigid-body inertia-tensor solver","node spheres are collision samples, not final visual geometry","no native material-volume coupling in the promoted body slice yet","no fluid buoyancy/drag/pressure-force coupling yet","no self-collision, muscle physiology, FEM tissue continuum or active controller yet","not loaded into the active browser route"],
+    "ci": {"status":"PASS","merge_sha":"961933896bcd4760963a1687a3266a6c2d6d3dab","post_merge_body_run_id":31849134150,"post_merge_foundation_run_id":31849134163,"stable_lab_isolation":"PASS","native_wasm_parity":"PASS"},
+    "tests": ["gravity changes native velocity and position","internal equal-mass constraint correction preserves center of mass","bend/range constraints enforce geometric bounds","voxel contact prevents persistent penetration","friction impulse remains within configured Coulomb bound and reduces tangential speed","yield changes physical rest length","break threshold severs a structural constraint","18-node whole-body replay is deterministic","freestanding WebAssembly has zero imports and exactly matches native reference replay"]
   },
   "native_volume_renderer": {"verification_level":"CI_PASS","truth":"WebGPU ray marching is presentation over native 3D state; time-driven fake water-normal animation is forbidden; water normals derive from native water-density gradients and turbidity derives from native suspended sediment, never pressure."},
   "scratch_engine": {"status":"PRESERVED_NOT_LOADED_BY_ACTIVE_ROUTE","verification_level":"CI_PASS"},
   "legacy_ecosystem_stack": {"status":"ARCHIVED_NOT_LOADED_BY_ACTIVE_ROUTE"},
   "physical_creature_v1": {"status":"PRESERVED_PROOF_SLICE","verification_level":"CI_PASS","route":"/genesis-codehood/physical-creature-v1/"},
-  "active_objective": "Integrate the CI-passed native body-mechanics kernel with the actual voxel material world: compile it into the active WASM module, collide body particles against native solid occupancy instead of a flat floor, and expose body state to rendering without scripted pose animation.",
-  "next_gate": "The body/world coupling must pass deterministic tests for voxel non-penetration, momentum response to material contact, friction bounds on sloped/irregular voxel surfaces, water-force coupling derived from native fluid velocity/pressure state, conservation/error telemetry, exact WASM rebuild proof, and fixed-seed replay before the active route may claim native articulated organisms.",
-  "next_scientific_blocker": "Body-to-material coupling: the mechanics candidate has real mass/joints/contact/yield, but its contact geometry is still a flat plane and it is not yet coupled to native voxel solids, native water momentum/pressure, active WASM, or the WebGPU body representation.",
-  "invariants": ["IMPLEMENTATION > NAME","C++/WASM owns active material/fluid state","exact browser WASM must match fresh compiler SHA-256","WebGPU simulation-looking motion must derive from native state","pressure must never masquerade as sediment/turbidity","do not call this validated CFD","no external game/physics/render/simulation libraries","Stable vs Lab isolation remains fail-closed","CI_PASS does not imply LIVE_TESTED or DEVICE_TESTED"],
+  "active_objective": "Couple the authoritative fixed-point native body engine to the actual native material volume so rock and sand occupancy causally create body contact before any active organism is rendered.",
+  "next_gate": "Body/material coupling must pass deterministic native tests proving rock/sand support comes from material occupancy, removing material removes support, water is not faked as solid, contact remains bounded, and combined material-fluid-body replay is deterministic before WASM/render integration.",
+  "next_scientific_blocker": "Native body-to-material coupling: fixed-point body v1 is real and CI-passed, but the promoted standalone slice still uses its isolated voxel contact cache and is not yet synchronized to the active material solver.",
+  "invariants": ["IMPLEMENTATION > NAME","one authoritative native body solver only","volume3d/body.cpp is compatibility-only","C++/WASM owns active material/fluid state","exact browser fluid WASM matches fresh compiler SHA-256","native body WASM semantic parity must remain exact","WebGPU simulation-looking motion derives from native state","pressure never masquerades as sediment/turbidity","do not call fluid validated CFD","no external game/physics/render/simulation libraries","Stable vs Lab remains fail-closed","CI_PASS does not imply LIVE_TESTED or DEVICE_TESTED"],
   "updated": "2026-08-14"
 }
