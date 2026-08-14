@@ -1,0 +1,63 @@
+name: GENESIS Native Body Coupling V2
+on:
+  push:
+    paths: ['native-body/**','volume3d/**','.github/workflows/native-body-coupling-v2.yml']
+  pull_request:
+    branches: [main]
+    paths: ['native-body/**','volume3d/**','.github/workflows/native-body-coupling-v2.yml']
+jobs:
+  verify-native-coupling:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail-closed architecture gate
+        run: |
+          set -euo pipefail
+          test -f native-body/coupled.cpp
+          test -f native-body/coupled_test.cpp
+          test -f native-body/coupled_wasm.test.mjs
+          test -f native-body/COUPLING.md
+          test -f native-body/body.cpp
+          test -f volume3d/solver.cpp
+          ! grep -q '#include .*solver.cpp' native-body/coupled.cpp
+          ! grep -q '#include .*body.cpp' native-body/coupled.cpp
+          grep -q 'exported C APIs' native-body/COUPLING.md
+          grep -q 'not treated as solid' native-body/COUPLING.md
+          grep -q '32 × 24 × 32' native-body/COUPLING.md
+          grep -q 'no hydrodynamic force coupling' native-body/COUPLING.md
+          ! grep -R -E '#include[[:space:]]*[<"](bullet|box2d|jolt|physx|ode|chipmunk|reactphysics3d|glm|eigen)' native-body
+      - name: Compile separate authoritative C++ modules
+        run: |
+          set -euo pipefail
+          clang++ -std=c++17 -O2 -Wall -Wextra -c volume3d/solver.cpp -o /tmp/material.o
+          clang++ -std=c++17 -O2 -Wall -Wextra -c native-body/body.cpp -o /tmp/body.o
+          clang++ -std=c++17 -O2 -Wall -Wextra -c native-body/coupled.cpp -o /tmp/coupled.o
+          clang++ -std=c++17 -O2 -Wall -Wextra -c native-body/coupled_test.cpp -o /tmp/coupled_test.o
+          clang++ /tmp/material.o /tmp/body.o /tmp/coupled.o /tmp/coupled_test.o -o /tmp/genesis-native-coupled-v2
+      - name: Execute causal material contact tests
+        run: |
+          set -euo pipefail
+          /tmp/genesis-native-coupled-v2 | tee native-body-coupling-test.txt
+          grep -q 'PASS GENESIS native API coupling' native-body-coupling-test.txt
+      - name: Compile combined authoritative C++ modules to freestanding WebAssembly
+        run: |
+          set -euo pipefail
+          clang++ --target=wasm32 -std=c++17 -O3 -nostdlib -fno-exceptions -fno-rtti \
+            volume3d/solver.cpp native-body/body.cpp native-body/coupled.cpp \
+            -Wl,--no-entry -Wl,--export-all -Wl,--export-memory -Wl,--initial-memory=8388608 -Wl,--max-memory=8388608 \
+            -o /tmp/genesis-native-coupled-v2.wasm
+          test -s /tmp/genesis-native-coupled-v2.wasm
+      - name: Verify native and WebAssembly coupled semantic parity
+        run: |
+          set -euo pipefail
+          node native-body/coupled_wasm.test.mjs /tmp/genesis-native-coupled-v2.wasm native-body-coupling-test.txt | tee native-body-coupling-wasm-test.txt
+          grep -q 'PASS GENESIS coupled native/WASM parity' native-body-coupling-wasm-test.txt
+      - name: Preserve coupling evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: genesis-native-body-coupling-v2-${{ github.run_id }}
+          path: |
+            native-body-coupling-test.txt
+            native-body-coupling-wasm-test.txt
+          if-no-files-found: ignore
