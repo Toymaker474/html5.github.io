@@ -6,33 +6,34 @@
   "phase": "native-fluid-pressure-projection-v1",
   "status": "IN_PROGRESS",
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
-  "stable": {"label":"native-water-momentum-pressure-v2-main","verified":false,"note":"Current main remains the prior native momentum/pressure-proxy build until this pressure-projection candidate passes branch CI and is promoted. Browser and iPhone execution of the candidate remain unverified."},
+  "stable": {"label":"native-fluid-projection-v3-ci-pass","verified":false,"note":"Native pressure-projection v3 is promoted on main with post-merge Codehood, Foundation, Stable-vs-Lab, physical-creature regression and both GitHub Pages deployment paths passing. Browser execution and iPhone execution remain unverified."},
   "active_experience": {
     "route": "/genesis-codehood/",
-    "verification_level": "IMPLEMENTED",
+    "verification_level": "CI_PASS",
     "stack": ["native-ray-volume.js","native-main.js","../volume3d/worker.js","../volume3d/solver.v3.manifest.json","../volume3d/solver.cpp"],
     "runtime": "from-scratch C++ compiled to WebAssembly owns 3D material occupancy, signed water velocity, divergence and pressure-projection state; a JavaScript Worker verifies the exact compiler-proven WASM payload and transfers packed native state to a from-scratch WebGPU volume ray marcher",
     "simulated_state": ["3D voxel material occupancy","sand gravity/collapse","signed per-water-cell vx/vy/vz","gravity and bounded velocity damping","measured discrete velocity divergence","iterative native pressure relaxation","pressure-gradient velocity projection","solid/boundary normal-velocity constraints","momentum-directed conservative water-voxel advection","native kinetic energy and signed XYZ momentum","sand moisture/cohesion and saturation weakening","suspended sediment","flow-speed-driven erosion/deposition","deterministic seeded state evolution including velocity/pressure"],
     "render_coupling": ["3D solid/water density derives from native occupancy","surface normals derive from native field gradients","sand wetness derives from native moisture","water turbidity derives from native suspended sediment","native pressure is dynamics/telemetry and is not relabeled as visual sediment","water shape derives from simulated water occupancy rather than animated geometry"],
     "approximations": ["not validated Navier-Stokes CFD/SPH/MPM/FLIP/LBM","water remains a coarse binary occupancy quantum per voxel","pressure projection is a discrete voxel-scale incompressibility constraint","advection moves a water voxel at most one neighboring cell per substep rather than continuous characteristic tracing","viscosity is approximated by bounded damping","ray marching interpolates simulation state for presentation only","no active native articulated creature physics yet","no active native learning/evolution yet"],
-    "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_PROJECTION_CANDIDATE","iphone_safari":"NOT_TESTED_AFTER_PROJECTION_CANDIDATE"}
+    "browser_exercise": {"live_pages":"DEPLOYED_NOT_EXECUTED_AFTER_PROJECTION_PROMOTION","iphone_safari":"NOT_DEVICE_TESTED_AFTER_PROJECTION_PROMOTION"}
   },
   "native_cpp_kernel": {
-    "verification_level": "TESTED",
+    "verification_level": "CI_PASS",
     "model_version": "0x00040001",
     "source": "volume3d/solver.cpp",
     "compiled_payload_manifest": "volume3d/solver.v3.manifest.json",
     "compiled_payload_sha256": "573eea6bccc8ef38ab828ccfa57d7d91861e5ac04254ca5aea523c3438bb55c0",
-    "status": "PENDING_BRANCH_CI",
+    "status": "PASS",
+    "ci": {"status":"PASS","head_sha":"7fee49a5bbddd7087f0e5187898e41c67849bc1a","codehood_run_id":31848627662,"foundation_run_id":31848627845,"physical_creature_run_id":31848627238,"pages_workflow_run_id":31848628037,"pages_native_run_id":31848621159,"stable_lab_isolation":"PASS","exact_wasm_rebuild":"PASS","pages_deploy":"PASS"},
     "tests": ["fresh native C++ projection fixture passes","water voxel count conserved","sand mass conserved through erosion/deposition","explicit impulse produces signed native momentum and kinetic energy","pressure projection does not increase measured divergence","reference fixture reduced divergence from 16457 to 12340","gravity produces downward native momentum","fixed-seed plus fixed-impulse replay includes velocity/pressure state","exact browser payload hash equals fresh compiler output","material invariant forbids motion/pressure on non-water cells"]
   },
   "native_volume_renderer": {"verification_level":"CI_PASS","truth":"WebGPU ray marching is presentation over native 3D state; time-driven fake water-normal animation is forbidden; water normals derive from native water-density gradients and turbidity derives from native suspended sediment, never pressure."},
   "scratch_engine": {"status":"PRESERVED_NOT_LOADED_BY_ACTIVE_ROUTE","verification_level":"CI_PASS"},
   "legacy_ecosystem_stack": {"status":"ARCHIVED_NOT_LOADED_BY_ACTIVE_ROUTE"},
   "physical_creature_v1": {"status":"PRESERVED_PROOF_SLICE","verification_level":"CI_PASS","route":"/genesis-codehood/physical-creature-v1/"},
-  "active_objective": "Promote the native divergence-reducing pressure-projection fluid kernel only after Codehood and Foundation independently rebuild the C++ source and prove the browser payload hash and semantics match the fresh compiler output.",
-  "next_gate": "Branch Codehood and Foundation must both pass the v3 manifest/hash, native conservation, divergence-reduction, renderer-truth and fail-closed audit checks; main Stable-vs-Lab and Pages deployment must pass after merge.",
-  "next_scientific_blocker": "After pressure projection is promoted, add native 3D articulated-body dynamics with mass, joint constraints, material contact/friction and strain before reintroducing active creatures into the volumetric world.",
+  "active_objective": "Build a native 3D articulated-body mechanics slice with mass, gravity, compliant joint constraints, world contact/friction and strain/yield telemetry before any active creature is reintroduced into the volumetric world.",
+  "next_gate": "The body-physics candidate must pass deterministic native C++ tests for gravity, constraint error, momentum transfer, contact non-penetration, Coulomb friction bounds, strain/yield behavior and fixed-seed replay before it may be compiled to WASM or coupled to the active renderer.",
+  "next_scientific_blocker": "Native 3D articulated-body dynamics with actual mass, joint constraints, material contact/friction and strain; current active native route has no articulated organism body yet.",
   "invariants": ["IMPLEMENTATION > NAME","C++/WASM owns active material/fluid state","exact browser WASM must match fresh compiler SHA-256","WebGPU simulation-looking motion must derive from native state","pressure must never masquerade as sediment/turbidity","do not call this validated CFD","no external game/physics/render/simulation libraries","Stable vs Lab isolation remains fail-closed","CI_PASS does not imply LIVE_TESTED or DEVICE_TESTED"],
   "updated": "2026-08-14"
 }
