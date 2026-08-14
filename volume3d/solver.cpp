@@ -7,66 +7,108 @@
 #define EXPORT(name)
 #endif
 
-extern "C" void* memset(void* dst,int value,size_t n){
-  unsigned char* p=(unsigned char*)dst;for(size_t i=0;i<n;i++)p[i]=(unsigned char)value;return dst;
-}
-extern "C" void* memcpy(void* dst,const void* src,size_t n){
-  unsigned char* d=(unsigned char*)dst;const unsigned char* s=(const unsigned char*)src;for(size_t i=0;i<n;i++)d[i]=s[i];return dst;
-}
+extern "C" void* memset(void* dst,int value,size_t n){unsigned char* p=(unsigned char*)dst;for(size_t i=0;i<n;i++)p[i]=(unsigned char)value;return dst;}
+extern "C" void* memcpy(void* dst,const void* src,size_t n){unsigned char* d=(unsigned char*)dst;const unsigned char* s=(const unsigned char*)src;for(size_t i=0;i<n;i++)d[i]=s[i];return dst;}
 
 namespace {
-constexpr int MAX_W=64, MAX_H=40, MAX_D=64;
-constexpr int MAX_CELLS=MAX_W*MAX_H*MAX_D;
-enum Material : uint8_t { EMPTY=0, SAND=1, WATER=2, ROCK=3 };
+constexpr int MAX_W=64,MAX_H=40,MAX_D=64,MAX_CELLS=MAX_W*MAX_H*MAX_D;
+constexpr int VEL_ONE=256,GRAVITY_Q8=30,MAX_VEL_Q8=1536,PRESSURE_ITERS=10;
+enum Material:uint8_t{EMPTY=0,SAND=1,WATER=2,ROCK=3};
 static uint8_t state[MAX_CELLS*3];
 static uint32_t packed[MAX_CELLS];
+static int16_t velX[MAX_CELLS],velY[MAX_CELLS],velZ[MAX_CELLS];
+static int16_t pressureField[MAX_CELLS],divField[MAX_CELLS];
+static uint8_t movedWater[MAX_CELLS];
 static int W=40,H=28,D=40,N=W*H*D;
 static uint32_t rngState=0x3d5a17u;
 static int cohesion=70;
-static uint32_t stepIndex=0, sandMoves=0, waterMoves=0, erosionEvents=0, depositionEvents=0;
+static uint32_t stepIndex=0,sandMoves=0,waterMoves=0,erosionEvents=0,depositionEvents=0;
+static uint32_t divergenceBefore=0,divergenceAfter=0,kineticEnergy=0;
+static int32_t momentumX=0,momentumY=0,momentumZ=0;
 
-inline int idx(int x,int y,int z){ return (y*D+z)*W+x; }
-inline bool inside(int x,int y,int z){ return x>=0&&x<W&&y>=0&&y<H&&z>=0&&z<D; }
-inline uint8_t& mat(int i){ return state[i*3]; }
-inline uint8_t& moist(int i){ return state[i*3+1]; }
-inline uint8_t& sediment(int i){ return state[i*3+2]; }
-inline uint32_t rnd(){ uint32_t x=rngState; x^=x<<13; x^=x>>17; x^=x<<5; rngState=x?x:0x9e3779b9u; return rngState; }
-inline int clampi(int v,int a,int b){ return v<a?a:(v>b?b:v); }
+inline int idx(int x,int y,int z){return(y*D+z)*W+x;}
+inline bool inside(int x,int y,int z){return x>=0&&x<W&&y>=0&&y<H&&z>=0&&z<D;}
+inline uint8_t& mat(int i){return state[i*3];}
+inline uint8_t& moist(int i){return state[i*3+1];}
+inline uint8_t& sediment(int i){return state[i*3+2];}
+inline int absi(int v){return v<0?-v:v;}
+inline int clampi(int v,int a,int b){return v<a?a:(v>b?b:v);}
+inline int16_t clampv(int v){return(int16_t)clampi(v,-MAX_VEL_Q8,MAX_VEL_Q8);}
+inline uint32_t rnd(){uint32_t x=rngState;x^=x<<13;x^=x>>17;x^=x<<5;rngState=x?x:0x9e3779b9u;return rngState;}
+inline bool is_solid(int i){uint8_t m=mat(i);return m==SAND||m==ROCK;}
+inline bool is_water_xyz(int x,int y,int z){return inside(x,y,z)&&mat(idx(x,y,z))==WATER;}
+inline int water_vx(int x,int y,int z){return is_water_xyz(x,y,z)?velX[idx(x,y,z)]:0;}
+inline int water_vy(int x,int y,int z){return is_water_xyz(x,y,z)?velY[idx(x,y,z)]:0;}
+inline int water_vz(int x,int y,int z){return is_water_xyz(x,y,z)?velZ[idx(x,y,z)]:0;}
+inline int water_p(int x,int y,int z){return is_water_xyz(x,y,z)?pressureField[idx(x,y,z)]:0;}
 
-void clear_all(){
-  for(int i=0;i<MAX_CELLS*3;i++) state[i]=0;
-  for(int i=0;i<MAX_CELLS;i++) packed[i]=0;
-  stepIndex=sandMoves=waterMoves=erosionEvents=depositionEvents=0;
-}
-void swap_cells(int a,int b){for(int k=0;k<3;k++){uint8_t t=state[a*3+k];state[a*3+k]=state[b*3+k];state[b*3+k]=t;}}
-bool has_water_neighbor(int x,int y,int z){
-  static const int dirs[6][3]={{1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1}};
-  for(auto &d:dirs){int nx=x+d[0],ny=y+d[1],nz=z+d[2];if(inside(nx,ny,nz)&&mat(idx(nx,ny,nz))==WATER)return true;}return false;
-}
+void clear_motion_cell(int i){velX[i]=velY[i]=velZ[i]=pressureField[i]=divField[i]=0;movedWater[i]=0;}
+void clear_all(){for(int i=0;i<MAX_CELLS*3;i++)state[i]=0;for(int i=0;i<MAX_CELLS;i++){packed[i]=0;clear_motion_cell(i);}stepIndex=sandMoves=waterMoves=erosionEvents=depositionEvents=0;divergenceBefore=divergenceAfter=kineticEnergy=0;momentumX=momentumY=momentumZ=0;}
+void swap_cells(int a,int b){for(int k=0;k<3;k++){uint8_t t=state[a*3+k];state[a*3+k]=state[b*3+k];state[b*3+k]=t;}int16_t t;t=velX[a];velX[a]=velX[b];velX[b]=t;t=velY[a];velY[a]=velY[b];velY[b]=t;t=velZ[a];velZ[a]=velZ[b];velZ[b]=t;t=pressureField[a];pressureField[a]=pressureField[b];pressureField[b]=t;if(mat(a)!=WATER){velX[a]=velY[a]=velZ[a]=pressureField[a]=0;}if(mat(b)!=WATER){velX[b]=velY[b]=velZ[b]=pressureField[b]=0;}}
+void move_water(int a,int b){state[b*3]=WATER;state[b*3+1]=0;state[b*3+2]=sediment(a);velX[b]=velX[a];velY[b]=velY[a];velZ[b]=velZ[a];pressureField[b]=pressureField[a];state[a*3]=EMPTY;state[a*3+1]=state[a*3+2]=0;velX[a]=velY[a]=velZ[a]=pressureField[a]=divField[a]=0;movedWater[b]=1;}
+
+bool has_water_neighbor(int x,int y,int z){static const int dirs[6][3]={{1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1}};for(auto&d:dirs){int nx=x+d[0],ny=y+d[1],nz=z+d[2];if(inside(nx,ny,nz)&&mat(idx(nx,ny,nz))==WATER)return true;}return false;}
 void wetting(){for(int y=1;y<H;y++)for(int z=0;z<D;z++)for(int x=0;x<W;x++){int i=idx(x,y,z);if(mat(i)!=SAND)continue;if(has_water_neighbor(x,y,z))moist(i)=255;else if(moist(i)>0)moist(i)=(uint8_t)(moist(i)-1);}}
-void step_sand(){
-  sandMoves=0;const int diag[8][2]={{1,0},{-1,0},{0,1},{0,-1},{1,1},{1,-1},{-1,1},{-1,-1}};bool rev=(stepIndex&1)!=0;
-  for(int y=1;y<H;y++)for(int zz=0;zz<D;zz++){int z=rev?(D-1-zz):zz;for(int xx=0;xx<W;xx++){int x=rev?(W-1-xx):xx;int i=idx(x,y,z);if(mat(i)!=SAND)continue;int below=idx(x,y-1,z);if(mat(below)==EMPTY){swap_cells(i,below);sandMoves++;continue;}if(mat(below)==WATER){swap_cells(i,below);moist(below)=255;sandMoves++;continue;}int wet=moist(i);int moveChance=100-(wet*cohesion)/255;if(moveChance<8)moveChance=8;if((int)(rnd()%100)>=moveChance)continue;int start=(int)(rnd()%8);for(int k=0;k<8;k++){int q=(start+k)&7,nx=x+diag[q][0],nz=z+diag[q][1];if(!inside(nx,y-1,nz))continue;int j=idx(nx,y-1,nz);if(mat(j)==EMPTY){swap_cells(i,j);sandMoves++;break;}if(mat(j)==WATER){swap_cells(i,j);moist(j)=255;sandMoves++;break;}}}}
+void step_sand(){sandMoves=0;const int diag[8][2]={{1,0},{-1,0},{0,1},{0,-1},{1,1},{1,-1},{-1,1},{-1,-1}};bool rev=(stepIndex&1)!=0;for(int y=1;y<H;y++)for(int zz=0;zz<D;zz++){int z=rev?(D-1-zz):zz;for(int xx=0;xx<W;xx++){int x=rev?(W-1-xx):xx;int i=idx(x,y,z);if(mat(i)!=SAND)continue;int below=idx(x,y-1,z);if(mat(below)==EMPTY){swap_cells(i,below);sandMoves++;continue;}if(mat(below)==WATER){swap_cells(i,below);moist(below)=255;sandMoves++;continue;}int wet=moist(i);int moveChance=100-(wet*cohesion)/255;if(moveChance<8)moveChance=8;if((int)(rnd()%100)>=moveChance)continue;int start=(int)(rnd()%8);for(int k=0;k<8;k++){int q=(start+k)&7,nx=x+diag[q][0],nz=z+diag[q][1];if(!inside(nx,y-1,nz))continue;int j=idx(nx,y-1,nz);if(mat(j)==EMPTY){swap_cells(i,j);sandMoves++;break;}if(mat(j)==WATER){swap_cells(i,j);moist(j)=255;sandMoves++;break;}}}}}
+
+void apply_fluid_forces(){
+  for(int i=0;i<N;i++)if(mat(i)!=WATER)clear_motion_cell(i);
+  for(int y=0;y<H;y++)for(int z=0;z<D;z++)for(int x=0;x<W;x++){int i=idx(x,y,z);if(mat(i)!=WATER)continue;velY[i]=clampv((velY[i]*251)/256-GRAVITY_Q8);velX[i]=clampv((velX[i]*253)/256);velZ[i]=clampv((velZ[i]*253)/256);}
 }
-void step_water(){
-  waterMoves=0;const int dirs[8][2]={{1,0},{-1,0},{0,1},{0,-1},{1,1},{1,-1},{-1,1},{-1,-1}};bool rev=(stepIndex&1)==0;
-  for(int y=1;y<H;y++)for(int zz=0;zz<D;zz++){int z=rev?(D-1-zz):zz;for(int xx=0;xx<W;xx++){int x=rev?(W-1-xx):xx;int i=idx(x,y,z);if(mat(i)!=WATER)continue;int below=idx(x,y-1,z);if(mat(below)==EMPTY){swap_cells(i,below);waterMoves++;continue;}int start=(int)(rnd()%8);bool moved=false;for(int k=0;k<8;k++){int q=(start+k)&7,nx=x+dirs[q][0],nz=z+dirs[q][1];if(!inside(nx,y,nz))continue;int down=idx(nx,y-1,nz);if(mat(down)==EMPTY){swap_cells(i,down);waterMoves++;moved=true;break;}}if(moved)continue;for(int k=0;k<8;k++){int q=(start+k)&7,nx=x+dirs[q][0],nz=z+dirs[q][1];if(!inside(nx,y,nz))continue;int j=idx(nx,y,nz);if(mat(j)==EMPTY){swap_cells(i,j);waterMoves++;break;}}}}
+uint32_t compute_divergence(){uint32_t sum=0;for(int y=0;y<H;y++)for(int z=0;z<D;z++)for(int x=0;x<W;x++){int i=idx(x,y,z);if(mat(i)!=WATER){divField[i]=0;continue;}int div=(water_vx(x+1,y,z)-water_vx(x-1,y,z)+water_vy(x,y+1,z)-water_vy(x,y-1,z)+water_vz(x,y,z+1)-water_vz(x,y,z-1))/2;div=clampi(div,-4096,4096);divField[i]=(int16_t)div;sum+=(uint32_t)absi(div);}return sum;}
+void solve_pressure(){for(int i=0;i<N;i++)pressureField[i]=0;for(int it=0;it<PRESSURE_ITERS;it++){bool rev=(it&1)!=0;for(int yy=0;yy<H;yy++){int y=rev?(H-1-yy):yy;for(int zz=0;zz<D;zz++){int z=rev?(D-1-zz):zz;for(int xx=0;xx<W;xx++){int x=rev?(W-1-xx):xx,i=idx(x,y,z);if(mat(i)!=WATER)continue;int sum=0,c=0;if(is_water_xyz(x+1,y,z)){sum+=water_p(x+1,y,z);c++;}if(is_water_xyz(x-1,y,z)){sum+=water_p(x-1,y,z);c++;}if(is_water_xyz(x,y+1,z)){sum+=water_p(x,y+1,z);c++;}if(is_water_xyz(x,y-1,z)){sum+=water_p(x,y-1,z);c++;}if(is_water_xyz(x,y,z+1)){sum+=water_p(x,y,z+1);c++;}if(is_water_xyz(x,y,z-1)){sum+=water_p(x,y,z-1);c++;}pressureField[i]=(int16_t)(c?clampi((sum-divField[i])/c,-4096,4096):0);}}}}
 }
+void project_velocity(){for(int y=0;y<H;y++)for(int z=0;z<D;z++)for(int x=0;x<W;x++){int i=idx(x,y,z);if(mat(i)!=WATER)continue;int gx=(water_p(x+1,y,z)-water_p(x-1,y,z))/2,gy=(water_p(x,y+1,z)-water_p(x,y-1,z))/2,gz=(water_p(x,y,z+1)-water_p(x,y,z-1))/2;velX[i]=clampv(velX[i]-gx/2);velY[i]=clampv(velY[i]-gy/2);velZ[i]=clampv(velZ[i]-gz/2);if((!inside(x+1,y,z)||is_solid(idx(x+1,y,z)))&&velX[i]>0)velX[i]=0;if((!inside(x-1,y,z)||is_solid(idx(x-1,y,z)))&&velX[i]<0)velX[i]=0;if((!inside(x,y+1,z)||is_solid(idx(x,y+1,z)))&&velY[i]>0)velY[i]=0;if((!inside(x,y-1,z)||is_solid(idx(x,y-1,z)))&&velY[i]<0)velY[i]=0;if((!inside(x,y,z+1)||is_solid(idx(x,y,z+1)))&&velZ[i]>0)velZ[i]=0;if((!inside(x,y,z-1)||is_solid(idx(x,y,z-1)))&&velZ[i]<0)velZ[i]=0;}}
+void update_fluid_metrics(){uint64_t ke=0;int64_t mx=0,my=0,mz=0;for(int i=0;i<N;i++)if(mat(i)==WATER){int32_t x=velX[i],y=velY[i],z=velZ[i];ke+=(uint64_t)(x*x+y*y+z*z);mx+=x;my+=y;mz+=z;}ke/=1024u;kineticEnergy=ke>0xffffffffull?0xffffffffu:(uint32_t)ke;momentumX=(int32_t)mx;momentumY=(int32_t)my;momentumZ=(int32_t)mz;}
+int best_motion_axis(int i,int x,int y,int z,int&tx,int&ty,int&tz){
+  int vx=velX[i],vy=velY[i],vz=velZ[i];int score[6]={vx>0?vx:0,vx<0?-vx:0,vy>0?vy:0,vy<0?-vy:0,vz>0?vz:0,vz<0?-vz:0};
+  const int dx[6]={1,-1,0,0,0,0},dy[6]={0,0,1,-1,0,0},dz[6]={0,0,0,0,1,-1};
+  score[3]+=40;for(int pass=0;pass<6;pass++){int best=-1,bv=-1;for(int k=0;k<6;k++)if(score[k]>bv){bv=score[k];best=k;}if(best<0||bv<72)return 0;score[best]=-1;int nx=x+dx[best],ny=y+dy[best],nz=z+dz[best];if(!inside(nx,ny,nz))continue;int j=idx(nx,ny,nz);if(mat(j)==EMPTY){tx=nx;ty=ny;tz=nz;return 1;}if(is_solid(j)){if(best==0||best==1)velX[i]=0;else if(best==2||best==3)velY[i]=0;else velZ[i]=0;}}
+  return 0;
+}
+void advect_water(){waterMoves=0;for(int i=0;i<N;i++)movedWater[i]=0;bool rev=(stepIndex&1)!=0;for(int yy=0;yy<H;yy++){int y=yy;for(int zz=0;zz<D;zz++){int z=rev?(D-1-zz):zz;for(int xx=0;xx<W;xx++){int x=rev?(W-1-xx):xx,i=idx(x,y,z);if(mat(i)!=WATER||movedWater[i])continue;int tx=x,ty=y,tz=z;if(!best_motion_axis(i,x,y,z,tx,ty,tz))continue;int j=idx(tx,ty,tz);move_water(i,j);velX[j]=(int16_t)((velX[j]*244)/256);velY[j]=(int16_t)((velY[j]*244)/256);velZ[j]=(int16_t)((velZ[j]*244)/256);waterMoves++;}}}}
+void step_water_momentum(){apply_fluid_forces();divergenceBefore=compute_divergence();solve_pressure();project_velocity();divergenceAfter=compute_divergence();advect_water();update_fluid_metrics();}
+
 void erode_and_deposit(){
   const int dirs[4][2]={{1,0},{-1,0},{0,1},{0,-1}};
-  for(int y=1;y<H-1;y++)for(int z=1;z<D-1;z++)for(int x=1;x<W-1;x++){int i=idx(x,y,z);if(mat(i)!=WATER)continue;if(sediment(i)==0&&(rnd()&31u)==0u){int start=(int)(rnd()%4);for(int k=0;k<4;k++){int q=(start+k)&3,j=idx(x+dirs[q][0],y,z+dirs[q][1]);if(mat(j)!=SAND||moist(j)>180)continue;int above=idx(x+dirs[q][0],y+1,z+dirs[q][1]);if(mat(above)!=EMPTY)continue;mat(j)=EMPTY;moist(j)=0;sediment(j)=0;sediment(i)=255;erosionEvents++;break;}}if(sediment(i)>=255&&(rnd()&15u)==0u){int below=idx(x,y-1,z);if(mat(below)==EMPTY)continue;int start=(int)(rnd()%4);for(int k=0;k<4;k++){int q=(start+k)&3,nx=x+dirs[q][0],nz=z+dirs[q][1],j=idx(nx,y,nz),jb=idx(nx,y-1,nz);if(mat(j)==EMPTY&&mat(jb)!=EMPTY&&mat(jb)!=WATER){mat(j)=SAND;moist(j)=200;sediment(i)=0;depositionEvents++;break;}}}}
+  for(int y=1;y<H-1;y++)for(int z=1;z<D-1;z++)for(int x=1;x<W-1;x++){
+    int i=idx(x,y,z);if(mat(i)!=WATER)continue;
+    int shear=(absi(velX[i])+absi(velY[i])+absi(velZ[i]))/3;
+    if(sediment(i)==0&&shear>55){
+      int start=(int)(rnd()%4);
+      for(int k=0;k<4;k++){
+        int q=(start+k)&3,nx=x+dirs[q][0],nz=z+dirs[q][1],j=idx(nx,y,nz);
+        if(mat(j)!=SAND)continue;
+        int above=idx(nx,y+1,nz);if(mat(above)!=EMPTY)continue;
+        int strength=52+(moist(j)*cohesion)/255;
+        int excess=shear-strength;if(excess<=0)continue;
+        if((int)(rnd()&255u)>=clampi(excess*3,16,255))continue;
+        mat(j)=EMPTY;moist(j)=0;sediment(j)=0;clear_motion_cell(j);
+        sediment(i)=255;erosionEvents++;break;
+      }
+    }
+    if(sediment(i)>=255&&shear<78&&(rnd()&7u)==0u){
+      int below=idx(x,y-1,z);if(mat(below)==EMPTY)continue;
+      int start=(int)(rnd()%4);
+      for(int k=0;k<4;k++){
+        int q=(start+k)&3,nx=x+dirs[q][0],nz=z+dirs[q][1],j=idx(nx,y,nz),jb=idx(nx,y-1,nz);
+        if(mat(j)==EMPTY&&mat(jb)!=EMPTY&&mat(jb)!=WATER){mat(j)=SAND;moist(j)=200;sediment(i)=0;clear_motion_cell(j);depositionEvents++;break;}
+      }
+    }
+  }
 }
 uint32_t sand_mass_units_internal(){uint32_t s=0;for(int i=0;i<N;i++){if(mat(i)==SAND)s+=255u;s+=sediment(i);}return s;}
 uint32_t water_cells_internal(){uint32_t n=0;for(int i=0;i<N;i++)if(mat(i)==WATER)n++;return n;}
-uint32_t hash_internal(){uint32_t h=2166136261u;for(int i=0;i<N*3;i++){h^=state[i];h*=16777619u;}h^=stepIndex;h*=16777619u;return h;}
+uint32_t hash_internal(){uint32_t h=2166136261u;for(int i=0;i<N*3;i++){h^=state[i];h*=16777619u;}for(int i=0;i<N;i++){if(mat(i)==WATER){uint16_t a=(uint16_t)velX[i],b=(uint16_t)velY[i],c=(uint16_t)velZ[i],p=(uint16_t)pressureField[i];h^=a;h*=16777619u;h^=b;h*=16777619u;h^=c;h*=16777619u;h^=p;h*=16777619u;}}h^=stepIndex;h*=16777619u;return h;}
 }
 
 extern "C" {
 EXPORT("genesis_init") int genesis_init(int w,int h,int d,uint32_t seed,int cohesionPct){W=clampi(w,16,MAX_W);H=clampi(h,16,MAX_H);D=clampi(d,16,MAX_D);N=W*H*D;rngState=seed?seed:0x3d5a17u;cohesion=clampi(cohesionPct,0,100);clear_all();return N;}
 EXPORT("genesis_clear") void genesis_clear(){clear_all();}
 EXPORT("genesis_seed_scene") void genesis_seed_scene(){clear_all();for(int z=0;z<D;z++)for(int x=0;x<W;x++){uint32_t n=(uint32_t)(x*73856093u)^(uint32_t)(z*19349663u)^rngState;int rockH=1+(int)((n>>5)%3u);for(int y=0;y<=rockH&&y<H;y++)mat(idx(x,y,z))=ROCK;int dx=x-W/2,dz=z-D/2;int r2=dx*dx+dz*dz;int pile=12-r2/18;if(pile>0)for(int y=rockH+1;y<=rockH+pile&&y<H;y++){mat(idx(x,y,z))=SAND;moist(idx(x,y,z))=0;}int wx=x-(W*3/4),wz=z-(D/3),basin=wx*wx+wz*wz;if(basin<(W/5)*(W/5))for(int y=rockH+1;y<=rockH+6&&y<H;y++){int i=idx(x,y,z);if(mat(i)==EMPTY)mat(i)=WATER;}}}
-EXPORT("genesis_step") void genesis_step(int iterations){iterations=clampi(iterations,1,8);for(int n=0;n<iterations;n++){wetting();step_sand();step_water();erode_and_deposit();stepIndex++;}}
-EXPORT("genesis_paint") int genesis_paint(int kind,int cx,int cy,int cz,int radius){radius=clampi(radius,1,8);int changed=0;for(int y=cy-radius;y<=cy+radius;y++)for(int z=cz-radius;z<=cz+radius;z++)for(int x=cx-radius;x<=cx+radius;x++){if(!inside(x,y,z))continue;int dx=x-cx,dy=y-cy,dz=z-cz;if(dx*dx+dy*dy+dz*dz>radius*radius)continue;int i=idx(x,y,z);if(kind==4){if(mat(i)!=ROCK){mat(i)=EMPTY;moist(i)=sediment(i)=0;changed++;}continue;}if(mat(i)!=EMPTY)continue;if(kind==1){mat(i)=SAND;moist(i)=0;changed++;}else if(kind==2){mat(i)=WATER;changed++;}else if(kind==3){mat(i)=ROCK;changed++;}else if(kind==5){mat(i)=SAND;moist(i)=255;changed++;}}return changed;}
+EXPORT("genesis_step") void genesis_step(int iterations){iterations=clampi(iterations,1,8);for(int n=0;n<iterations;n++){wetting();step_sand();step_water_momentum();erode_and_deposit();stepIndex++;}}
+EXPORT("genesis_paint") int genesis_paint(int kind,int cx,int cy,int cz,int radius){radius=clampi(radius,1,8);int changed=0;for(int y=cy-radius;y<=cy+radius;y++)for(int z=cz-radius;z<=cz+radius;z++)for(int x=cx-radius;x<=cx+radius;x++){if(!inside(x,y,z))continue;int dx=x-cx,dy=y-cy,dz=z-cz;if(dx*dx+dy*dy+dz*dz>radius*radius)continue;int i=idx(x,y,z);if(kind==4){if(mat(i)!=ROCK){mat(i)=EMPTY;moist(i)=sediment(i)=0;clear_motion_cell(i);changed++;}continue;}if(mat(i)!=EMPTY)continue;if(kind==1){mat(i)=SAND;moist(i)=0;clear_motion_cell(i);changed++;}else if(kind==2){mat(i)=WATER;moist(i)=sediment(i)=0;clear_motion_cell(i);changed++;}else if(kind==3){mat(i)=ROCK;clear_motion_cell(i);changed++;}else if(kind==5){mat(i)=SAND;moist(i)=255;clear_motion_cell(i);changed++;}}return changed;}
+EXPORT("genesis_impulse_water") int genesis_impulse_water(int cx,int cy,int cz,int radius,int ix,int iy,int iz){radius=clampi(radius,1,8);ix=clampi(ix,-1024,1024);iy=clampi(iy,-1024,1024);iz=clampi(iz,-1024,1024);int changed=0;for(int y=cy-radius;y<=cy+radius;y++)for(int z=cz-radius;z<=cz+radius;z++)for(int x=cx-radius;x<=cx+radius;x++){if(!inside(x,y,z))continue;int dx=x-cx,dy=y-cy,dz=z-cz;if(dx*dx+dy*dy+dz*dz>radius*radius)continue;int i=idx(x,y,z);if(mat(i)!=WATER)continue;velX[i]=clampv(velX[i]+ix);velY[i]=clampv(velY[i]+iy);velZ[i]=clampv(velZ[i]+iz);changed++;}update_fluid_metrics();return changed;}
 EXPORT("genesis_pack") uint32_t* genesis_pack(){for(int i=0;i<N;i++)packed[i]=(uint32_t)mat(i)|((uint32_t)moist(i)<<8)|((uint32_t)sediment(i)<<16);return packed;}
 EXPORT("genesis_state_ptr") uint8_t* genesis_state_ptr(){return state;}
 EXPORT("genesis_state_bytes") int genesis_state_bytes(){return N*3;}
@@ -82,6 +124,12 @@ EXPORT("genesis_sand_moves") uint32_t genesis_sand_moves(){return sandMoves;}
 EXPORT("genesis_water_moves") uint32_t genesis_water_moves(){return waterMoves;}
 EXPORT("genesis_erosion_events") uint32_t genesis_erosion_events(){return erosionEvents;}
 EXPORT("genesis_deposition_events") uint32_t genesis_deposition_events(){return depositionEvents;}
-EXPORT("genesis_invariant") int genesis_invariant(){for(int i=0;i<N;i++){uint8_t m=mat(i);if(m>ROCK)return 0;if(m!=WATER&&sediment(i)!=0)return 0;if(m!=SAND&&moist(i)!=0)return 0;}return 1;}
-EXPORT("genesis_model_version") uint32_t genesis_model_version(){return 0x00030001u;}
+EXPORT("genesis_fluid_divergence_before") uint32_t genesis_fluid_divergence_before(){return divergenceBefore;}
+EXPORT("genesis_fluid_divergence_after") uint32_t genesis_fluid_divergence_after(){return divergenceAfter;}
+EXPORT("genesis_fluid_kinetic_energy") uint32_t genesis_fluid_kinetic_energy(){return kineticEnergy;}
+EXPORT("genesis_fluid_momentum_x") int32_t genesis_fluid_momentum_x(){return momentumX;}
+EXPORT("genesis_fluid_momentum_y") int32_t genesis_fluid_momentum_y(){return momentumY;}
+EXPORT("genesis_fluid_momentum_z") int32_t genesis_fluid_momentum_z(){return momentumZ;}
+EXPORT("genesis_invariant") int genesis_invariant(){for(int i=0;i<N;i++){uint8_t m=mat(i);if(m>ROCK)return 0;if(m!=WATER&&(sediment(i)!=0||velX[i]!=0||velY[i]!=0||velZ[i]!=0||pressureField[i]!=0))return 0;if(m!=SAND&&moist(i)!=0)return 0;if(absi(velX[i])>MAX_VEL_Q8||absi(velY[i])>MAX_VEL_Q8||absi(velZ[i])>MAX_VEL_Q8)return 0;}return 1;}
+EXPORT("genesis_model_version") uint32_t genesis_model_version(){return 0x00040001u;}
 }
