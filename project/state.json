@@ -6,55 +6,19 @@
   "phase": "scratch-deep-world-nav-capability-fix",
   "status": "IN_PROGRESS",
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
-  "stable": {
-    "label": "deep-world-standalone-ci-pass-active-integration-tested",
-    "verified": false,
-    "note": "Standalone deep-world evidence remains CI_PASS. Active navigation integration changed and is TESTED pending fresh proof."
-  },
+  "stable": {"label":"deep-world-standalone-ci-pass-active-integration-tested","verified":false,"note":"Standalone deep-world evidence remains CI_PASS. Active navigation integration changed and is TESTED pending fresh proof."},
   "active_experience": {
     "route": "/genesis-codehood/",
     "verification_level": "IMPLEMENTED",
     "stack": ["scratch/main.js","scratch/environment-worker.js","scratch/deep-world.js","scratch/deep-bind.js","scratch/deep-nav.js","scratch/deep-render.js","scratch/alife.js","scratch/navigation.js","scratch/sim-core.js","scratch/environment.js","scratch/organic-render.js"],
     "runtime": "vanilla JavaScript modules + Worker + transferred OffscreenCanvas; no third-party runtime libraries",
-    "simulation_changes": [
-      "persistent chunked 2D material-volume state remains active for geology, caves, underground water, atmosphere, support, moisture and nutrients",
-      "default cave/terrain/liquid rendering hides simulation cells behind extracted smoothed contours",
-      "surface crawlers use persistent terrain-aware routes with slope, water-depth and instability costs",
-      "steering direction and locomotion speed are low-pass filtered rather than snapping every tick",
-      "deep A* routing is capability-gated: only bodies explicitly marked locomotionMode=volume may receive cave-cell routes",
-      "current crawlers remain surface locomotors and cannot be assigned arbitrary cave routes",
-      "render pose smoothing is presentation-only and never writes back into physics state"
-    ],
-    "approximations": [
-      "current crawler motor is surface-bound and cannot execute arbitrary vertical cave traversal",
-      "deep A* is retained for future compatible climbing/swimming/volume bodies",
-      "surface route planning is a side-view corridor planner rather than a general 2D navmesh",
-      "deep liquid transport remains a cellular conservative approximation rather than CFD",
-      "smooth contour rendering does not increase simulation resolution",
-      "ALife drive arbitration is authored and is not learning"
-    ],
+    "simulation_changes": ["persistent deep-world material state remains active","cave/terrain/liquid cells render through extracted smoothed contours instead of visible blocks","surface crawlers use persistent terrain-aware routes with smoothed steering and speed","deep A* is capability-gated and current crawlers remain surface locomotors","render pose smoothing is presentation-only"],
+    "approximations": ["current crawler motor cannot execute arbitrary vertical cave traversal","surface route planning is a side-view corridor planner rather than a general 2D navmesh","deep liquid transport is not CFD","smooth contour rendering does not increase simulation resolution","ALife drive arbitration is authored and not learning"],
     "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_NAV_CAPABILITY_FIX","iphone_safari":"NOT_TESTED_AFTER_NAV_CAPABILITY_FIX"}
   },
-  "scratch_engine": {
-    "verification_level": "TESTED",
-    "source": ["genesis-codehood/scratch/sim-core.js","genesis-codehood/scratch/alife.js","genesis-codehood/scratch/navigation.js","genesis-codehood/scratch/deep-world.js","genesis-codehood/scratch/deep-bind.js","genesis-codehood/scratch/deep-nav.js","genesis-codehood/scratch/deep-render.js","genesis-codehood/scratch/environment.js","genesis-codehood/scratch/organic-render.js","genesis-codehood/scratch/environment-worker.js","genesis-codehood/scratch/main.js"],
-    "tests": ["genesis-codehood/tests/scratch_sim.test.mjs","genesis-codehood/tests/scratch_alife.test.mjs","genesis-codehood/tests/scratch_environment.test.mjs","genesis-codehood/tests/scratch_navigation.test.mjs","genesis-codehood/tests/scratch_render.test.mjs","genesis-codehood/tests/deep_world.test.mjs"],
-    "prior_ci": {"status":"SUPERSEDED_FOR_ACTIVE_INTEGRATION","proof_pull_request":106,"codehood_run_id":31816167495,"foundation_run_id":31816167365},
-    "fresh_ci": "PENDING",
-    "live_browser": "NOT_TESTED",
-    "iphone_safari": "NOT_TESTED"
-  },
-  "deep_world": {
-    "verification_level": "CI_PASS",
-    "source": ["genesis-codehood/scratch/deep-world.js","genesis-codehood/scratch/deep-bind.js","genesis-codehood/scratch/deep-nav.js","genesis-codehood/scratch/deep-render.js"],
-    "tests": "genesis-codehood/tests/deep_world.test.mjs",
-    "ci": {"status":"PASS","proof_pull_request":106,"codehood_run_id":31816167495,"codehood_job_id":94818255947,"foundation_run_id":31816167365,"foundation_job_id":94818255473}
-  },
-  "scratch_navigation": {
-    "verification_level": "TESTED",
-    "truth": "surface crawlers use surface routes; deep A* requires an explicitly compatible volume locomotion body",
-    "fresh_ci": "PENDING"
-  },
+  "scratch_engine": {"verification_level":"TESTED","prior_ci":{"status":"SUPERSEDED_FOR_ACTIVE_INTEGRATION","proof_pull_request":106,"codehood_run_id":31816167495,"foundation_run_id":31816167365},"fresh_ci":"PENDING","live_browser":"NOT_TESTED","iphone_safari":"NOT_TESTED"},
+  "deep_world": {"verification_level":"CI_PASS","ci":{"status":"PASS","proof_pull_request":106,"codehood_run_id":31816167495,"codehood_job_id":94818255947,"foundation_run_id":31816167365,"foundation_job_id":94818255473}},
+  "scratch_navigation": {"verification_level":"TESTED","truth":"surface crawlers use surface routes; deep A* requires an explicitly compatible volume locomotion body","current_crawler_mode":"surface","fresh_ci":"PENDING"},
   "scratch_alife": {"verification_level":"TESTED","note":"ALife navigation integration changed and needs fresh regression CI."},
   "scratch_environment": {"verification_level":"CI_PASS","note":"Standalone environment subsystem evidence remains valid."},
   "legacy_ecosystem_stack": {"status":"ARCHIVED_NOT_LOADED_BY_ACTIVE_ROUTE"},
