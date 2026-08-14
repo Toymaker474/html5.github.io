@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#050908">
+<title>GENESIS — World Weather</title>
+<style>
+:root{color-scheme:dark;--bg:#050908;--panel:#0a1210;--line:#23362f;--text:#eaf3ee;--muted:#8ca39a;--mint:#8fe0b0;--amber:#edbd6a;--bad:#ff6b5d}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;-webkit-tap-highlight-color:transparent}body{padding:max(10px,env(safe-area-inset-top)) 10px max(14px,env(safe-area-inset-bottom));background:radial-gradient(90% 65% at 50% 0,#10241c 0,#07100d 43%,#050908 100%)}main{width:min(1120px,100%);margin:auto;display:grid;gap:10px}.top{display:flex;gap:10px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;padding:4px 2px}.eyebrow{color:var(--mint);font-size:10px;letter-spacing:.18em}.top h1{font:800 clamp(24px,7vw,42px)/1 system-ui,sans-serif;letter-spacing:-.045em;margin:5px 0}.truth{max-width:700px;color:var(--muted);font:12px/1.45 system-ui,sans-serif}.badge{border:1px solid var(--line);border-radius:999px;padding:7px 10px;color:var(--amber);font-size:10px;white-space:nowrap}.badge.ok{color:var(--mint);border-color:#315d49}.badge.bad{color:var(--bad);border-color:#6a352f}.viewport{position:relative;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#020504;aspect-ratio:3/2;box-shadow:0 18px 70px rgba(0,0,0,.35)}#world{display:block;width:100%;height:100%;touch-action:manipulation}.overlay{position:absolute;left:8px;right:8px;bottom:8px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}.pill{background:rgba(4,9,8,.78);backdrop-filter:blur(8px);border:1px solid rgba(143,224,176,.18);border-radius:999px;padding:6px 9px;color:#cfe0d7;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}.stat{border:1px solid var(--line);border-radius:13px;background:var(--panel);padding:9px 10px;min-width:0}.stat span{display:block;color:var(--muted);font-size:8px;letter-spacing:.12em;white-space:nowrap}.stat b{display:block;margin-top:3px;font:700 clamp(14px,4vw,20px)/1.1 system-ui,sans-serif;overflow:hidden;text-overflow:ellipsis}.controls{display:grid;grid-template-columns:1.2fr 1fr;gap:8px}.box{border:1px solid var(--line);border-radius:15px;background:var(--panel);padding:10px}.label{color:var(--muted);font-size:9px;letter-spacing:.12em;margin-bottom:7px}.buttons{display:flex;gap:6px;flex-wrap:wrap}button,select{appearance:none;border:1px solid #315044;border-radius:10px;background:#0d1a16;color:#dceae2;font:700 10px ui-monospace,monospace;padding:10px 11px;min-height:38px}button:active{transform:translateY(1px)}button.on{background:#183629;border-color:#6fc493;color:#dff8e8}select{padding-right:30px}.speed{display:flex;align-items:center;gap:7px}.speed select{flex:1}.speed b{min-width:30px;text-align:right;color:var(--mint)}.legend{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:9px;padding:2px}.legend i{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:-1px}.l-river{background:#1192c2}.l-cloud{background:#dbe6e8}.l-rain{background:#537d9b}.l-tornado{background:#ff8a3e}.footer{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;border-top:1px solid #17231f;padding:8px 2px 0;color:var(--muted);font:10px/1.45 system-ui,sans-serif}.footer a{color:#b8d8c7;text-decoration:none}@media(max-width:720px){.stats{grid-template-columns:repeat(3,1fr)}.controls{grid-template-columns:1fr}.viewport{border-radius:14px}.overlay{left:5px;right:5px;bottom:5px}.pill:last-child{display:none}}@media(max-width:390px){.stat{padding:8px}.buttons button{flex:1 1 42%}}
+</style>
+</head>
+<body>
+<main>
+  <section class="top">
+    <div><div class="eyebrow">GENESIS · WORLD ATMOSPHERE / HYDROLOGY</div><h1>Weather is world state.</h1><div class="truth">Native C++ → verified WASM. The simulation grid is <b>192×128</b> = <b>24,576</b> atmosphere/hydrology cells. Clouds condense from humidity, rain feeds runoff, runoff concentrates into rivers, and tornado cells exist only while the resolved pressure/rotation/moisture conditions support them.</div></div>
+    <div id="boot" class="badge">BOOTING NATIVE MODEL…</div>
+  </section>
+
+  <section class="viewport" aria-label="GENESIS simulated weather and hydrology world map">
+    <canvas id="world" width="768" height="512"></canvas>
+    <div class="overlay"><div id="scenario" class="pill">INITIALIZING WORLD…</div><div class="pill">SIM 192×128 · VISUAL INTERPOLATION ONLY</div></div>
+  </section>
+
+  <section class="stats" aria-label="Native simulation telemetry">
+    <div class="stat"><span>STEPS</span><b id="steps">0</b></div>
+    <div class="stat"><span>CLOUD CELLS</span><b id="clouds">0</b></div>
+    <div class="stat"><span>RAIN CELLS</span><b id="rain">0</b></div>
+    <div class="stat"><span>RIVER CELLS</span><b id="rivers">0</b></div>
+    <div class="stat"><span>TORNADO CELLS</span><b id="tornadoes">0</b></div>
+    <div class="stat"><span>PEAK DISCHARGE</span><b id="discharge">0</b></div>
+  </section>
+
+  <section class="controls">
+    <div class="box"><div class="label">WORLD INITIAL CONDITIONS</div><div class="buttons"><button id="storm" type="button">SUPERCELL + BASIN</button><button id="river" type="button">RIVER BASIN</button><button id="natural" type="button">NATURAL TERRAIN</button><button id="play" type="button">PAUSE</button><button id="step" type="button">+1 STEP</button></div></div>
+    <div class="box"><div class="label">OBSERVATION</div><div class="buttons" style="margin-bottom:8px"><button class="on" data-layer="composite" type="button">COMPOSITE</button><button data-layer="atmosphere" type="button">ATMOSPHERE</button><button data-layer="hydrology" type="button">HYDROLOGY</button></div><div class="speed"><label for="speed">SIM RATE</label><select id="speed"><option value="1">1 step / beat</option><option value="2">2 steps / beat</option><option value="4">4 steps / beat</option></select><b id="speedLabel">1×</b></div></div>
+  </section>
+
+  <div class="legend"><span><i class="l-river"></i>high discharge / river</span><span><i class="l-cloud"></i>cloud condensate</span><span><i class="l-rain"></i>rain</span><span><i class="l-tornado"></i>native tornado diagnostic</span></div>
+  <footer class="footer"><span>Compiler payload SHA-256: <b id="sha">verifying…</b> · fail-closed boot · zero external simulation libraries.</span><span><a href="../">GENESIS home</a> · <a href="../genesis-codehood/">3D material world</a></span></footer>
+</main>
+<script type="module" src="./weather-view.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "model": "genesis-world-weather-v1",
+  "model_version": "0x00010001",
+  "source": "world-weather/weather.cpp",
+  "runtime": "world-weather/wasm_runtime.cpp",
+  "compiled_bytes": 10669,
+  "sha256": "d95d030df7ca6594d1d8641c483fec234d185d5ad7de6ef0ded56207b627929c",
+  "imports": 0,
+  "resolution": [192, 128],
+  "cells": 24576,
+  "compiler_proof_run": 31851046043,
+  "artifact_id": 9237516490,
+  "truth": "Exact freestanding C++ -> WebAssembly bytes preserved from the successful CI artifact. Browser must verify SHA-256 before instantiation."
+}
