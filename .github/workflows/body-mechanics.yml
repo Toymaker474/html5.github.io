@@ -10,27 +10,52 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Compile and execute native mechanics tests
+      - name: Verify one authoritative body implementation
         run: |
           set -euo pipefail
+          test -f native-body/body.cpp
+          test -f native-body/body_test.cpp
+          test -f native-body/body_wasm.test.mjs
+          test -f native-body/wasm_runtime.cpp
+          test -f native-body/MODEL.md
           test -f volume3d/body.cpp
           test -f volume3d/body_test.cpp
-          clang++ -std=c++17 -O2 -Wall -Wextra -pedantic volume3d/body_test.cpp -o /tmp/genesis-body-test
-          /tmp/genesis-body-test | tee body-mechanics-test.txt
-          grep -q 'PASS GENESIS native 3D articulated body mechanics tests' body-mechanics-test.txt
-      - name: Verify clean-room mechanics contract
+          grep -q 'native-body/body.cpp' volume3d/body.cpp
+          grep -q 'native-body/body_test.cpp' volume3d/body_test.cpp
+          test "$(grep -c '^#include' volume3d/body.cpp)" -eq 1
+          test "$(grep -c '^#include' volume3d/body_test.cpp)" -eq 1
+          ! grep -R -E '#include[[:space:]]*[<"](bullet|box2d|jolt|physx|ode|chipmunk|reactphysics3d|glm|eigen)' native-body
+          grep -q 'Q16.16' native-body/MODEL.md
+          grep -q 'Coulomb' native-body/MODEL.md
+          grep -q 'not yet coupled' native-body/MODEL.md
+      - name: Compile authoritative native fixed-point mechanics
         run: |
           set -euo pipefail
-          ! grep -E '#include[[:space:]]*[<"](bullet|box2d|jolt|physx|ode|chipmunk|reactphysics3d)' volume3d/body.cpp
-          grep -q 'compliance' volume3d/body.cpp
-          grep -q 'yieldStrain' volume3d/body.cpp
-          grep -q 'genesis_body_joint_error' volume3d/body.cpp
-          grep -q 'genesis_body_max_penetration' volume3d/body.cpp
-          grep -q 'genesis_body_yield_events' volume3d/body.cpp
+          clang++ -std=c++17 -O2 -Wall -Wextra native-body/body_test.cpp -o /tmp/genesis-body-test
+          /tmp/genesis-body-test | tee body-mechanics-test.txt
+          grep -q 'PASS GENESIS native fixed-point articulated-body mechanics' body-mechanics-test.txt
+      - name: Prove compatibility path runs same mechanics
+        run: |
+          set -euo pipefail
+          clang++ -std=c++17 -O2 -Wall -Wextra volume3d/body_test.cpp -o /tmp/genesis-body-compat-test
+          /tmp/genesis-body-compat-test | tee body-mechanics-compat-test.txt
+          cmp <(tail -n 2 body-mechanics-test.txt) <(tail -n 2 body-mechanics-compat-test.txt)
+      - name: Compile freestanding C++ body solver to WebAssembly
+        run: |
+          set -euo pipefail
+          clang++ --target=wasm32 -std=c++17 -O3 -nostdlib -fno-exceptions -fno-rtti native-body/body.cpp native-body/wasm_runtime.cpp \
+            -Wl,--no-entry -Wl,--export-all -Wl,--export-memory -Wl,--initial-memory=2097152 -Wl,--max-memory=2097152 \
+            -o /tmp/genesis-native-body-v1.wasm
+          test -s /tmp/genesis-native-body-v1.wasm
+          node native-body/body_wasm.test.mjs /tmp/genesis-native-body-v1.wasm | tee body-mechanics-wasm-test.txt
+          grep -q 'PASS GENESIS native body C++ -> WASM semantic parity' body-mechanics-wasm-test.txt
       - name: Preserve mechanics evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: genesis-native-body-mechanics-${{ github.run_id }}
-          path: body-mechanics-test.txt
+          path: |
+            body-mechanics-test.txt
+            body-mechanics-compat-test.txt
+            body-mechanics-wasm-test.txt
           if-no-files-found: error
