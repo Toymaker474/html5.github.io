@@ -16,6 +16,7 @@ jobs:
           test -f world-weather/weather.cpp
           test -f world-weather/weather_test.cpp
           test -f world-weather/weather_wasm.test.mjs
+          test -f world-weather/wasm_runtime.cpp
           test -f world-weather/MODEL.md
           ! grep -R -E '#include[[:space:]]*[<"](bullet|box2d|jolt|physx|three|babylon|unity|unreal|glm|eigen)' world-weather
           grep -q '192×128' world-weather/MODEL.md
@@ -33,7 +34,7 @@ jobs:
       - name: Compile freestanding C++ to WebAssembly
         run: |
           set -euo pipefail
-          clang++ --target=wasm32 -std=c++17 -O3 -nostdlib -fno-exceptions -fno-rtti world-weather/weather.cpp \
+          clang++ --target=wasm32 -std=c++17 -O3 -nostdlib -fno-exceptions -fno-rtti world-weather/weather.cpp world-weather/wasm_runtime.cpp \
             -Wl,--no-entry -Wl,--export-all -Wl,--export-memory -Wl,--initial-memory=8388608 -Wl,--max-memory=8388608 \
             -o /tmp/genesis-world-weather-v1.wasm
           test -s /tmp/genesis-world-weather-v1.wasm
