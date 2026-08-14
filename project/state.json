@@ -7,9 +7,9 @@
   "status": "IN_PROGRESS",
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
   "stable": {
-    "label": "scratch-deep-world-tested",
+    "label": "scratch-deep-world-ci-pass",
     "verified": false,
-    "note": "The active runtime changed from a heightfield-first habitat to a chunked persistent 2D material volume for cave/world rendering and navigation. Previous CI no longer covers this changed runtime; fresh CI is required."
+    "note": "The active deep-world foundation has fresh Codehood and Foundation CI evidence. The deployed browser/iPhone build after this architecture change is still not live/device tested."
   },
   "active_experience": {
     "route": "/genesis-codehood/",
@@ -17,52 +17,76 @@
     "stack": ["scratch/main.js","scratch/environment-worker.js","scratch/deep-world.js","scratch/deep-bind.js","scratch/deep-nav.js","scratch/deep-render.js","scratch/alife.js","scratch/navigation.js","scratch/sim-core.js","scratch/environment.js","scratch/organic-render.js"],
     "runtime": "vanilla JavaScript modules + Worker + transferred OffscreenCanvas; no third-party runtime libraries",
     "simulation_changes": [
-      "a persistent chunked 2D world volume now stores material identity, integrity, support, moisture, nutrients, temperature, water volume/velocity, oxygen, carbon dioxide and vapor",
-      "the deep volume is deterministically bound to the existing generated surface so visible geology and cave openings share world coordinates with organisms",
-      "the volume contains soil, stone, sand, clay, limestone, basalt, organic material and actual cave air cells rather than painted cave backgrounds",
-      "granular/weak material can change cell occupancy when unsupported or heavily saturated",
+      "a persistent chunked 2D world volume stores material identity, integrity, support, moisture, nutrients, temperature, water volume/velocity, oxygen, carbon dioxide and vapor",
+      "the deep volume is deterministically bound to the generated surface so visible geology, cave openings, organisms and navigation share world coordinates",
+      "the volume contains air, soil, stone, sand, clay, limestone, basalt and organic material rather than painted cave backgrounds",
+      "granular/weak material changes actual occupancy when unsupported or sufficiently unstable",
       "underground water transfers conservatively through open volume cells and carries a velocity proxy",
       "gas and heat exchange operate between connected open cells",
       "chunks retain independent seed/LOD/active metadata and are activated around the camera and living organisms",
-      "ALife navigation uses A* over the persistent material-volume walk cells when the deep world is available instead of direct target chasing",
-      "A* cost includes solid occupancy, water, carbon dioxide and temperature hazards",
-      "default geology and cave rendering is extracted from the material occupancy into smoothed closed contours; simulation cells are not drawn as tiles",
-      "visible crawler bodies are generated from the articulated rig as continuous body envelopes, shell segmentation, tapered limb volumes, claws/feet and mandibles rather than circles placed on physics nodes",
-      "render pose smoothing remains presentation-only and never writes back into simulation state"
+      "ALife navigation uses A* over persistent material-volume walk cells instead of direct target chasing when the deep world is available",
+      "A* uses solid occupancy plus water, carbon-dioxide and temperature hazard cost, and supports physically supported one-cell stair transitions while rejecting diagonal wall clipping",
+      "default geology/cave/liquid rendering is extracted from discrete simulation occupancy into smoothed closed contours; the grid is not drawn as tiles",
+      "visible crawler bodies are generated from articulated rig state as continuous body envelopes, shell segmentation, tapered limb volumes, claws/feet and mandibles rather than circle-per-node graphics",
+      "render pose smoothing is presentation-only and never writes back into simulation state"
     ],
     "approximations": [
       "this is a 2D material-volume simulation, not full 3D",
-      "deep liquid transport is a conservative cellular volume/momentum approximation, not Navier-Stokes/FLIP/MPM",
-      "surface ocean/river compatibility still uses the older 1D shallow-water state while mass can leak into deep openings",
+      "deep liquid transport is a conservative cellular volume/momentum approximation, not Navier-Stokes, FLIP, SPH or MPM",
+      "surface ocean/river compatibility still uses the older 1D shallow-water state while some mass can leak into deep openings",
       "the older Environment module remains temporarily active for cloud compatibility and some organism atmosphere/waste behavior; deep-world gas is not yet the sole authority for every atmospheric subsystem",
       "the A* planner can compute cave-volume routes but the current articulated crawler motor is still optimized for ground travel and cannot yet execute arbitrary vertical cave traversal",
+      "chunk LOD/active metadata exists but deep-world stepping is not yet fully reduced/slept by chunk LOD",
       "creature gait uses authored articulated stance/swing actuation rather than muscle physiology",
       "ALife drive arbitration is not learning",
-      "smooth contour rendering is a visualization of discrete material state and does not change the simulation resolution"
+      "smooth contour rendering visualizes discrete material state and does not increase simulation resolution"
     ],
     "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_DEEP_WORLD_CHANGE","iphone_safari":"NOT_TESTED_AFTER_DEEP_WORLD_CHANGE"}
   },
   "scratch_engine": {
-    "verification_level": "TESTED",
+    "verification_level": "CI_PASS",
     "source": ["genesis-codehood/scratch/sim-core.js","genesis-codehood/scratch/alife.js","genesis-codehood/scratch/navigation.js","genesis-codehood/scratch/deep-world.js","genesis-codehood/scratch/deep-bind.js","genesis-codehood/scratch/deep-nav.js","genesis-codehood/scratch/deep-render.js","genesis-codehood/scratch/environment.js","genesis-codehood/scratch/organic-render.js","genesis-codehood/scratch/environment-worker.js","genesis-codehood/scratch/main.js"],
     "tests": ["genesis-codehood/tests/scratch_sim.test.mjs","genesis-codehood/tests/scratch_alife.test.mjs","genesis-codehood/tests/scratch_environment.test.mjs","genesis-codehood/tests/scratch_navigation.test.mjs","genesis-codehood/tests/scratch_render.test.mjs","genesis-codehood/tests/deep_world.test.mjs"],
-    "prior_ci": {"status":"SUPERSEDED_BY_DEEP_WORLD_CHANGE","proof_pull_request":101,"codehood_run_id":31513320947,"foundation_run_id":31513320842},
+    "ci": {"status":"PASS","proof_pull_request":106,"codehood_run_id":31816167495,"codehood_job_id":94818255947,"foundation_run_id":31816167365,"foundation_job_id":94818255473,"syntax_check":"PASS","forge_fail_closed_audit":"PASS"},
+    "failed_deep_world_proofs": [
+      {"pull_request":102,"codehood_run_id":31815507516,"codehood_job_id":94816085083,"reason":"obsolete first-frame speed test from prior planner"},
+      {"pull_request":103,"codehood_run_id":31815644626,"codehood_job_id":94816538527,"reason":"test assumed speed before deliberate steering commitment"},
+      {"pull_request":104,"codehood_run_id":31815875016,"codehood_job_id":94817302607,"reason":"A* fixture demanded an impossible route over unsupported vertical wall"},
+      {"pull_request":105,"codehood_run_id":31816019110,"codehood_job_id":94817769649,"reason":"A* anti-corner rule incorrectly rejected legitimate supported stair transitions"}
+    ],
     "live_browser": "NOT_TESTED",
     "iphone_safari": "NOT_TESTED"
   },
   "deep_world": {
-    "verification_level": "TESTED",
+    "verification_level": "CI_PASS",
     "source": ["genesis-codehood/scratch/deep-world.js","genesis-codehood/scratch/deep-bind.js","genesis-codehood/scratch/deep-nav.js","genesis-codehood/scratch/deep-render.js"],
     "tests": "genesis-codehood/tests/deep_world.test.mjs",
-    "ci": "PENDING",
+    "ci": {
+      "status":"PASS",
+      "proof_pull_request":106,
+      "codehood_run_id":31816167495,
+      "codehood_job_id":94818255947,
+      "foundation_run_id":31816167365,
+      "foundation_job_id":94818255473,
+      "cases": {
+        "deterministic_chunks_strata_and_caves":"PASS",
+        "deep_water_mass_conservation_and_gravity":"PASS",
+        "astar_supported_route_around_solid_terrain":"PASS",
+        "unsupported_granular_material_changes_occupancy":"PASS",
+        "grid_hidden_and_no_prerendered_sprite_cheats":"PASS",
+        "all_scratch_regressions":"PASS",
+        "syntax":"PASS",
+        "forge_fail_closed":"PASS"
+      }
+    },
     "truth": "persistent 2D cells are simulation state; default renderer hides the grid behind extracted/smoothed contours"
   },
-  "scratch_alife": {"verification_level":"TESTED","note":"Changed navigation path invalidates the previous overall CI promotion until rerun."},
+  "scratch_alife": {"verification_level":"CI_PASS","note":"The current ALife regression suite passed with the deep-world route planner, including sustained planted-foot locomotion along an active deep-world route."},
   "scratch_environment": {"verification_level":"CI_PASS","note":"Standalone cave/gas/liquid tests remain valid for environment.js, but it is now a compatibility subsystem rather than the sole active world volume."},
   "legacy_ecosystem_stack": {"status":"ARCHIVED_NOT_LOADED_BY_ACTIVE_ROUTE","note":"Previous V100-V110 and patch layers remain in repository files/history but are not imported by the active scratch route."},
   "physical_creature_v1": {"status":"PRESERVED_PROOF_SLICE","verification_level":"CI_PASS","route":"/genesis-codehood/physical-creature-v1/"},
-  "active_objective": "Pass fresh fail-closed CI for the chunked deep-world runtime, then exercise the deployed iPhone build and judge world continuity, non-blocky geology, route behavior and motion stability.",
-  "next_gate": "CI_PASS requires the new deep_world.test.mjs plus all existing scratch tests and FORGE fail-closed audit to pass. LIVE_TESTED/DEVICE_TESTED remain separate afterward.",
+  "active_objective": "Unify atmosphere/waste/surface fluids into the deep world so there is one authoritative environmental state, then make chunk LOD actually reduce distant simulation and extend the physical motor to execute stairs, drops, climbing and cave traversal from the same A* route.",
+  "next_gate": "Do not add civilization-scale complexity until one authoritative deep environment, real chunk scheduling and route-following motor traversal are causally integrated and freshly tested. LIVE_TESTED/DEVICE_TESTED still require deployed browser/iPhone execution.",
   "invariants": [
     "IMPLEMENTATION > NAME",
     "No third-party runtime libraries in the active scratch engine",
@@ -73,7 +97,6 @@
     "Do not call cellular liquid transport CFD",
     "Do not call authored gait muscle physiology",
     "Do not call the ALife controller learning",
-    "Changed runtime invalidates prior overall CI promotion",
     "CI_PASS does not imply LIVE_TESTED or DEVICE_TESTED"
   ],
   "updated": "2026-08-14"
