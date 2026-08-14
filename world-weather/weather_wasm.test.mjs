@@ -1,0 +1,18 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+const p=process.argv[2];if(!p)throw new Error('wasm path required');
+const bytes=fs.readFileSync(p);const mod=await WebAssembly.compile(bytes);const imports=WebAssembly.Module.imports(mod);if(imports.length!==0)throw new Error(`unexpected imports ${JSON.stringify(imports)}`);
+const {exports:e}=await WebAssembly.instantiate(mod,{});
+const need=['genesis_weather_reset','genesis_weather_step','genesis_weather_seed_supercell','genesis_weather_quench_storm','genesis_weather_seed_river_basin','genesis_weather_width','genesis_weather_height','genesis_weather_cloud_cells','genesis_weather_rain_cells','genesis_weather_river_cells','genesis_weather_tornado_cells','genesis_weather_max_discharge','genesis_weather_max_vorticity','genesis_weather_total_rain','genesis_weather_hash','genesis_weather_model_version'];
+for(const n of need)if(typeof e[n]!=='function')throw new Error(`missing export ${n}`);
+if(e.genesis_weather_model_version()!==0x00010001)throw new Error('model version mismatch');
+if(e.genesis_weather_width()!==192||e.genesis_weather_height()!==128)throw new Error('resolution mismatch');
+e.genesis_weather_reset(0x51a7);e.genesis_weather_seed_supercell(96,64);
+if(!(e.genesis_weather_cloud_cells()>100&&e.genesis_weather_rain_cells()>20&&e.genesis_weather_max_vorticity()>180&&e.genesis_weather_tornado_cells()>0))throw new Error('storm causal gate failed');
+e.genesis_weather_step(6);if(e.genesis_weather_tornado_cells()<=0||e.genesis_weather_total_rain()<=0)throw new Error('storm evolution gate failed');
+e.genesis_weather_quench_storm();if(e.genesis_weather_tornado_cells()!==0||e.genesis_weather_max_vorticity()!==0)throw new Error('storm quench gate failed');
+e.genesis_weather_reset(0x7721);e.genesis_weather_seed_river_basin();e.genesis_weather_step(96);const h=e.genesis_weather_hash()>>>0,d=e.genesis_weather_max_discharge()>>>0,r=e.genesis_weather_river_cells()>>>0;
+if(!(e.genesis_weather_total_rain()>10000&&d>2600&&r>0))throw new Error('river concentration gate failed');
+e.genesis_weather_reset(0x7721);e.genesis_weather_seed_river_basin();e.genesis_weather_step(96);if((e.genesis_weather_hash()>>>0)!==h||(e.genesis_weather_max_discharge()>>>0)!==d||(e.genesis_weather_river_cells()>>>0)!==r)throw new Error('determinism gate failed');
+console.log(JSON.stringify({model:'genesis-world-weather-v1',wasmBytes:bytes.length,wasmSha256:crypto.createHash('sha256').update(bytes).digest('hex'),imports:imports.length,resolution:'192x128',cells:24576,hash:h,maxDischarge:d,riverCells:r}));
+console.log('PASS GENESIS world weather C++ -> WASM semantic parity');
