@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 const manifest=JSON.parse(fs.readFileSync('world-weather/weather.wasm.manifest.json','utf8'));
-const parts=[0,1,2,3].map(i=>fs.readFileSync(`world-weather/weather.wasm.part${i}.b64`,'utf8').trim()).join('');
+const names=['weather.wasm.part0.b64','weather.wasm.part1.b64','weather.wasm.part2.b64','weather.wasm.part3a.b64','weather.wasm.part3b.b64','weather.wasm.part3c.b64','weather.wasm.part3d.b64'];
+const parts=names.map(n=>fs.readFileSync(`world-weather/${n}`,'utf8').trim()).join('');
 const bytes=Buffer.from(parts,'base64');
 const sha=crypto.createHash('sha256').update(bytes).digest('hex');
 if(bytes.length!==manifest.compiled_bytes)throw new Error(`payload bytes ${bytes.length} != ${manifest.compiled_bytes}`);
