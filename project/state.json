@@ -6,7 +6,7 @@
   "phase": "scratch-deep-world-nav-capability-fix",
   "status": "IN_PROGRESS",
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
-  "stable": {"label":"deep-world-standalone-ci-pass-active-integration-tested","verified":false,"note":"Standalone deep-world evidence remains CI_PASS. Active navigation integration changed and is TESTED pending fresh proof."},
+  "stable": {"label":"deep-world-nav-capability-ci-pass","verified":false,"note":"Deep-world and the corrected navigation/render integration have fresh Codehood and Foundation CI evidence. Deployed browser/iPhone behavior after this fix remains untested."},
   "active_experience": {
     "route": "/genesis-codehood/",
     "verification_level": "IMPLEMENTED",
@@ -16,15 +16,27 @@
     "approximations": ["current crawler motor cannot execute arbitrary vertical cave traversal","surface route planning is a side-view corridor planner rather than a general 2D navmesh","deep liquid transport is not CFD","smooth contour rendering does not increase simulation resolution","ALife drive arbitration is authored and not learning"],
     "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_NAV_CAPABILITY_FIX","iphone_safari":"NOT_TESTED_AFTER_NAV_CAPABILITY_FIX"}
   },
-  "scratch_engine": {"verification_level":"TESTED","prior_ci":{"status":"SUPERSEDED_FOR_ACTIVE_INTEGRATION","proof_pull_request":106,"codehood_run_id":31816167495,"foundation_run_id":31816167365},"fresh_ci":"PENDING","live_browser":"NOT_TESTED","iphone_safari":"NOT_TESTED"},
+  "scratch_engine": {
+    "verification_level":"CI_PASS",
+    "ci":{"status":"PASS","proof_pull_request":107,"codehood_run_id":31826377727,"codehood_job_id":94851389956,"foundation_run_id":31826377711,"foundation_job_id":94851389811,"syntax_check":"PASS","forge_fail_closed_audit":"PASS"},
+    "prior_ci":{"status":"SUPERSEDED_FOR_ACTIVE_INTEGRATION","proof_pull_request":106,"codehood_run_id":31816167495,"foundation_run_id":31816167365},
+    "live_browser":"NOT_TESTED",
+    "iphone_safari":"NOT_TESTED"
+  },
   "deep_world": {"verification_level":"CI_PASS","ci":{"status":"PASS","proof_pull_request":106,"codehood_run_id":31816167495,"codehood_job_id":94818255947,"foundation_run_id":31816167365,"foundation_job_id":94818255473}},
-  "scratch_navigation": {"verification_level":"TESTED","truth":"surface crawlers use surface routes; deep A* requires an explicitly compatible volume locomotion body","current_crawler_mode":"surface","fresh_ci":"PENDING"},
-  "scratch_alife": {"verification_level":"TESTED","note":"ALife navigation integration changed and needs fresh regression CI."},
+  "scratch_navigation": {
+    "verification_level":"CI_PASS",
+    "truth":"surface crawlers use surface routes; deep A* requires an explicitly compatible volume locomotion body",
+    "current_crawler_mode":"surface",
+    "ci":{"status":"PASS","proof_pull_request":107,"codehood_run_id":31826377727,"codehood_job_id":94851389956,"cases":{"sustained_surface_locomotion":"PASS","surface_crawler_refuses_incompatible_cave_astar":"PASS","steering_commit_and_speed_ramp":"PASS","route_reversal_hysteresis":"PASS","deep_water_route_block":"PASS","excessive_slope_route_block":"PASS"}}
+  },
+  "scratch_render": {"verification_level":"CI_PASS","ci":{"status":"PASS","proof_pull_request":107,"codehood_run_id":31826377727,"case":"organic renderer hides environment grid and derives smooth fields from simulation state"}},
+  "scratch_alife": {"verification_level":"CI_PASS","note":"Fresh regression CI passed with the corrected locomotion-compatible navigation boundary."},
   "scratch_environment": {"verification_level":"CI_PASS","note":"Standalone environment subsystem evidence remains valid."},
   "legacy_ecosystem_stack": {"status":"ARCHIVED_NOT_LOADED_BY_ACTIVE_ROUTE"},
   "physical_creature_v1": {"status":"PRESERVED_PROOF_SLICE","verification_level":"CI_PASS","route":"/genesis-codehood/physical-creature-v1/"},
-  "active_objective": "Pass fresh CI for the locomotion-compatible navigation boundary, then exercise the deployed iPhone build for smoother routing and non-blocky cave/liquid presentation.",
-  "next_gate": "Fresh Codehood and Foundation CI must cover the corrected navigation integration. LIVE_TESTED and DEVICE_TESTED still require deployed browser/iPhone execution afterward.",
+  "active_objective": "Exercise the deployed iPhone build for smooth route following and non-blocky cave/liquid presentation, then deepen physical locomotion before enabling true cave traversal.",
+  "next_gate": "LIVE_TESTED and DEVICE_TESTED require actual deployed browser/iPhone execution. Do not enable deep/cave A* for current crawlers until their physical motor can execute vertical/cave traversal.",
   "invariants": ["IMPLEMENTATION > NAME","Do not render simulation cells as visible block tiles","Do not give an agent a path its body locomotion cannot execute","Do not call the surface planner a general 2D navmesh","Do not call presentation interpolation physics","Do not call authored ALife learning","CI_PASS does not imply LIVE_TESTED or DEVICE_TESTED"],
   "updated": "2026-08-14"
 }
