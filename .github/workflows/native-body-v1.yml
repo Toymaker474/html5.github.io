@@ -15,6 +15,8 @@ jobs:
           set -euo pipefail
           test -f native-body/body.cpp
           test -f native-body/body_test.cpp
+          test -f native-body/body_wasm.test.mjs
+          test -f native-body/wasm_runtime.cpp
           test -f native-body/MODEL.md
           ! grep -R -E "#include <(box2d|bullet|jolt|physx|ode|chipmunk|glm|eigen|three|babylon)" native-body
           grep -q "Q16.16" native-body/MODEL.md
@@ -29,10 +31,24 @@ jobs:
           set -euo pipefail
           /tmp/genesis-native-body-v1 | tee native-body-test.txt
           grep -q "PASS GENESIS native fixed-point articulated-body mechanics" native-body-test.txt
+      - name: Compile freestanding C++ body solver to WebAssembly
+        run: |
+          set -euo pipefail
+          clang++ --target=wasm32 -std=c++17 -O3 -nostdlib -fno-exceptions -fno-rtti native-body/body.cpp native-body/wasm_runtime.cpp \
+            -Wl,--no-entry -Wl,--export-all -Wl,--export-memory -Wl,--initial-memory=2097152 -Wl,--max-memory=2097152 \
+            -o /tmp/genesis-native-body-v1.wasm
+          test -s /tmp/genesis-native-body-v1.wasm
+      - name: Verify native/WASM semantic parity
+        run: |
+          set -euo pipefail
+          node native-body/body_wasm.test.mjs /tmp/genesis-native-body-v1.wasm | tee native-body-wasm-test.txt
+          grep -q "PASS GENESIS native body C++ -> WASM semantic parity" native-body-wasm-test.txt
       - name: Preserve native body evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: genesis-native-body-v1-${{ github.run_id }}
-          path: native-body-test.txt
+          path: |
+            native-body-test.txt
+            native-body-wasm-test.txt
           if-no-files-found: ignore
