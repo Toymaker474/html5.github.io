@@ -1,29 +1,41 @@
 name: GENESIS Codehood Verify
-
 on:
   push:
-    paths:
-      - 'genesis-codehood/**'
-      - '.github/workflows/genesis-codehood.yml'
+    paths: ['genesis-codehood/**','volume3d/**','project/state.json','.github/workflows/genesis-codehood.yml']
   pull_request:
-    paths:
-      - 'genesis-codehood/**'
-      - '.github/workflows/genesis-codehood.yml'
-
+    paths: ['genesis-codehood/**','volume3d/**','project/state.json','.github/workflows/genesis-codehood.yml']
 jobs:
   verify:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: genesis-codehood
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Node
         uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+        with: { node-version: '20' }
       - name: Run deterministic VM tests
+        working-directory: genesis-codehood
         run: npm test
       - name: Syntax check modules
+        working-directory: genesis-codehood
         run: npm run check
+      - name: Compile and test native C++ water physics
+        run: |
+          c++ -std=c++17 -O2 volume3d/momentum_test.cpp -o /tmp/genesis-volume3d-test
+          /tmp/genesis-volume3d-test
+      - name: Verify committed WASM v2 payload boots
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const bin=Buffer.from(fs.readFileSync('volume3d/solver.v2.wasm.b64','utf8').trim(),'base64');
+          WebAssembly.instantiate(bin,{}).then(({instance})=>{
+            const e=instance.exports;
+            if((e.genesis_model_version()>>>0)!==0x00030002) throw Error('wrong native model version');
+            e.genesis_init(24,20,24,123,72); e.genesis_seed_scene();
+            if(!e.genesis_pressure_sum || e.genesis_pressure_sum()===0) throw Error('pressure state missing');
+            e.genesis_step(2);
+            if(!e.genesis_water_momentum || e.genesis_water_momentum()===0) throw Error('momentum state missing');
+            if(e.genesis_invariant()!==1) throw Error('native invariant failed');
+            console.log('PASS committed WASM v2 momentum/pressure boot');
+          }).catch(e=>{console.error(e);process.exit(1)});
+          NODE
