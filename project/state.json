@@ -3,91 +3,78 @@
   "project": "GENESIS",
   "product": "GENESIS Ecosystem Sandbox",
   "engineering_system": "GENESIS FORGE",
-  "phase": "scratch-organic-navigation",
+  "phase": "scratch-deep-world",
   "status": "IN_PROGRESS",
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
   "stable": {
-    "label": "scratch-organic-navigation-ci-pass",
+    "label": "scratch-deep-world-tested",
     "verified": false,
-    "note": "The active scratch runtime hides environmental cells behind organic field rendering and routes organisms through terrain-aware persistent waypoints. Fresh Codehood and Foundation CI pass; deployed browser/iPhone behavior remains unverified."
+    "note": "The active runtime changed from a heightfield-first habitat to a chunked persistent 2D material volume for cave/world rendering and navigation. Previous CI no longer covers this changed runtime; fresh CI is required."
   },
   "active_experience": {
     "route": "/genesis-codehood/",
     "verification_level": "IMPLEMENTED",
-    "stack": ["scratch/main.js","scratch/environment-worker.js","scratch/organic-render.js","scratch/environment.js","scratch/sim-core.js","scratch/alife.js","scratch/navigation.js"],
+    "stack": ["scratch/main.js","scratch/environment-worker.js","scratch/deep-world.js","scratch/deep-bind.js","scratch/deep-nav.js","scratch/deep-render.js","scratch/alife.js","scratch/navigation.js","scratch/sim-core.js","scratch/environment.js","scratch/organic-render.js"],
     "runtime": "vanilla JavaScript modules + Worker + transferred OffscreenCanvas; no third-party runtime libraries",
     "simulation_changes": [
-      "cave/atmosphere/multi-fluid environment and surface ecosystem remain active",
-      "ALife goals become persistent terrain-aware surface routes rather than direct target chasing",
-      "route cost reads actual slope, water depth, root reinforcement and waterlogged-instability state",
-      "deep water and excessive slopes block routes; organisms abandon unreachable food/water goals rather than vibrating against them",
-      "look-ahead waypoints persist between replans; steering and speed ramp exponentially instead of snapping",
-      "heading changes require steering commitment and release old stance-foot contacts before the new direction gait begins",
-      "active cave environment resolution is 18-unit cells / 40 rows rather than the previous 24-unit / 30-row active runtime",
-      "environment cells remain simulation bookkeeping but are not shown as visible block tiles",
-      "cave voids render as joined organic envelopes derived from the real solid/void field",
-      "cave water and urine render as connected smooth envelopes derived from actual per-cell liquid mass",
-      "clouds render as overlapping continuous fields derived from persistent cloud water",
-      "creature draw poses interpolate authoritative physics nodes so solver corrections are less visually twitchy"
+      "a persistent chunked 2D world volume now stores material identity, integrity, support, moisture, nutrients, temperature, water volume/velocity, oxygen, carbon dioxide and vapor",
+      "the deep volume is deterministically bound to the existing generated surface so visible geology and cave openings share world coordinates with organisms",
+      "the volume contains soil, stone, sand, clay, limestone, basalt, organic material and actual cave air cells rather than painted cave backgrounds",
+      "granular/weak material can change cell occupancy when unsupported or heavily saturated",
+      "underground water transfers conservatively through open volume cells and carries a velocity proxy",
+      "gas and heat exchange operate between connected open cells",
+      "chunks retain independent seed/LOD/active metadata and are activated around the camera and living organisms",
+      "ALife navigation uses A* over the persistent material-volume walk cells when the deep world is available instead of direct target chasing",
+      "A* cost includes solid occupancy, water, carbon dioxide and temperature hazards",
+      "default geology and cave rendering is extracted from the material occupancy into smoothed closed contours; simulation cells are not drawn as tiles",
+      "visible crawler bodies are generated from the articulated rig as continuous body envelopes, shell segmentation, tapered limb volumes, claws/feet and mandibles rather than circles placed on physics nodes",
+      "render pose smoothing remains presentation-only and never writes back into simulation state"
     ],
     "approximations": [
-      "navigation is a terrain-aware side-view surface route planner, not a general 2D/3D navmesh",
-      "render-pose interpolation is presentation smoothing and does not alter simulation physics",
-      "organic cave/liquid rendering smooths discrete environmental cells while the underlying environmental solver remains cellular",
-      "cave atmosphere remains 2D cellular diffusion/transport rather than gas CFD",
-      "cave water/urine remain gravity/lateral cellular transport rather than Navier-Stokes, SPH, FLIP or MPM",
-      "surface rivers/ocean remain a one-dimensional side-view shallow-water approximation",
-      "ALife remains authored drive arbitration with memory and is not learning",
-      "creature articulation remains 2D Verlet/distance constraints with authored gait actuation"
+      "this is a 2D material-volume simulation, not full 3D",
+      "deep liquid transport is a conservative cellular volume/momentum approximation, not Navier-Stokes/FLIP/MPM",
+      "surface ocean/river compatibility still uses the older 1D shallow-water state while mass can leak into deep openings",
+      "the older Environment module remains temporarily active for cloud compatibility and some organism atmosphere/waste behavior; deep-world gas is not yet the sole authority for every atmospheric subsystem",
+      "the A* planner can compute cave-volume routes but the current articulated crawler motor is still optimized for ground travel and cannot yet execute arbitrary vertical cave traversal",
+      "creature gait uses authored articulated stance/swing actuation rather than muscle physiology",
+      "ALife drive arbitration is not learning",
+      "smooth contour rendering is a visualization of discrete material state and does not change the simulation resolution"
     ],
-    "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_NAV_RENDER_CHANGE","iphone_safari":"NOT_TESTED_AFTER_NAV_RENDER_CHANGE"}
+    "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_DEEP_WORLD_CHANGE","iphone_safari":"NOT_TESTED_AFTER_DEEP_WORLD_CHANGE"}
   },
   "scratch_engine": {
-    "verification_level": "CI_PASS",
-    "source": ["genesis-codehood/scratch/sim-core.js","genesis-codehood/scratch/alife.js","genesis-codehood/scratch/navigation.js","genesis-codehood/scratch/environment.js","genesis-codehood/scratch/organic-render.js","genesis-codehood/scratch/environment-worker.js","genesis-codehood/scratch/main.js","genesis-codehood/scratch/style.css"],
-    "tests": ["genesis-codehood/tests/scratch_sim.test.mjs","genesis-codehood/tests/scratch_alife.test.mjs","genesis-codehood/tests/scratch_environment.test.mjs","genesis-codehood/tests/scratch_navigation.test.mjs","genesis-codehood/tests/scratch_render.test.mjs"],
-    "ci": {"status":"PASS","proof_pull_request":101,"codehood_run_id":31513320947,"codehood_job_id":93852222514,"foundation_run_id":31513320842,"foundation_job_id":93852221604,"syntax_check":"PASS","forge_fail_closed_audit":"PASS"},
+    "verification_level": "TESTED",
+    "source": ["genesis-codehood/scratch/sim-core.js","genesis-codehood/scratch/alife.js","genesis-codehood/scratch/navigation.js","genesis-codehood/scratch/deep-world.js","genesis-codehood/scratch/deep-bind.js","genesis-codehood/scratch/deep-nav.js","genesis-codehood/scratch/deep-render.js","genesis-codehood/scratch/environment.js","genesis-codehood/scratch/organic-render.js","genesis-codehood/scratch/environment-worker.js","genesis-codehood/scratch/main.js"],
+    "tests": ["genesis-codehood/tests/scratch_sim.test.mjs","genesis-codehood/tests/scratch_alife.test.mjs","genesis-codehood/tests/scratch_environment.test.mjs","genesis-codehood/tests/scratch_navigation.test.mjs","genesis-codehood/tests/scratch_render.test.mjs","genesis-codehood/tests/deep_world.test.mjs"],
+    "prior_ci": {"status":"SUPERSEDED_BY_DEEP_WORLD_CHANGE","proof_pull_request":101,"codehood_run_id":31513320947,"foundation_run_id":31513320842},
     "live_browser": "NOT_TESTED",
     "iphone_safari": "NOT_TESTED"
   },
-  "scratch_alife": {"verification_level":"CI_PASS","note":"Local sensing, stomach feeding, drinking, corpse return and traversable-route locomotion pass in the fresh Codehood run."},
-  "scratch_environment": {"verification_level":"CI_PASS","note":"Cave/gas/liquid causal tests pass again under the changed active renderer/runtime."},
-  "scratch_navigation": {
-    "verification_level": "CI_PASS",
-    "source": "genesis-codehood/scratch/navigation.js",
-    "tests": "genesis-codehood/tests/scratch_navigation.test.mjs",
-    "ci": {"status":"PASS","proof_pull_request":101,"run_id":31513320947,"job_id":93852222514,"cases":{"traversable_corridor":"PASS","deep_water_block":"PASS","steep_slope_block":"PASS","smoothed_steering_speed":"PASS","reversal_hysteresis":"PASS","truthful_metadata":"PASS"}}
+  "deep_world": {
+    "verification_level": "TESTED",
+    "source": ["genesis-codehood/scratch/deep-world.js","genesis-codehood/scratch/deep-bind.js","genesis-codehood/scratch/deep-nav.js","genesis-codehood/scratch/deep-render.js"],
+    "tests": "genesis-codehood/tests/deep_world.test.mjs",
+    "ci": "PENDING",
+    "truth": "persistent 2D cells are simulation state; default renderer hides the grid behind extracted/smoothed contours"
   },
-  "scratch_rendering": {
-    "verification_level": "CI_PASS",
-    "source": "genesis-codehood/scratch/organic-render.js",
-    "tests": "genesis-codehood/tests/scratch_render.test.mjs",
-    "contract": "environment grid is hidden; cave/liquid/cloud envelopes are derived from simulation fields",
-    "ci": {"status":"PASS","proof_pull_request":101,"run_id":31513320947,"job_id":93852222514,"grid_hidden":"PASS"}
-  },
-  "failed_nav_render_proofs": [
-    {"pull_request":96,"run_id":31511934833,"job_id":93847642584,"kind":"TEST_INTERFACE","reason":"old gait test wrote retired direct target field instead of persistent navigation goal"},
-    {"pull_request":97,"run_id":31512240047,"job_id":93848668025,"kind":"IMPLEMENTATION_BUG","reason":"old planted-foot contacts could pull a turning crawler backward; turn now releases stance contacts"},
-    {"pull_request":98,"run_id":31512580642,"job_id":93849792707,"kind":"TEST_INTERFACE","reason":"thirst test expected immediate targetX to equal final water goal even while turn-safe routing holds an intermediate target"},
-    {"pull_request":99,"run_id":31512898689,"job_id":93850845419,"kind":"TEST_ASSUMPTION","reason":"gait test hard-coded a rightward destination that generated terrain legitimately marked unreachable"},
-    {"pull_request":100,"run_id":31513102990,"job_id":93851509547,"kind":"IMPLEMENTATION_BUG","reason":"steering dead-zone reset the first smoothed turn increment to zero every frame; fixed so turns accumulate"}
-  ],
-  "legacy_ecosystem_stack": {"status":"ARCHIVED_NOT_LOADED_BY_ACTIVE_ROUTE","note":"Previous V100-V110 and patch layers remain in repository files/history but are not imported by the current route."},
+  "scratch_alife": {"verification_level":"TESTED","note":"Changed navigation path invalidates the previous overall CI promotion until rerun."},
+  "scratch_environment": {"verification_level":"CI_PASS","note":"Standalone cave/gas/liquid tests remain valid for environment.js, but it is now a compatibility subsystem rather than the sole active world volume."},
+  "legacy_ecosystem_stack": {"status":"ARCHIVED_NOT_LOADED_BY_ACTIVE_ROUTE","note":"Previous V100-V110 and patch layers remain in repository files/history but are not imported by the active scratch route."},
   "physical_creature_v1": {"status":"PRESERVED_PROOF_SLICE","verification_level":"CI_PASS","route":"/genesis-codehood/physical-creature-v1/"},
-  "active_objective": "Exercise the deployed organic-render/navigation build on iPhone and judge whether cave/liquid presentation no longer reads as blocks and whether organism travel/turning is visibly less janky.",
-  "next_gate": "LIVE_TESTED and DEVICE_TESTED require actual deployed browser/iPhone execution after this change. CI_PASS alone is not sufficient.",
+  "active_objective": "Pass fresh fail-closed CI for the chunked deep-world runtime, then exercise the deployed iPhone build and judge world continuity, non-blocky geology, route behavior and motion stability.",
+  "next_gate": "CI_PASS requires the new deep_world.test.mjs plus all existing scratch tests and FORGE fail-closed audit to pass. LIVE_TESTED/DEVICE_TESTED remain separate afterward.",
   "invariants": [
     "IMPLEMENTATION > NAME",
-    "Active route must not import archived V100-V110 layers",
-    "No third-party runtime libraries in the scratch engine",
-    "Rendering must run through transferred OffscreenCanvas in a worker",
+    "No third-party runtime libraries in the active scratch engine",
+    "Active world simulation must use persistent state rather than decorative effects",
     "Simulation cells may not be presented as visible block tiles in the default renderer",
-    "Do not call the side-view planner a general 2D/3D navmesh",
-    "Do not call render interpolation physics",
-    "Do not call cellular gas transport CFD",
+    "Physics nodes may not be rendered as circle-per-node creatures",
+    "Do not call the 2D material volume full 3D",
+    "Do not call cellular liquid transport CFD",
+    "Do not call authored gait muscle physiology",
     "Do not call the ALife controller learning",
-    "CI_PASS does not imply LIVE_TESTED or DEVICE_TESTED",
-    "Unknown runtime state remains NOT_TESTED"
+    "Changed runtime invalidates prior overall CI promotion",
+    "CI_PASS does not imply LIVE_TESTED or DEVICE_TESTED"
   ],
-  "updated": "2026-08-11"
+  "updated": "2026-08-14"
 }
