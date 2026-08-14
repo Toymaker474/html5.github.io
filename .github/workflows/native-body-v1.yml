@@ -1,0 +1,38 @@
+name: GENESIS Native Body V1
+on:
+  push:
+    paths: ['native-body/**','.github/workflows/native-body-v1.yml']
+  pull_request:
+    branches: [main]
+    paths: ['native-body/**','.github/workflows/native-body-v1.yml']
+jobs:
+  verify-native-body:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail-closed source gate
+        run: |
+          set -euo pipefail
+          test -f native-body/body.cpp
+          test -f native-body/body_test.cpp
+          test -f native-body/MODEL.md
+          ! grep -R -E "#include <(box2d|bullet|jolt|physx|ode|chipmunk|glm|eigen|three|babylon)" native-body
+          grep -q "Q16.16" native-body/MODEL.md
+          grep -q "Coulomb" native-body/MODEL.md
+          grep -q "not yet coupled" native-body/MODEL.md
+      - name: Compile native fixed-point body solver
+        run: |
+          set -euo pipefail
+          clang++ -std=c++17 -O2 -Wall -Wextra native-body/body_test.cpp -o /tmp/genesis-native-body-v1
+      - name: Execute causal mechanics tests
+        run: |
+          set -euo pipefail
+          /tmp/genesis-native-body-v1 | tee native-body-test.txt
+          grep -q "PASS GENESIS native fixed-point articulated-body mechanics" native-body-test.txt
+      - name: Preserve native body evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: genesis-native-body-v1-${{ github.run_id }}
+          path: native-body-test.txt
+          if-no-files-found: ignore
