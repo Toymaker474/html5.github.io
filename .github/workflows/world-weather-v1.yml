@@ -1,10 +1,10 @@
 name: GENESIS World Weather V1
 on:
   push:
-    paths: ['world-weather/**','.github/workflows/world-weather-v1.yml','index.html']
+    paths: ['world-weather/**','.github/workflows/world-weather-v1.yml','project/state.json','index.html']
   pull_request:
     branches: [main]
-    paths: ['world-weather/**','.github/workflows/world-weather-v1.yml','index.html']
+    paths: ['world-weather/**','.github/workflows/world-weather-v1.yml','project/state.json','index.html']
 jobs:
   verify-world-weather:
     runs-on: ubuntu-latest
