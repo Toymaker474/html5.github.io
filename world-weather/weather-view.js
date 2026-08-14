@@ -1,5 +1,5 @@
 const EXPECTED_SHA='d95d030df7ca6594d1d8641c483fec234d185d5ad7de6ef0ded56207b627929c';
-const PARTS=['weather.wasm.part0.b64','weather.wasm.part1.b64','weather.wasm.part2.b64','weather.wasm.part3.b64'];
+const PARTS=['weather.wasm.part0.b64','weather.wasm.part1.b64','weather.wasm.part2.b64','weather.wasm.part3a.b64','weather.wasm.part3b.b64','weather.wasm.part3c.b64','weather.wasm.part3d.b64'];
 const SIM_W=192,SIM_H=128;
 const $=id=>document.getElementById(id);
 const canvas=$('world');
