@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "model_version": "0x00040001",
+  "decoded_bytes": 19086,
+  "decoded_sha256": "573eea6bccc8ef38ab828ccfa57d7d91861e5ac04254ca5aea523c3438bb55c0",
+  "base64_chars": 25448,
+  "base64_sha256": "2b06abb3f7780c1d497272b79987cc560738bdec3b02706e3925272f72b456e8",
+  "parts": [
+    {"file":"solver.v3.part0.b64","chars":5200,"sha256":"85dfd45df19168fe5305d45315a4cebc1fea0544e4c6c8cc2bdc682639c6969e"},
+    {"file":"solver.v3.part1.b64","chars":5200,"sha256":"dea01237e7a6bc59ecb6c9c7b9bc8f029e525184cbfe255f1d0d0fb8ff3aefff"},
+    {"file":"solver.v3.part2.b64","chars":5200,"sha256":"7328d716e8c9ea1a864f70941a5d5d5849b0d66215f76ca97a42cfc60353272e"},
+    {"file":"solver.v3.part3.b64","chars":5200,"sha256":"5f60e8249e8fdf18402c2f3c34e507c349035a572bd17247e3a1f6970bd8b139"},
+    {"file":"solver.v3.part4.b64","chars":4648,"sha256":"df068c3c3f65eb98444a48b268506f3e5072b55626f5dc14e50abbc0db914d59"}
+  ]
+}
