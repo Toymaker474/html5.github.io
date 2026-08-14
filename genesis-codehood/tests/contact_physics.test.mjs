@@ -19,22 +19,22 @@ function flatWorld({wet=0,water=0,sediment=0,root=1}={}){
 
 function creature(){
   const nodes=Array.from({length:5},()=>({x:40,y:90,px:40,py:90,m:1}));
-  const foot={x:40,y:100,px:40,py:100};const leg={anchor:2,stance:true,foot};
+  const foot={x:40,y:100,px:40,py:100};const leg={anchor:2,stance:true,foot,footMass:.55};
   return{nodes,legs:[leg],dir:1,energy:1,fatigue:0,leg};
 }
 
 {
   const w=flatWorld({wet:.05,root:1}),c=creature(),dt=.05;
   const beforeA=pointVelocity(c.nodes[2],dt),beforeF=pointVelocity(c.leg.foot,dt),r=stanceTraction(w,c,c.leg,1,dt,{gravity:110,muscleForce:54});
-  const afterA=pointVelocity(c.nodes[2],dt),afterF=pointVelocity(c.leg.foot,dt);
-  assert.equal(r.applied,true);assert(afterA.x>beforeA.x);assert(afterF.x<beforeF.x);assert(Math.abs((afterA.x-beforeA.x)+(afterF.x-beforeF.x))<1e-9);
+  const afterA=pointVelocity(c.nodes[2],dt),afterF=pointVelocity(c.leg.foot,dt),dva=afterA.x-beforeA.x,dvf=afterF.x-beforeF.x;
+  assert.equal(r.applied,true);assert(dva>0);assert(dvf<0);assert(Math.abs(r.anchorMass*dva+r.footMass*dvf)<1e-9,'paired impulse must conserve horizontal momentum across the stance pair');
 }
 
 {
   const dry=creature(),wet=creature(),dt=.05;
   const rd=stanceTraction(flatWorld({wet:.05,root:1}),dry,dry.leg,1,dt,{gravity:110,muscleForce:1000});
   const rw=stanceTraction(flatWorld({wet:1,water:8,root:.1}),wet,wet.leg,1,dt,{gravity:110,muscleForce:1000});
-  assert(rd.limit>rw.limit);assert(rd.impulse>rw.impulse);
+  assert.equal(rd.slipping,true);assert.equal(rw.slipping,true);assert(rd.limit>rw.limit);assert(rd.impulse>rw.impulse);assert(rw.slipRatio>rd.slipRatio,'weaker wet substrate must produce more breakaway slip at equal drive');
 }
 
-console.log('PASS contact physics: projection, Coulomb friction, momentum-paired traction, wet-slip limit');
+console.log('PASS contact physics: projection, Coulomb friction, mass-correct paired impulse, static breakaway and wet-slip limit');
