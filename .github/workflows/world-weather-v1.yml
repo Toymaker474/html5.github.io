@@ -36,12 +36,13 @@ jobs:
           set -euo pipefail
           clang++ --target=wasm32 -std=c++17 -O3 -nostdlib -fno-exceptions -fno-rtti world-weather/weather.cpp world-weather/wasm_runtime.cpp \
             -Wl,--no-entry -Wl,--export-all -Wl,--export-memory -Wl,--initial-memory=8388608 -Wl,--max-memory=8388608 \
-            -o /tmp/genesis-world-weather-v1.wasm
-          test -s /tmp/genesis-world-weather-v1.wasm
+            -o world-weather/genesis-world-weather-v1.wasm
+          test -s world-weather/genesis-world-weather-v1.wasm
+          sha256sum world-weather/genesis-world-weather-v1.wasm | tee world-weather-wasm.sha256
       - name: Verify native WASM semantic parity
         run: |
           set -euo pipefail
-          node world-weather/weather_wasm.test.mjs /tmp/genesis-world-weather-v1.wasm | tee world-weather-wasm.txt
+          node world-weather/weather_wasm.test.mjs world-weather/genesis-world-weather-v1.wasm | tee world-weather-wasm.txt
           grep -q 'PASS GENESIS world weather C++ -> WASM semantic parity' world-weather-wasm.txt
       - name: Preserve weather evidence
         if: always()
@@ -51,4 +52,6 @@ jobs:
           path: |
             world-weather-native.txt
             world-weather-wasm.txt
-          if-no-files-found: ignore
+            world-weather-wasm.sha256
+            world-weather/genesis-world-weather-v1.wasm
+          if-no-files-found: error
