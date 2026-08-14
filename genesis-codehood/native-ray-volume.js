@@ -71,13 +71,18 @@ fn shadeSolid(p:vec3f,rd:vec3f)->vec3f{
   return c;
 }
 fn shadeWater(p:vec3f,rd:vec3f,behind:vec3f,depth:f32)->vec3f{
-  var n=-gradW(p);
-  n=normalize(n+vec3f(sin(p.z*1.7+u.render.z*1.3),0,cos(p.x*1.4-u.render.z*.9))*.052);
+  let v=sampleV(p);
+  let n=-gradW(p);
+  let turb=clamp(v.a,0.0,1.0);
   let view=-rd;let l=normalize(u.sun.xyz);let fres=pow(1.0-max(dot(n,view),0.0),5.0);
-  let refl=sky(reflect(rd,n));let halfv=normalize(l+view);let spec=pow(max(dot(n,halfv),0.0),170.0)*2.0;
-  let absorb=exp(-max(depth,0.0)*vec3f(.20,.054,.027));
-  let transmitted=behind*absorb;let deep=vec3f(.009,.115,.16)*(1.0-absorb);
-  return mix(transmitted+deep,refl,.11+.66*fres)+vec3f(1.0,.84,.62)*spec;
+  let refl=sky(reflect(rd,n));let halfv=normalize(l+view);
+  let spec=pow(max(dot(n,halfv),0.0),mix(170.0,72.0,turb))*mix(2.0,.62,turb);
+  let absorbCoeff=mix(vec3f(.20,.054,.027),vec3f(.34,.17,.082),turb);
+  let absorb=exp(-max(depth,0.0)*absorbCoeff);
+  let transmitted=behind*absorb;
+  let scatterColor=mix(vec3f(.009,.115,.16),vec3f(.115,.075,.025),turb);
+  let scattered=scatterColor*(vec3f(1.0)-absorb);
+  return mix(transmitted+scattered,refl,.11+.66*fres)+vec3f(1.0,.84,.62)*spec;
 }
 struct O{@builtin(position)pos:vec4f,@location(0)uv:vec2f};
 @vertex fn vs(@builtin(vertex_index)i:u32)->O{
