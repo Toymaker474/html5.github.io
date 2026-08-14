@@ -3,13 +3,13 @@
   "project": "GENESIS",
   "product": "GENESIS Ecosystem Sandbox",
   "engineering_system": "GENESIS FORGE",
-  "phase": "scratch-deep-world",
+  "phase": "scratch-deep-world-nav-capability-fix",
   "status": "IN_PROGRESS",
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
   "stable": {
-    "label": "scratch-deep-world-ci-pass",
+    "label": "deep-world-standalone-ci-pass-active-integration-tested",
     "verified": false,
-    "note": "The active deep-world foundation has fresh Codehood and Foundation CI evidence. The deployed browser/iPhone build after this architecture change is still not live/device tested."
+    "note": "The standalone deep-world foundation retains its prior CI evidence, but active navigation integration changed after discovering that surface crawlers could be assigned deep/cave A* routes they could not physically execute. The active engine is therefore TESTED until fresh integration CI passes."
   },
   "active_experience": {
     "route": "/genesis-codehood/",
@@ -17,43 +17,30 @@
     "stack": ["scratch/main.js","scratch/environment-worker.js","scratch/deep-world.js","scratch/deep-bind.js","scratch/deep-nav.js","scratch/deep-render.js","scratch/alife.js","scratch/navigation.js","scratch/sim-core.js","scratch/environment.js","scratch/organic-render.js"],
     "runtime": "vanilla JavaScript modules + Worker + transferred OffscreenCanvas; no third-party runtime libraries",
     "simulation_changes": [
-      "a persistent chunked 2D world volume stores material identity, integrity, support, moisture, nutrients, temperature, water volume/velocity, oxygen, carbon dioxide and vapor",
-      "the deep volume is deterministically bound to the generated surface so visible geology, cave openings, organisms and navigation share world coordinates",
-      "the volume contains air, soil, stone, sand, clay, limestone, basalt and organic material rather than painted cave backgrounds",
-      "granular/weak material changes actual occupancy when unsupported or sufficiently unstable",
-      "underground water transfers conservatively through open volume cells and carries a velocity proxy",
-      "gas and heat exchange operate between connected open cells",
-      "chunks retain independent seed/LOD/active metadata and are activated around the camera and living organisms",
-      "ALife navigation uses A* over persistent material-volume walk cells instead of direct target chasing when the deep world is available",
-      "A* uses solid occupancy plus water, carbon-dioxide and temperature hazard cost, and supports physically supported one-cell stair transitions while rejecting diagonal wall clipping",
-      "default geology/cave/liquid rendering is extracted from discrete simulation occupancy into smoothed closed contours; the grid is not drawn as tiles",
-      "visible crawler bodies are generated from articulated rig state as continuous body envelopes, shell segmentation, tapered limb volumes, claws/feet and mandibles rather than circle-per-node graphics",
-      "render pose smoothing is presentation-only and never writes back into simulation state"
+      "persistent chunked 2D material-volume state remains active for geology, caves, underground water, atmosphere, support, moisture and nutrients",
+      "default cave/terrain/liquid rendering hides cell rectangles and uses extracted smoothed contours",
+      "surface crawlers use persistent terrain-aware surface routes with slope, water-depth and instability costs",
+      "steering direction and locomotion speed are low-pass filtered rather than snapping every tick",
+      "deep A* routing is now capability-gated: only a body explicitly marked locomotionMode=volume may receive a cave-cell route",
+      "current crawlers remain surface locomotors, so they no longer receive routes their physical motor cannot execute",
+      "render pose smoothing remains presentation-only and never writes back into physics state"
     ],
     "approximations": [
-      "this is a 2D material-volume simulation, not full 3D",
-      "deep liquid transport is a conservative cellular volume/momentum approximation, not Navier-Stokes, FLIP, SPH or MPM",
-      "surface ocean/river compatibility still uses the older 1D shallow-water state while some mass can leak into deep openings",
-      "the older Environment module remains temporarily active for cloud compatibility and some organism atmosphere/waste behavior; deep-world gas is not yet the sole authority for every atmospheric subsystem",
-      "the A* planner can compute cave-volume routes but the current articulated crawler motor is still optimized for ground travel and cannot yet execute arbitrary vertical cave traversal",
-      "chunk LOD/active metadata exists but deep-world stepping is not yet fully reduced/slept by chunk LOD",
-      "creature gait uses authored articulated stance/swing actuation rather than muscle physiology",
-      "ALife drive arbitration is not learning",
-      "smooth contour rendering visualizes discrete material state and does not increase simulation resolution"
+      "current crawler motor is surface-bound and cannot yet execute arbitrary vertical cave traversal",
+      "deep A* is retained for future compatible climbing/swimming/volume bodies but is not used by current surface crawlers",
+      "surface route planning is a side-view corridor planner rather than a general 2D navmesh",
+      "deep liquid transport remains a cellular conservative approximation rather than CFD",
+      "smooth contour rendering does not increase simulation resolution",
+      "ALife drive arbitration is authored and is not learning"
     ],
-    "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_DEEP_WORLD_CHANGE","iphone_safari":"NOT_TESTED_AFTER_DEEP_WORLD_CHANGE"}
+    "browser_exercise": {"live_pages":"NOT_TESTED_AFTER_NAV_CAPABILITY_FIX","iphone_safari":"NOT_TESTED_AFTER_NAV_CAPABILITY_FIX"}
   },
   "scratch_engine": {
-    "verification_level": "CI_PASS",
+    "verification_level": "TESTED",
     "source": ["genesis-codehood/scratch/sim-core.js","genesis-codehood/scratch/alife.js","genesis-codehood/scratch/navigation.js","genesis-codehood/scratch/deep-world.js","genesis-codehood/scratch/deep-bind.js","genesis-codehood/scratch/deep-nav.js","genesis-codehood/scratch/deep-render.js","genesis-codehood/scratch/environment.js","genesis-codehood/scratch/organic-render.js","genesis-codehood/scratch/environment-worker.js","genesis-codehood/scratch/main.js"],
     "tests": ["genesis-codehood/tests/scratch_sim.test.mjs","genesis-codehood/tests/scratch_alife.test.mjs","genesis-codehood/tests/scratch_environment.test.mjs","genesis-codehood/tests/scratch_navigation.test.mjs","genesis-codehood/tests/scratch_render.test.mjs","genesis-codehood/tests/deep_world.test.mjs"],
-    "ci": {"status":"PASS","proof_pull_request":106,"codehood_run_id":31816167495,"codehood_job_id":94818255947,"foundation_run_id":31816167365,"foundation_job_id":94818255473,"syntax_check":"PASS","forge_fail_closed_audit":"PASS"},
-    "failed_deep_world_proofs": [
-      {"pull_request":102,"codehood_run_id":31815507516,"codehood_job_id":94816085083,"reason":"obsolete first-frame speed test from prior planner"},
-      {"pull_request":103,"codehood_run_id":31815644626,"codehood_job_id":94816538527,"reason":"test assumed speed before deliberate steering commitment"},
-      {"pull_request":104,"codehood_run_id":31815875016,"codehood_job_id":94817302607,"reason":"A* fixture demanded an impossible route over unsupported vertical wall"},
-      {"pull_request":105,"codehood_run_id":31816019110,"codehood_job_id":94817769649,"reason":"A* anti-corner rule incorrectly rejected legitimate supported stair transitions"}
-    ],
+    "prior_ci": {"status":"SUPERSEDED_FOR_ACTIVE_INTEGRATION","proof_pull_request":106,"codehood_run_id":31816167495,"foundation_run_id":31816167365},
+    "pending_ci_reason": "navigation capability boundary changed after active surface crawler/deep-route mismatch was identified",
     "live_browser": "NOT_TESTED",
     "iphone_safari": "NOT_TESTED"
   },
@@ -61,42 +48,27 @@
     "verification_level": "CI_PASS",
     "source": ["genesis-codehood/scratch/deep-world.js","genesis-codehood/scratch/deep-bind.js","genesis-codehood/scratch/deep-nav.js","genesis-codehood/scratch/deep-render.js"],
     "tests": "genesis-codehood/tests/deep_world.test.mjs",
-    "ci": {
-      "status":"PASS",
-      "proof_pull_request":106,
-      "codehood_run_id":31816167495,
-      "codehood_job_id":94818255947,
-      "foundation_run_id":31816167365,
-      "foundation_job_id":94818255473,
-      "cases": {
-        "deterministic_chunks_strata_and_caves":"PASS",
-        "deep_water_mass_conservation_and_gravity":"PASS",
-        "astar_supported_route_around_solid_terrain":"PASS",
-        "unsupported_granular_material_changes_occupancy":"PASS",
-        "grid_hidden_and_no_prerendered_sprite_cheats":"PASS",
-        "all_scratch_regressions":"PASS",
-        "syntax":"PASS",
-        "forge_fail_closed":"PASS"
-      }
-    },
+    "ci": {"status":"PASS","proof_pull_request":106,"codehood_run_id":31816167495,"codehood_job_id":94818255947,"foundation_run_id":31816167365,"foundation_job_id":94818255473},
     "truth": "persistent 2D cells are simulation state; default renderer hides the grid behind extracted/smoothed contours"
   },
-  "scratch_alife": {"verification_level":"CI_PASS","note":"The current ALife regression suite passed with the deep-world route planner, including sustained planted-foot locomotion along an active deep-world route."},
-  "scratch_environment": {"verification_level":"CI_PASS","note":"Standalone cave/gas/liquid tests remain valid for environment.js, but it is now a compatibility subsystem rather than the sole active world volume."},
-  "legacy_ecosystem_stack": {"status":"ARCHIVED_NOT_LOADED_BY_ACTIVE_ROUTE","note":"Previous V100-V110 and patch layers remain in repository files/history but are not imported by the active scratch route."},
+  "scratch_navigation": {
+    "verification_level": "TESTED",
+    "truth": "surface crawlers use surface routes; deep A* requires an explicitly compatible volume locomotion body",
+    "fresh_ci": "PENDING"
+  },
+  "scratch_alife": {"verification_level":"TESTED","note":"ALife source is unchanged, but its navigation integration changed and needs fresh regression CI."},
+  "scratch_environment": {"verification_level":"CI_PASS","note":"Standalone environment subsystem evidence remains valid."},
+  "legacy_ecosystem_stack": {"status":"ARCHIVED_NOT_LOADED_BY_ACTIVE_ROUTE"},
   "physical_creature_v1": {"status":"PRESERVED_PROOF_SLICE","verification_level":"CI_PASS","route":"/genesis-codehood/physical-creature-v1/"},
-  "active_objective": "Unify atmosphere/waste/surface fluids into the deep world so there is one authoritative environmental state, then make chunk LOD actually reduce distant simulation and extend the physical motor to execute stairs, drops, climbing and cave traversal from the same A* route.",
-  "next_gate": "Do not add civilization-scale complexity until one authoritative deep environment, real chunk scheduling and route-following motor traversal are causally integrated and freshly tested. LIVE_TESTED/DEVICE_TESTED still require deployed browser/iPhone execution.",
+  "active_objective": "Pass fresh CI for the locomotion-compatible navigation boundary, then exercise the deployed iPhone build for smoother routing and non-blocky cave/liquid presentation.",
+  "next_gate": "Fresh Codehood and Foundation CI must cover the corrected navigation integration. LIVE_TESTED and DEVICE_TESTED still require deployed browser/iPhone execution afterward.",
   "invariants": [
     "IMPLEMENTATION > NAME",
-    "No third-party runtime libraries in the active scratch engine",
-    "Active world simulation must use persistent state rather than decorative effects",
-    "Simulation cells may not be presented as visible block tiles in the default renderer",
-    "Physics nodes may not be rendered as circle-per-node creatures",
-    "Do not call the 2D material volume full 3D",
-    "Do not call cellular liquid transport CFD",
-    "Do not call authored gait muscle physiology",
-    "Do not call the ALife controller learning",
+    "Do not render simulation cells as visible block tiles",
+    "Do not give an agent a path its body locomotion cannot execute",
+    "Do not call the surface planner a general 2D navmesh",
+    "Do not call presentation interpolation physics",
+    "Do not call authored ALife learning",
     "CI_PASS does not imply LIVE_TESTED or DEVICE_TESTED"
   ],
   "updated": "2026-08-14"
