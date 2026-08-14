@@ -9,7 +9,7 @@
   "stable": {
     "label": "native-fluid-projection-v3-ci-pass",
     "verified": false,
-    "note": "The active 3D browser route remains the compiler-proven native material/fluid slice. Native body-to-material coupling V2 is promoted on main but isolated from the active browser route. World Weather V1 is a separate CI-passed candidate route until merge and Pages deployment. LIVE_TESTED and DEVICE_TESTED remain false unless actual deployed execution is observed."
+    "note": "The active 3D browser route remains the compiler-proven native material/fluid slice. Native body-to-material coupling V2 is promoted on main but isolated from the active browser route. World Weather V1 is promoted on main and both GitHub Pages deployment paths passed. Runtime browser execution and iPhone device execution remain unverified."
   },
   "active_experience": {
     "route": "/genesis-codehood/",
@@ -18,8 +18,8 @@
     "runtime": "from-scratch C++/WASM owns the active 3D material and fluid state; JavaScript only verifies/transfers native state and drives the from-scratch WebGPU volume renderer",
     "simulated_state": ["3D voxel material occupancy","sand gravity/collapse","signed per-water-cell vx/vy/vz","gravity and bounded velocity damping","measured discrete velocity divergence","iterative native pressure relaxation","pressure-gradient velocity projection","solid/boundary normal-velocity constraints","momentum-directed conservative water-voxel advection","native kinetic energy and signed XYZ momentum","sand moisture/cohesion and saturation weakening","suspended sediment","flow-speed-driven erosion/deposition","deterministic seeded state evolution including velocity/pressure"],
     "render_coupling": ["3D solid/water density derives from native occupancy","surface normals derive from native field gradients","sand wetness derives from native moisture","water turbidity derives from native suspended sediment","native pressure is dynamics/telemetry and never relabeled as sediment","water shape derives from simulated occupancy rather than animated geometry"],
-    "approximations": ["not validated Navier-Stokes CFD/SPH/MPM/FLIP/LBM","water is coarse binary voxel occupancy","pressure projection is a voxel-scale incompressibility constraint","advection moves water at most one neighboring voxel per substep","viscosity uses bounded damping","ray marching interpolates only for presentation","native body v1 is not loaded by the active browser route","world-weather is a separate candidate route","no active native learning/evolution yet"],
-    "browser_exercise": {"live_pages":"DEPLOYED_NOT_EXECUTED_AFTER_LATEST_PHYSICS_PROMOTION","iphone_safari":"NOT_DEVICE_TESTED"}
+    "approximations": ["not validated Navier-Stokes CFD/SPH/MPM/FLIP/LBM","water is coarse binary voxel occupancy","pressure projection is a voxel-scale incompressibility constraint","advection moves water at most one neighboring voxel per substep","viscosity uses bounded damping","ray marching interpolates only for presentation","native body v1 is not loaded by the active browser route","world-weather is a separate promoted route","no active native learning/evolution yet"],
+    "browser_exercise": {"live_pages":"DEPLOYED_NOT_RUNTIME_EXECUTED","iphone_safari":"NOT_DEVICE_TESTED"}
   },
   "native_cpp_kernel": {
     "verification_level": "CI_PASS",
@@ -65,10 +65,11 @@
   },
   "world_weather": {
     "verification_level": "CI_PASS",
-    "status": "PASS_BRANCH_CANDIDATE",
+    "status": "PROMOTED_ON_MAIN_DEPLOYED",
     "engineering_subphase": "world-atmosphere-hydrology-v1",
     "route": "/world-weather/",
-    "loaded_on_main": false,
+    "loaded_on_main": true,
+    "merge_sha": "2728d86d375c0746070c67294ec84be59030d54c",
     "model": "genesis-world-weather-v1",
     "model_version": "0x00010001",
     "source": "world-weather/weather.cpp",
@@ -79,15 +80,16 @@
     "causal_model": ["pressure gradients accelerate wind","wind transports humidity/cloud state","temperature-dependent saturation condenses humidity into cloud","cloud condensate above threshold precipitates rain","rain infiltrates soil or becomes mobile surface water","surface water follows local hydraulic head","persistent concentrated discharge diagnoses river cells","tornado cells require simultaneous resolved vorticity, pressure deficit, cloud, rain and wind"],
     "reference_fixture": {"cloud_cells":2362,"rain_cells":860,"river_cells":987,"max_discharge":13229,"deterministic_hash":2320738123},
     "browser_contract": ["browser reconstructs seven committed payload chunks","SHA-256 is verified before WebAssembly instantiation","unexpected imports fail boot","model version and 192x128 dimensions must match","renderer reads native elevation/cloud/rain/water/discharge/tornado exports","Math.random is forbidden from generating simulation state","visual smoothing is presentation-only"],
+    "post_merge_ci": {"weather_run_id":31851910240,"foundation_run_id":31851910193,"codehood_run_id":31851910228,"native_body_run_id":31851910227,"physical_creature_run_id":31851910187,"stable_lab_isolation":"PASS","pages_workflow_run_id":31851910206,"pages_native_run_id":31851909405,"pages_deploy":"PASS"},
     "truth": "This is a deterministic 2D surface atmosphere/hydrology layer, not DNS, LES, mesoscale NWP or a validated tornado forecast model. It does not claim the full 3D material volume has been expanded to 192x128xdepth. Tornado output is a resolved-field diagnostic and is never directly written by a timer or spawn animation.",
-    "browser_exercise": {"branch_ci":"PASS","pages_deploy":"NOT_YET_MERGED","live_runtime":"NOT_TESTED","iphone_safari":"NOT_DEVICE_TESTED"}
+    "browser_exercise": {"branch_ci":"PASS","post_merge_ci":"PASS","pages_deploy":"PASS","live_runtime":"NOT_TESTED","iphone_safari":"NOT_DEVICE_TESTED"}
   },
   "native_volume_renderer": {"verification_level":"CI_PASS","truth":"WebGPU ray marching is presentation over native 3D state; time-driven fake water-normal animation is forbidden; water normals derive from native water-density gradients and turbidity derives from native suspended sediment, never pressure."},
   "scratch_engine": {"status":"PRESERVED_NOT_LOADED_BY_ACTIVE_ROUTE","verification_level":"CI_PASS"},
   "legacy_ecosystem_stack": {"status":"ARCHIVED_NOT_LOADED_BY_ACTIVE_ROUTE"},
   "physical_creature_v1": {"status":"PRESERVED_PROOF_SLICE","verification_level":"CI_PASS","route":"/genesis-codehood/physical-creature-v1/"},
-  "active_objective": "Promote the 192x128 native atmosphere/hydrology map only after exact C++->WASM payload proof, browser native-state contract, Foundation regression and Pages deployment remain green.",
-  "next_gate": "After merge, verify World Weather, Foundation, Stable-vs-Lab and both Pages deployment paths. Then feed rainfall/runoff boundary conditions into the native 3D material volume before resuming hydrodynamic body-force work.",
+  "active_objective": "Couple the promoted 192x128 atmosphere/hydrology layer to the native 3D material world so real simulated rainfall/runoff enters volumetric water state and volumetric evaporation/topography can feed back into weather.",
+  "next_gate": "Prove deterministic two-way weather-to-volume water transfer and conservation/error telemetry before resuming hydrodynamic body-force work.",
   "next_scientific_blocker": "Two-way world coupling: the high-resolution surface weather layer and 3D material/fluid volume are both causal systems, but rainfall/runoff has not yet been injected into the volumetric material state and volumetric evaporation/topography feedback has not yet been returned to the weather layer.",
   "invariants": ["IMPLEMENTATION > NAME","one authoritative native body solver","one active scientific lane","C++/WASM owns simulation state","committed browser WASM must equal fresh compiler output","weather renderer must read native state rather than inventing simulation motion","tornado state cannot be directly timer-spawned","visual interpolation is not simulation resolution","pressure never masquerades as sediment/turbidity","do not call weather validated NWP/tornado forecasting","do not call fluid validated CFD","no external game/physics/render/simulation libraries","Stable-vs-Lab remains fail-closed","CI_PASS does not imply LIVE_TESTED or DEVICE_TESTED"],
   "updated": "2026-08-14"
