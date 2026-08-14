@@ -22,6 +22,14 @@ assert.match(renderer,/gradS\(/);
 assert.match(renderer,/softShadow\(/);
 assert.match(renderer,/shadeWater\(/);
 assert.doesNotMatch(renderer,/THREE|BABYLON|PlayCanvas|p5\.|pixi|matter\.js/i);
+
+const water=renderer.match(/fn shadeWater\([\s\S]*?\n}\nstruct O/);
+assert.ok(water,'water shader body must be inspectable');
+assert.match(water[0],/let n=-gradW\(p\)/,'water normal must come from simulated 3D water-density gradient');
+assert.match(water[0],/let v=sampleV\(p\)/,'water shading must consume native packed material state');
+assert.match(water[0],/turb=clamp\(v\.a/,'native suspended sediment must drive turbidity');
+assert.doesNotMatch(water[0],/u\.render\.z|sin\(|cos\(/,'water shading may not invent time-driven wave motion absent from physics');
+assert.match(renderer,/q\[o\+3\]=m===1\?wet:sed/,'native wetness/sediment channel must reach GPU texture');
 assert.match(worker,/solver\.v1\.wasm\.b64/);
 assert.match(cpp,/EXPORT\("genesis_step"\)/);
 
@@ -34,4 +42,4 @@ for(let i=0;i<16;i++)e.genesis_step(1);
 assert.notEqual(e.genesis_hash()>>>0,before);
 assert.equal(e.genesis_invariant(),1);
 assert.ok((e.genesis_sand_moves()>>>0)+(e.genesis_water_moves()>>>0)>0);
-console.log('PASS active GENESIS: native C++/WASM state + true WebGPU 3D volume ray renderer; flat Canvas projection forbidden');
+console.log('PASS active GENESIS: native C++/WASM state + WebGPU 3D volume renderer; flat Canvas and fake time-driven water motion forbidden');
