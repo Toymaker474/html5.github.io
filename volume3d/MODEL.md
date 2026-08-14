@@ -1,35 +1,46 @@
-# GENESIS Materials 0.3 — Volumetric C++ / WebAssembly
+# GENESIS Materials 0.4 — Native 3D Momentum + Pressure Projection
 
 Status: LAB CANDIDATE.
 
-## Representation
-The simulation state is a genuine 3D `x × y × z` voxel volume. Each cell stores one coarse material occupancy (empty, sand, water, or rock), plus moisture on sand and a sediment load on water. The browser executes the solver as WebAssembly compiled from `solver.cpp`. WebGPU renders that state as perspective 3D geometry with a depth buffer.
+## State
+The solver is from-scratch C++ compiled to WebAssembly over a real `x × y × z` volume. Each cell stores coarse material occupancy (empty, sand, water, rock), sand moisture and water-borne sediment. Water cells additionally carry signed fixed-point velocity `(vx, vy, vz)` plus a native pressure field.
 
-This removes the 0.2 heightfield restriction: material can occupy multiple vertical layers and can form overhangs, cavities, columns and buried structures within voxel resolution.
+WebGPU is presentation only. It consumes the packed native material field; the renderer does not create physical wave motion.
 
-## Rules
-- Gravity: unsupported sand and water fall vertically.
-- Granular settling: blocked sand may move diagonally downward into open neighboring volume.
-- Wet cohesion: moisture reduces the probability of lateral/diagonal sand failure, so wet structures can retain steeper voxel-scale shapes.
-- Water transport: water prefers downward and downward-diagonal empty volume, then lateral empty volume.
-- Wetting: sand adjacent to water gains moisture; moisture decays gradually away from water.
-- Erosion: exposed dry sand next to water can become sediment carried by that water voxel.
-- Deposition: sediment-bearing water can deposit a sand voxel onto a supported neighboring empty cell.
-- Sand-mass accounting includes both settled sand voxels and sediment carried by water.
+## Fluid update
+For each native step:
+1. Gravity and bounded damping update water momentum.
+2. Discrete velocity divergence is measured over neighboring water cells.
+3. A pressure Poisson approximation is relaxed repeatedly in the native C++ volume.
+4. The pressure gradient is subtracted from velocity.
+5. Solid and world-boundary normal velocity is clamped.
+6. The projection is repeated, then divergence is measured again.
+7. Water voxels advect at most one neighboring cell from the projected velocity field.
+8. Native kinetic energy, signed XYZ momentum and pressure magnitude are recomputed.
 
-## Determinism
-The C++ reference path uses an explicit xorshift32 PRNG and deterministic scan order for a fixed build, seed, dimensions and command sequence. Cross-compiler bit-identical WASM bytes are not promised; CI compares model outputs instead of binary identity.
+Internal stepping conserves the number of water voxels. Fixed-seed replay hashes include water velocity and pressure, not occupancy alone.
+
+## Material coupling
+- Unsupported sand still collapses under gravity.
+- Adjacent water drives sand moisture.
+- Soil strength uses a bounded capillary-cohesion peak and saturation weakening approximation.
+- Erosion consumes local simulated water speed and soil strength.
+- Suspended sediment is conserved as sand mass and can deposit in slow supported flow.
+- The GPU turbidity channel remains actual native sediment. Pressure is never relabeled as sediment or visual turbidity.
 
 ## Validation gates
 - Native C++ fixture.
-- Freshly compiled WebAssembly fixture.
-- Committed browser WebAssembly fixture.
-- Native/WASM semantic result comparison.
+- Fresh C++ → WebAssembly fixture.
+- Exact committed browser WebAssembly fixture.
+- Fresh/committed semantic equality.
+- Water-voxel conservation.
 - Sand-mass conservation through erosion/deposition.
-- Water-voxel conservation under internal stepping.
-- Fixed-seed replay hash.
-- Explicit 3D dimension checks.
-- Previous Matter 0.6, Materials 0.1 and Materials 0.2 regression suites remain required.
+- Impulse produces native signed momentum and kinetic energy.
+- Pressure projection must not increase measured discrete divergence on the impulse fixture.
+- Gravity fixture produces downward native momentum.
+- Fixed-seed + fixed-impulse deterministic replay.
+- Invariant forbids velocity/pressure on non-water cells.
+- Active renderer must consume native sediment for water turbidity and may not invent time-driven wave motion.
 
 ## Non-claims
-This is not discrete-element-method grain mechanics, CFD/Navier–Stokes/SPH/MPM/FLIP, geotechnical validation, literal micron-scale grains, photoreal Unreal Engine rendering, global illumination, biological evolution, creatures, or finished GENESIS. Each voxel represents a coarse material volume. The renderer's micro-grain shading is presentation derived from state, not extra simulated particles.
+This is **not validated Navier–Stokes CFD**, SPH, MPM, FLIP, LBM or an engineering fluid package. The free surface remains coarse binary voxel occupancy and advection is discrete neighbor transport rather than continuous characteristic tracing. Pressure projection is a real native dynamics constraint, but spatial accuracy is voxel-scale and viscosity is approximated by bounded damping. Do not call it full CFD.

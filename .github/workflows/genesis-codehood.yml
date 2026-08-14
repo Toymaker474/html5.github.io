@@ -1,9 +1,9 @@
 name: GENESIS Codehood Verify
 on:
   push:
-    paths: ['genesis-codehood/**','volume3d/**','project/state.json','.github/workflows/genesis-codehood.yml']
+    paths: ['genesis-codehood/**','volume3d/**','project/state.json','forge/audit-core.js','.github/workflows/genesis-codehood.yml']
   pull_request:
-    paths: ['genesis-codehood/**','volume3d/**','project/state.json','.github/workflows/genesis-codehood.yml']
+    paths: ['genesis-codehood/**','volume3d/**','project/state.json','forge/audit-core.js','.github/workflows/genesis-codehood.yml']
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -19,23 +19,16 @@ jobs:
       - name: Syntax check modules
         working-directory: genesis-codehood
         run: npm run check
-      - name: Compile and test native C++ water physics
+      - name: Compile and test native C++ pressure projection
         run: |
-          c++ -std=c++17 -O2 volume3d/momentum_test.cpp -o /tmp/genesis-volume3d-test
+          set -euo pipefail
+          c++ -std=c++17 -O2 volume3d/solver_test.cpp -o /tmp/genesis-volume3d-test
           /tmp/genesis-volume3d-test
-      - name: Verify committed WASM v2 payload boots
+      - name: Rebuild WASM and prove exact promoted v3 payload
         run: |
-          node - <<'NODE'
-          const fs=require('fs');
-          const bin=Buffer.from(fs.readFileSync('volume3d/solver.v2.wasm.b64','utf8').trim(),'base64');
-          WebAssembly.instantiate(bin,{}).then(({instance})=>{
-            const e=instance.exports;
-            if((e.genesis_model_version()>>>0)!==0x00030002) throw Error('wrong native model version');
-            e.genesis_init(32,24,32,123456,72); e.genesis_seed_scene();
-            if(!e.genesis_pressure_sum || e.genesis_pressure_sum()===0) throw Error('pressure state missing');
-            e.genesis_step(2);
-            if(!e.genesis_water_momentum || e.genesis_water_momentum()===0) throw Error('momentum state missing');
-            if(e.genesis_invariant()!==1) throw Error('native invariant failed');
-            console.log('PASS committed WASM v2 momentum/pressure boot');
-          }).catch(e=>{console.error(e);process.exit(1)});
-          NODE
+          set -euo pipefail
+          clang++ --target=wasm32 -std=c++17 -O3 -nostdlib -fno-exceptions -fno-rtti volume3d/solver.cpp \
+            -Wl,--no-entry -Wl,--export-all -Wl,--export-memory -Wl,--initial-memory=4194304 -Wl,--max-memory=4194304 \
+            -o /tmp/genesis-volume.wasm
+          test -s /tmp/genesis-volume.wasm
+          node volume3d/wasm.test.mjs /tmp/genesis-volume.wasm
