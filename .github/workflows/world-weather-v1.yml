@@ -1,0 +1,53 @@
+name: GENESIS World Weather V1
+on:
+  push:
+    paths: ['world-weather/**','.github/workflows/world-weather-v1.yml']
+  pull_request:
+    branches: [main]
+    paths: ['world-weather/**','.github/workflows/world-weather-v1.yml']
+jobs:
+  verify-world-weather:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail-closed source and truth gate
+        run: |
+          set -euo pipefail
+          test -f world-weather/weather.cpp
+          test -f world-weather/weather_test.cpp
+          test -f world-weather/weather_wasm.test.mjs
+          test -f world-weather/MODEL.md
+          ! grep -R -E '#include[[:space:]]*[<"](bullet|box2d|jolt|physx|three|babylon|unity|unreal|glm|eigen)' world-weather
+          grep -q '192×128' world-weather/MODEL.md
+          grep -q 'not spawned or animated by a timer' world-weather/MODEL.md
+          grep -q 'not DNS' world-weather/MODEL.md
+      - name: Compile native atmosphere and hydrology
+        run: |
+          set -euo pipefail
+          clang++ -std=c++17 -O2 -Wall -Wextra -pedantic world-weather/weather_test.cpp -o /tmp/genesis-world-weather-v1
+      - name: Execute causal native tests
+        run: |
+          set -euo pipefail
+          /tmp/genesis-world-weather-v1 | tee world-weather-native.txt
+          grep -q 'PASS GENESIS high-resolution atmosphere hydrology' world-weather-native.txt
+      - name: Compile freestanding C++ to WebAssembly
+        run: |
+          set -euo pipefail
+          clang++ --target=wasm32 -std=c++17 -O3 -nostdlib -fno-exceptions -fno-rtti world-weather/weather.cpp \
+            -Wl,--no-entry -Wl,--export-all -Wl,--export-memory -Wl,--initial-memory=8388608 -Wl,--max-memory=8388608 \
+            -o /tmp/genesis-world-weather-v1.wasm
+          test -s /tmp/genesis-world-weather-v1.wasm
+      - name: Verify native WASM semantic parity
+        run: |
+          set -euo pipefail
+          node world-weather/weather_wasm.test.mjs /tmp/genesis-world-weather-v1.wasm | tee world-weather-wasm.txt
+          grep -q 'PASS GENESIS world weather C++ -> WASM semantic parity' world-weather-wasm.txt
+      - name: Preserve weather evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: genesis-world-weather-v1-${{ github.run_id }}
+          path: |
+            world-weather-native.txt
+            world-weather-wasm.txt
+          if-no-files-found: ignore
