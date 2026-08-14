@@ -36,20 +36,21 @@ export function solveTerrainContact(world,p,dt,opts={}){
 }
 
 export function stanceTraction(world,c,leg,demand,dt,opts={}){
-  if(!leg.stance||demand<=0)return{applied:false,impulse:0,limit:0};
+  if(!leg.stance||demand<=0)return{applied:false,impulse:0,limit:0,slipping:false,slipRatio:0};
   const anchor=c.nodes[leg.anchor],foot=leg.foot,frame=terrainFrame(world,foot.x),mat=terrainMaterial(world,foot.x),stanceCount=Math.max(1,c.legs.reduce((n,l)=>n+(l.stance?1:0),0));
   const bodyMass=c.nodes.reduce((s,n)=>s+(n.m??1),0)+c.legs.length*.55;
   const supportForce=bodyMass*(opts.gravity??110)/stanceCount;
   const muscleForce=(opts.muscleForce??54)*clamp(demand,0,1.25)*clamp(.35+.65*c.energy,0,1)*clamp(1-c.fatigue*.62,.2,1);
-  const frictionLimit=mat.muStatic*supportForce,force=Math.min(muscleForce,frictionLimit),impulse=force*dt;
+  const staticLimit=mat.muStatic*supportForce,kineticLimit=mat.muKinetic*supportForce,slipping=muscleForce>staticLimit;
+  const force=slipping?kineticLimit:muscleForce,slipRatio=slipping?clamp((muscleForce-staticLimit)/Math.max(EPS,muscleForce),0,1):0,impulse=force*dt;
   const dir=c.dir||1,dvx=frame.tx*dir*impulse,dvy=frame.ty*dir*impulse;
   applyVelocityDelta(anchor,dvx,dvy,dt);applyVelocityDelta(foot,-dvx,-dvy,dt);
-  return{applied:true,impulse,limit:frictionLimit*dt,muStatic:mat.muStatic,supportForce,muscleForce,tx:frame.tx*dir,ty:frame.ty*dir};
+  return{applied:true,impulse,limit:staticLimit*dt,kineticLimit:kineticLimit*dt,muStatic:mat.muStatic,muKinetic:mat.muKinetic,supportForce,muscleForce,appliedForce:force,slipping,slipRatio,tx:frame.tx*dir,ty:frame.ty*dir};
 }
 
 export const CONTACT_PHYSICS_META={
   solver:'Verlet point-mass terrain contact with slope-normal projection, restitution and Coulomb static/kinetic friction',
-  traction:'equal-and-opposite stance impulses capped by muscle force and friction-limited support force',
+  traction:'equal-and-opposite stance impulses with static-friction breakaway, kinetic-slip force and explicit slip ratio',
   terrainCoupling:['surface_slope','moisture','surface_water','roots','sediment'],
   externalPhysicsLibrary:false,
   rigidBodyClaim:false
