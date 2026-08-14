@@ -1,0 +1,40 @@
+name: GENESIS Native Body Coupling V1
+on:
+  push:
+    paths: ['native-body/**','volume3d/**','.github/workflows/native-body-coupling-v1.yml']
+  pull_request:
+    branches: [main]
+    paths: ['native-body/**','volume3d/**','.github/workflows/native-body-coupling-v1.yml']
+jobs:
+  verify-native-coupling:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail-closed coupling source gate
+        run: |
+          set -euo pipefail
+          test -f native-body/coupled.cpp
+          test -f native-body/coupled_test.cpp
+          test -f native-body/COUPLING.md
+          test -f native-body/body.cpp
+          test -f volume3d/solver.cpp
+          grep -q "genesis_coupled_sync_solids" native-body/coupled.cpp
+          grep -q "WATER.*not.*solid\|not.*treated as solid" native-body/COUPLING.md
+          grep -q "32 × 24 × 32" native-body/COUPLING.md
+          ! grep -R -E "#include <(box2d|bullet|jolt|physx|ode|chipmunk|glm|eigen|three|babylon)" native-body
+      - name: Compile combined native material plus articulated body engine
+        run: |
+          set -euo pipefail
+          clang++ -std=c++17 -O2 -Wall -Wextra native-body/coupled_test.cpp -o /tmp/genesis-native-coupled-v1
+      - name: Execute causal material contact tests
+        run: |
+          set -euo pipefail
+          /tmp/genesis-native-coupled-v1 | tee native-body-coupling-test.txt
+          grep -q "PASS GENESIS coupled native C++" native-body-coupling-test.txt
+      - name: Preserve coupling evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: genesis-native-body-coupling-v1-${{ github.run_id }}
+          path: native-body-coupling-test.txt
+          if-no-files-found: ignore
