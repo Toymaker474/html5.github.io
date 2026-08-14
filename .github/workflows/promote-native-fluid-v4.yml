@@ -1,0 +1,72 @@
+name: GENESIS Promote Native Fluid V4
+
+on:
+  push:
+    branches: [native-fluid-projection-v1]
+    paths:
+      - 'volume3d/solver.v4.wasm.b64'
+      - 'volume3d/worker_v4.js'
+      - '.github/workflows/promote-native-fluid-v4.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  promote-native-route:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: native-fluid-projection-v1
+          fetch-depth: 0
+
+      - name: Fail-closed native route promotion
+        run: |
+          set -euo pipefail
+          test -s volume3d/solver.v4.wasm.b64
+          test -s volume3d/worker_v4.js
+          python3 - <<'PY'
+          from pathlib import Path
+
+          src=Path('genesis-codehood/native-main.js').read_text()
+          old='../volume3d/worker.js?v=native-active-2'
+          if old not in src:
+              raise SystemExit('FAIL: verified native bridge worker URL changed; refusing blind promotion')
+          out=src.replace(old,'../volume3d/worker_v4.js?v=cpp-fluid-v4',1)
+          if out.count('worker_v4.js') != 1:
+              raise SystemExit('FAIL: worker v4 routing is ambiguous')
+          # Keep renderer/input code byte-for-byte except telemetry labels and the worker URL.
+          out=out.replace('<b>C++/WASM</b>','<b>C++/WASM FLUID v4</b>')
+          needle=' · invariant ${inv} · WASM '
+          if needle not in out:
+              raise SystemExit('FAIL: telemetry insertion anchor changed; refusing cosmetic guess')
+          fluid=' · div ${meta.divergenceBefore.toFixed(4)}→${meta.divergenceAfter.toFixed(4)} · KE ${meta.kineticEnergy.toFixed(2)} · P[${meta.momentumX.toFixed(1)},${meta.momentumY.toFixed(1)},${meta.momentumZ.toFixed(1)}]'
+          out=out.replace(needle,fluid+needle,1)
+          Path('genesis-codehood/native-v4-main.js').write_text(out)
+
+          index=Path('genesis-codehood/index.html').read_text()
+          if './native-main.js?v=ray-volume-1' not in index:
+              raise SystemExit('FAIL: active native script anchor changed; refusing blind route update')
+          index=index.replace('GENESIS — Native C++ Volumetric World','GENESIS — Native C++ Fluid World',1)
+          index=index.replace('GENESIS</b> // C++ VOLUMETRIC WORLD','GENESIS</b> // C++ FLUID WORLD',1)
+          index=index.replace('C++ owns matter · WebGPU ray-marches the 3D volume','C++ owns matter + 3D fluid momentum · WebGPU ray-marches the native volume',1)
+          index=index.replace('./native-main.js?v=ray-volume-1','./native-v4-main.js?v=cpp-fluid-v4',1)
+          Path('genesis-codehood/index.html').write_text(index)
+          PY
+          node --check genesis-codehood/native-v4-main.js
+          grep -q 'worker_v4.js' genesis-codehood/native-v4-main.js
+          ! grep -q "getContext('2d')" genesis-codehood/native-v4-main.js
+          grep -q 'native-v4-main.js' genesis-codehood/index.html
+
+      - name: Commit generated active route
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- genesis-codehood/native-v4-main.js genesis-codehood/index.html; then
+            echo 'Native v4 route already promoted.'
+            exit 0
+          fi
+          git config user.name 'GENESIS Native Builder'
+          git config user.email 'actions@users.noreply.github.com'
+          git add genesis-codehood/native-v4-main.js genesis-codehood/index.html
+          git commit -m 'Promote native fluid v4 into active GENESIS route'
+          git push origin HEAD:native-fluid-projection-v1
