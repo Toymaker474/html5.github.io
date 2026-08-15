@@ -1,10 +1,10 @@
 name: GENESIS True 3D Weather V2
 on:
   push:
-    paths: ['world-weather/weather3d*','.github/workflows/world-weather-3d-v2.yml']
+    paths: ['world-weather/weather3d*','world-weather/index.html','.github/workflows/world-weather-3d-v2.yml']
   pull_request:
     branches: [main]
-    paths: ['world-weather/weather3d*','.github/workflows/world-weather-3d-v2.yml']
+    paths: ['world-weather/weather3d*','world-weather/index.html','.github/workflows/world-weather-3d-v2.yml']
 jobs:
   verify-true-3d-weather:
     runs-on: ubuntu-latest
@@ -16,11 +16,21 @@ jobs:
           test -f world-weather/weather3d.cpp
           test -f world-weather/weather3d_test.cpp
           test -f world-weather/weather3d_wasm.test.mjs
+          test -f world-weather/weather3d_browser.test.mjs
+          test -f world-weather/weather3d-view.js
+          test -f world-weather/weather3d.manifest.json
+          test -f world-weather/index.html
           test -f world-weather/wasm_runtime.cpp
+          for i in 0 1 2 3 4 5; do test -s "world-weather/weather3d.wasm.part${i}.b64"; done
           grep -q 'W=96,H=48,D=96' world-weather/weather3d.cpp
           grep -q 'genesis_weather3d_cloud_ptr' world-weather/weather3d.cpp
           grep -q 'vortY' world-weather/weather3d.cpp
+          grep -q "getContext('webgpu')" world-weather/weather3d-view.js
+          grep -q '442,368 simulated atmosphere cells' world-weather/index.html
+          ! grep -q "getContext('2d')" world-weather/weather3d-view.js
           ! grep -R -E '#include[[:space:]]*[<"](three|babylon|unity|unreal|bullet|box2d|jolt|physx|glm|eigen)' world-weather/weather3d.cpp world-weather/weather3d_test.cpp
+          ! grep -Ei '(three\.js|babylon|playcanvas|pixi|matter\.js|p5\.js)' world-weather/weather3d-view.js world-weather/index.html
+          node --check world-weather/weather3d-view.js
       - name: Compile native 3D atmosphere hydrology
         run: |
           set -euo pipefail
@@ -40,20 +50,41 @@ jobs:
             -o /tmp/genesis-weather3d.wasm
           test -s /tmp/genesis-weather3d.wasm
           sha256sum /tmp/genesis-weather3d.wasm | tee world-weather-3d-wasm.sha256
-          wc -c /tmp/genesis-weather3d.wasm | tee world-weather-3d-wasm.bytes
+          test "$(wc -c < /tmp/genesis-weather3d.wasm)" = "13433"
+          test "$(sha256sum /tmp/genesis-weather3d.wasm | cut -d' ' -f1)" = "91491be5228fd3724ffb173b11e769d574eda164b98e21d08fbbb40bb2f21db8"
+      - name: Prove committed browser WASM equals fresh compiler output
+        run: |
+          set -euo pipefail
+          cat world-weather/weather3d.wasm.part{0,1,2,3,4,5}.b64 > /tmp/weather3d-committed.b64
+          base64 -d /tmp/weather3d-committed.b64 > /tmp/weather3d-committed.wasm
+          echo "committed_bytes=$(wc -c < /tmp/weather3d-committed.wasm)"
+          echo "committed_sha=$(sha256sum /tmp/weather3d-committed.wasm | cut -d' ' -f1)"
+          test "$(wc -c < /tmp/weather3d-committed.wasm)" = "13433"
+          test "$(sha256sum /tmp/weather3d-committed.wasm | cut -d' ' -f1)" = "91491be5228fd3724ffb173b11e769d574eda164b98e21d08fbbb40bb2f21db8"
+          cmp -s /tmp/genesis-weather3d.wasm /tmp/weather3d-committed.wasm
       - name: Verify native and WebAssembly semantics
         run: |
           set -euo pipefail
           node world-weather/weather3d_wasm.test.mjs /tmp/genesis-weather3d.wasm | tee world-weather-3d-wasm.txt
           grep -q 'PASS GENESIS true 3D weather C++ -> freestanding WASM semantic parity' world-weather-3d-wasm.txt
-      - name: Preserve exact compiler payload
+          node world-weather/weather3d_wasm.test.mjs /tmp/weather3d-committed.wasm | tee world-weather-3d-promoted.txt
+          grep -q 'PASS GENESIS true 3D weather C++ -> freestanding WASM semantic parity' world-weather-3d-promoted.txt
+      - name: Verify true 3D browser contract
+        run: |
+          set -euo pipefail
+          node world-weather/weather3d_browser.test.mjs | tee world-weather-3d-browser.txt
+          grep -q 'PASS GENESIS true 3D browser contract' world-weather-3d-browser.txt
+      - name: Preserve exact compiler evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: genesis-true-3d-weather-v2-${{ github.run_id }}
           path: |
             /tmp/genesis-weather3d.wasm
+            /tmp/weather3d-committed.wasm
             world-weather-3d-native.txt
             world-weather-3d-wasm.txt
+            world-weather-3d-promoted.txt
+            world-weather-3d-browser.txt
             world-weather-3d-wasm.sha256
-            world-weather-3d-wasm.bytes
-          if-no-files-found: error
+          if-no-files-found: ignore
