@@ -1,6 +1,7 @@
 const EXPECTED_SHA='91491be5228fd3724ffb173b11e769d574eda164b98e21d08fbbb40bb2f21db8';
 const PARTS=[
-  'weather3d.wasm.part0.b64','weather3d.wasm.part1.b64','weather3d.wasm.part2.b64',
+  'weather3d.wasm.part0.b64','weather3d.wasm.part1.b64',
+  'weather3d.wasm.part2a.b64','weather3d.wasm.part2b.b64','weather3d.wasm.part2c.b64',
   'weather3d.wasm.part3.b64','weather3d.wasm.part4.b64','weather3d.wasm.part5.b64'
 ];
 const W=96,H=48,D=96,N=W*H*D,SN=W*D;
@@ -20,6 +21,7 @@ async function fetchTextRetry(url){let err;for(let n=0;n<3;n++){try{const r=awai
 async function loadNative(){
   $('boot').textContent='VERIFYING C++ → WASM…';
   const manifest=await fetch(`weather3d.manifest.json?v=${EXPECTED_SHA.slice(0,12)}`,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(`manifest HTTP ${r.status}`);return r.json();});
+  if(JSON.stringify(manifest.payload_parts)!==JSON.stringify(PARTS))throw new Error('native payload manifest/loader mismatch');
   const chunks=await Promise.all(PARTS.map(p=>fetchTextRetry(`${p}?v=${EXPECTED_SHA.slice(0,12)}`)));
   const bytes=decodeBase64(chunks.map(x=>x.trim()).join(''));
   if(bytes.byteLength!==13433||bytes.byteLength!==manifest.wasm_bytes)throw new Error(`WASM bytes ${bytes.byteLength} != 13433`);
@@ -65,7 +67,7 @@ struct Params { aspect:f32, yaw:f32, pitch:f32, radius:f32, exposure:f32, cloudG
 @group(0) @binding(2) var<uniform> params:Params;
 
 const W:f32=96.0; const H:f32=48.0; const D:f32=96.0;
-const SUN:vec3<f32>=normalize(vec3<f32>(0.55,0.78,-0.31));
+const SUN:vec3<f32>=vec3<f32>(0.548,0.777,-0.309);
 struct VOut { @builtin(position) pos:vec4<f32>, @location(0) uv:vec2<f32> };
 
 @vertex fn vs(@builtin(vertex_index) i:u32)->VOut{
@@ -119,12 +121,12 @@ fn cloudLight(p:vec3<f32>,n:vec3<f32>)->f32{
   let f=normalize(target-ro);let r=normalize(cross(f,vec3<f32>(0.0,1.0,0.0)));let u=cross(r,f);
   let ndc=i.uv*2.0-1.0;let rd=normalize(f+r*ndc.x*params.aspect*0.72+u*ndc.y*0.72);
   let hit=boxHit(ro,rd);var col=sky(rd);if(hit.y<=max(hit.x,0.0)){return vec4<f32>(col,1.0);}
-  var t=max(hit.x,0.0);let end=hit.y;let ds=max((end-t)/104.0,0.35);var trans=1.0;var accum=vec3<f32>(0.0);var ground=false;
+  var t=max(hit.x,0.0);let end=hit.y;let ds=max((end-t)/104.0,0.35);var trans=1.0;var accum=vec3<f32>(0.0);
   for(var s:i32=0;s<116;s++){
     if(t>end||trans<0.018){break;}let p=ro+rd*t;
     let xi=clamp(i32(p.x),0,95);let zi=clamp(i32(p.z),0,95);let sf=surf(xi,zi);
     if(p.y<=sf.x+0.22){
-      let n=terrainNormal(xi,zi);let gc=groundColor(sf.x,sf.y,sf.z,n);accum+=trans*gc;trans=0.0;ground=true;break;
+      let n=terrainNormal(xi,zi);let gc=groundColor(sf.x,sf.y,sf.z,n);accum+=trans*gc;trans=0.0;break;
     }
     let a=aSample(p);let c=smoothstep(0.08,0.74,a.x)*params.cloudGain;let rain=smoothstep(0.01,0.35,a.y);let torn=a.z;
     let density=c*0.105+rain*0.020+torn*0.075;
@@ -151,8 +153,10 @@ async function initGPU(){
   atmoBuffer=device.createBuffer({size:N*4,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST});
   surfaceBuffer=device.createBuffer({size:SN*4,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST});
   uniformBuffer=device.createBuffer({size:32,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+  device.pushErrorScope('validation');
   const module=device.createShaderModule({code:WGSL});
   pipeline=device.createRenderPipeline({layout:'auto',vertex:{module,entryPoint:'vs'},fragment:{module,entryPoint:'fs',targets:[{format}]},primitive:{topology:'triangle-list'}});
+  const validation=await device.popErrorScope();if(validation)throw new Error('WebGPU shader/pipeline: '+validation.message);
   bindGroup=device.createBindGroup({layout:pipeline.getBindGroupLayout(0),entries:[{binding:0,resource:{buffer:atmoBuffer}},{binding:1,resource:{buffer:surfaceBuffer}},{binding:2,resource:{buffer:uniformBuffer}}]});
 }
 
