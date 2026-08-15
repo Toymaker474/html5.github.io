@@ -12,7 +12,9 @@
   "payload_parts": [
     "weather3d.wasm.part0.b64",
     "weather3d.wasm.part1.b64",
-    "weather3d.wasm.part2.b64",
+    "weather3d.wasm.part2a.b64",
+    "weather3d.wasm.part2b.b64",
+    "weather3d.wasm.part2c.b64",
     "weather3d.wasm.part3.b64",
     "weather3d.wasm.part4.b64",
     "weather3d.wasm.part5.b64"
