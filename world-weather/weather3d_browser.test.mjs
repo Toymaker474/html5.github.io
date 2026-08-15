@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 const manifest=JSON.parse(fs.readFileSync('world-weather/weather3d.manifest.json','utf8'));
-const parts=manifest.payload_parts.map(n=>fs.readFileSync(`world-weather/${n}`,'utf8').trim()).join('');
-const bytes=Buffer.from(parts,'base64');
+if(manifest.wasm_file!=='weather3d.wasm')throw new Error('browser must consume direct compiler-produced WASM');
+const bytes=fs.readFileSync(`world-weather/${manifest.wasm_file}`);
 const sha=crypto.createHash('sha256').update(bytes).digest('hex');
 if(bytes.length!==13433||bytes.length!==manifest.wasm_bytes)throw new Error(`browser payload bytes=${bytes.length}`);
 if(sha!=='91491be5228fd3724ffb173b11e769d574eda164b98e21d08fbbb40bb2f21db8'||sha!==manifest.wasm_sha256)throw new Error(`browser payload SHA=${sha}`);
@@ -16,8 +16,8 @@ let vertical=0;for(let y=8;y<40;y++)if(e.genesis_weather3d_cloud_at(52,y,48)>700
 const page=fs.readFileSync('world-weather/index.html','utf8');
 const ui=fs.readFileSync('world-weather/weather3d-view.js','utf8');
 for(const s of ['442,368 simulated atmosphere cells','96×48×96','C++/WASM','WEBGPU VOLUME','weather3d-view.js'])if(!page.includes(s))throw new Error(`missing active truth label ${s}`);
-for(const s of ["getContext('webgpu')",'var<storage,read> atmo','boxHit(','cloudNormal(','genesis_weather3d_cloud_ptr','genesis_weather3d_tornado_ptr','genesis_weather3d_terrain_ptr','device.queue.writeBuffer'])if(!ui.includes(s))throw new Error(`missing true 3D browser mechanism ${s}`);
-for(const forbidden of ["getContext('2d')",'weather-view.js','THREE.','three.js','babylon','Math.random'])if(ui.includes(forbidden)||page.includes(forbidden))throw new Error(`forbidden flat/fake/browser mechanism ${forbidden}`);
+for(const s of ["weather3d.wasm", "getContext('webgpu')",'var<storage,read> atmo','boxHit(','cloudNormal(','genesis_weather3d_cloud_ptr','genesis_weather3d_tornado_ptr','genesis_weather3d_terrain_ptr','device.queue.writeBuffer'])if(!ui.includes(s))throw new Error(`missing true 3D browser mechanism ${s}`);
+for(const forbidden of ["getContext('2d')",'weather-view.js','THREE.','three.js','babylon','Math.random','.wasm.part'])if(ui.includes(forbidden)||page.includes(forbidden))throw new Error(`forbidden flat/fake/legacy browser mechanism ${forbidden}`);
 if(/from\s+['\"][^'\"]+['\"]/.test(ui))throw new Error('active 3D renderer must not import external JS libraries');
 console.log(JSON.stringify({model:manifest.model,bytes:bytes.length,sha256:sha,imports:imports.length,resolution:'96x48x96',cells:442368,verticalCloudCells:vertical,cloudCells:e.genesis_weather3d_cloud_cells(),tornadoCells:e.genesis_weather3d_tornado_cells()}));
-console.log('PASS GENESIS true 3D browser contract: exact C++ WASM + WebGPU perspective volume; Canvas2D forbidden');
+console.log('PASS GENESIS true 3D browser contract: direct compiler C++ WASM + WebGPU perspective volume; Canvas2D forbidden');
