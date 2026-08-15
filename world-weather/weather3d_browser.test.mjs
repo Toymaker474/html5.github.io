@@ -19,5 +19,10 @@ for(const s of ['442,368 simulated atmosphere cells','96×48×96','C++/WASM','WE
 for(const s of ["weather3d.wasm", "getContext('webgpu')",'var<storage,read> atmo','boxHit(','cloudNormal(','genesis_weather3d_cloud_ptr','genesis_weather3d_tornado_ptr','genesis_weather3d_terrain_ptr','device.queue.writeBuffer'])if(!ui.includes(s))throw new Error(`missing true 3D browser mechanism ${s}`);
 for(const forbidden of ["getContext('2d')",'weather-view.js','THREE.','three.js','babylon','Math.random','.wasm.part'])if(ui.includes(forbidden)||page.includes(forbidden))throw new Error(`forbidden flat/fake/legacy browser mechanism ${forbidden}`);
 if(/from\s+['\"][^'\"]+['\"]/.test(ui))throw new Error('active 3D renderer must not import external JS libraries');
-console.log(JSON.stringify({model:manifest.model,bytes:bytes.length,sha256:sha,imports:imports.length,resolution:'96x48x96',cells:442368,verticalCloudCells:vertical,cloudCells:e.genesis_weather3d_cloud_cells(),tornadoCells:e.genesis_weather3d_tornado_cells()}));
-console.log('PASS GENESIS true 3D browser contract: direct compiler C++ WASM + WebGPU perspective volume; Canvas2D forbidden');
+const shader=ui.match(/const WGSL=String\.raw`([\s\S]*?)`;/)?.[1];
+if(!shader)throw new Error('WGSL source missing from active renderer');
+if(/\b(?:let|var|const)\s+[A-Za-z_]\w*\s*=[^\n;]+,\s*[A-Za-z_]\w*\s*=/.test(shader))throw new Error('WGSL contains C++/JS-style comma multi-declaration rejected by Safari');
+if(/\b1\.0\s*\/\s*rd\b/.test(shader))throw new Error('WGSL scalar/vector reciprocal is not explicit enough for portable validation');
+if(!shader.includes('let ex=vec3<f32>(1.0,0.0,0.0);')||!shader.includes('let ey=vec3<f32>(0.0,1.0,0.0);')||!shader.includes('let ez=vec3<f32>(0.0,0.0,1.0);'))throw new Error('portable cloud gradient basis declarations missing');
+console.log(JSON.stringify({model:manifest.model,bytes:bytes.length,sha256:sha,imports:imports.length,resolution:'96x48x96',cells:442368,verticalCloudCells:vertical,cloudCells:e.genesis_weather3d_cloud_cells(),tornadoCells:e.genesis_weather3d_tornado_cells(),wgslPortableDeclarations:true}));
+console.log('PASS GENESIS true 3D browser contract: direct compiler C++ WASM + WebGPU perspective volume; Canvas2D forbidden; Safari WGSL regression guarded');
