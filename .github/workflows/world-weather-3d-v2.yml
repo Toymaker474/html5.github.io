@@ -21,7 +21,12 @@ jobs:
           test -f world-weather/weather3d.manifest.json
           test -f world-weather/index.html
           test -f world-weather/wasm_runtime.cpp
-          for i in 0 1 2 3 4 5; do test -s "world-weather/weather3d.wasm.part${i}.b64"; done
+          node - <<'NODE'
+          const fs=require('fs');
+          const m=require('./world-weather/weather3d.manifest.json');
+          if(m.cells!==442368||m.wasm_bytes!==13433||m.wasm_sha256!=='91491be5228fd3724ffb173b11e769d574eda164b98e21d08fbbb40bb2f21db8')process.exit(1);
+          for(const p of m.payload_parts)if(!fs.statSync('world-weather/'+p).size)process.exit(1);
+          NODE
           grep -q 'W=96,H=48,D=96' world-weather/weather3d.cpp
           grep -q 'genesis_weather3d_cloud_ptr' world-weather/weather3d.cpp
           grep -q 'vortY' world-weather/weather3d.cpp
@@ -55,7 +60,12 @@ jobs:
       - name: Prove committed browser WASM equals fresh compiler output
         run: |
           set -euo pipefail
-          cat world-weather/weather3d.wasm.part{0,1,2,3,4,5}.b64 > /tmp/weather3d-committed.b64
+          node - <<'NODE'
+          const fs=require('fs');
+          const m=require('./world-weather/weather3d.manifest.json');
+          const text=m.payload_parts.map(p=>fs.readFileSync('world-weather/'+p,'utf8').trim()).join('');
+          fs.writeFileSync('/tmp/weather3d-committed.b64',text);
+          NODE
           base64 -d /tmp/weather3d-committed.b64 > /tmp/weather3d-committed.wasm
           echo "committed_bytes=$(wc -c < /tmp/weather3d-committed.wasm)"
           echo "committed_sha=$(sha256sum /tmp/weather3d-committed.wasm | cut -d' ' -f1)"
