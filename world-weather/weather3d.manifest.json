@@ -4,19 +4,11 @@
   "dimensions": [96, 48, 96],
   "cells": 442368,
   "surface_cells": 9216,
+  "wasm_file": "weather3d.wasm",
   "wasm_bytes": 13433,
   "wasm_sha256": "91491be5228fd3724ffb173b11e769d574eda164b98e21d08fbbb40bb2f21db8",
   "imports": 0,
-  "compiler_proof_run_id": 31853271068,
-  "compiler_artifact_id": 9238196530,
-  "payload_parts": [
-    "weather3d.wasm.part0.b64",
-    "weather3d.wasm.part1.b64",
-    "weather3d.wasm.part2a.b64",
-    "weather3d.wasm.part2b.b64",
-    "weather3d.wasm.part2c.b64",
-    "weather3d.wasm.part3.b64",
-    "weather3d.wasm.part4.b64",
-    "weather3d.wasm.part5.b64"
-  ]
+  "compiler_proof_run_id": 31854232057,
+  "compiler_promoted_commit": "abc9995",
+  "promotion": "GitHub Actions compiled weather3d.cpp and committed the exact output binary; browser and CI consume that binary directly"
 }
