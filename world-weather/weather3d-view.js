@@ -1,9 +1,4 @@
 const EXPECTED_SHA='91491be5228fd3724ffb173b11e769d574eda164b98e21d08fbbb40bb2f21db8';
-const PARTS=[
-  'weather3d.wasm.part0.b64','weather3d.wasm.part1.b64',
-  'weather3d.wasm.part2a.b64','weather3d.wasm.part2b.b64','weather3d.wasm.part2c.b64',
-  'weather3d.wasm.part3.b64','weather3d.wasm.part4.b64','weather3d.wasm.part5.b64'
-];
 const W=96,H=48,D=96,N=W*H*D,SN=W*D;
 const $=id=>document.getElementById(id);
 const canvas=$('world3d');
@@ -15,15 +10,14 @@ let dragging=false,lastX=0,lastY=0;
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function hex(buf){return [...new Uint8Array(buf)].map(v=>v.toString(16).padStart(2,'0')).join('');}
-function decodeBase64(s){const raw=atob(s);const out=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);return out;}
-async function fetchTextRetry(url){let err;for(let n=0;n<3;n++){try{const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error(`${url} HTTP ${r.status}`);return await r.text();}catch(x){err=x;await new Promise(q=>setTimeout(q,90*(n+1)));}}throw err;}
+async function fetchBytesRetry(url){let err;for(let n=0;n<3;n++){try{const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error(`${url} HTTP ${r.status}`);return new Uint8Array(await r.arrayBuffer());}catch(x){err=x;await new Promise(q=>setTimeout(q,90*(n+1)));}}throw err;}
 
 async function loadNative(){
   $('boot').textContent='VERIFYING C++ → WASM…';
-  const manifest=await fetch(`weather3d.manifest.json?v=${EXPECTED_SHA.slice(0,12)}`,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(`manifest HTTP ${r.status}`);return r.json();});
-  if(JSON.stringify(manifest.payload_parts)!==JSON.stringify(PARTS))throw new Error('native payload manifest/loader mismatch');
-  const chunks=await Promise.all(PARTS.map(p=>fetchTextRetry(`${p}?v=${EXPECTED_SHA.slice(0,12)}`)));
-  const bytes=decodeBase64(chunks.map(x=>x.trim()).join(''));
+  const tag=EXPECTED_SHA.slice(0,12);
+  const manifest=await fetch(`weather3d.manifest.json?v=${tag}`,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(`manifest HTTP ${r.status}`);return r.json();});
+  if(manifest.wasm_file!=='weather3d.wasm')throw new Error('native manifest does not point to direct compiler WASM');
+  const bytes=await fetchBytesRetry(`${manifest.wasm_file}?v=${tag}`);
   if(bytes.byteLength!==13433||bytes.byteLength!==manifest.wasm_bytes)throw new Error(`WASM bytes ${bytes.byteLength} != 13433`);
   if(!globalThis.crypto?.subtle)throw new Error('WebCrypto unavailable; cannot verify native payload');
   const digest=hex(await crypto.subtle.digest('SHA-256',bytes));
