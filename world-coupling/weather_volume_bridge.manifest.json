@@ -1,0 +1,7 @@
+{
+  "model":"genesis-weather3d-volume-coupling-v1",
+  "model_version":"0x00010001",
+  "authoritative_sources":["world-weather/weather3d.cpp","volume3d/solver.cpp"],
+  "mass_units_per_water_voxel":256,
+  "wasm":{"bytes":38910,"sha256":"3fbec5c7f18a07e9c809a32f1b4444480d5dcfc28a7a9577a4d87e8404f437ae","imports":0}
+}
