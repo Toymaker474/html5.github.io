@@ -4,15 +4,17 @@
 
 static void flood_body_samples(){
   // Build the deterministic hydro fixture from the body's actual simulated
-  // node coordinates instead of assuming the body still occupies its seed
-  // center after world/fluid stepping. This exercises real WATER occupancy
-  // against the exact seven-point native hydrodynamics sampler.
+  // node coordinates. Radius 2 covers the exact seven-point hydro sampler
+  // while keeping the fixture local to the articulated body.
+  uint32_t painted=0;
   for(int i=0;i<genesis_body_node_count();i++){
     const int x=genesis_body_node_x(i)/65536;
     const int y=genesis_body_node_y(i)/65536;
     const int z=genesis_body_node_z(i)/65536;
-    genesis_paint(WATER,x,y,z,1);
+    const int n=genesis_paint(WATER,x,y,z,2);
+    if(n>0)painted+=(uint32_t)n;
   }
+  assert(painted>0);
 }
 
 static uint32_t run_fixture(){
