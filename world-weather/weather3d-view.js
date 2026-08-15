@@ -85,7 +85,7 @@ fn terrainNormal(x:i32,z:i32)->vec3<f32>{
   return normalize(vec3<f32>(-hx*0.5,2.0,-hz*0.5));
 }
 fn boxHit(ro:vec3<f32>,rd:vec3<f32>)->vec2<f32>{
-  let inv=1.0/rd;let a=(vec3<f32>(0.0)-ro)*inv;let b=(vec3<f32>(W,H,D)-ro)*inv;
+  let inv=vec3<f32>(1.0)/rd;let a=(vec3<f32>(0.0)-ro)*inv;let b=(vec3<f32>(W,H,D)-ro)*inv;
   let lo=min(a,b);let hi=max(a,b);let tn=max(lo.x,max(lo.y,lo.z));let tf=min(hi.x,min(hi.y,hi.z));return vec2<f32>(tn,tf);
 }
 fn sky(rd:vec3<f32>)->vec3<f32>{
@@ -99,7 +99,9 @@ fn groundColor(h:f32,water:f32,q:f32,n:vec3<f32>)->vec3<f32>{
   let lit=0.20+0.80*max(dot(n,SUN),0.0);return c*lit;
 }
 fn cloudNormal(p:vec3<f32>)->vec3<f32>{
-  let ex=vec3<f32>(1.0,0.0,0.0),ey=vec3<f32>(0.0,1.0,0.0),ez=vec3<f32>(0.0,0.0,1.0);
+  let ex=vec3<f32>(1.0,0.0,0.0);
+  let ey=vec3<f32>(0.0,1.0,0.0);
+  let ez=vec3<f32>(0.0,0.0,1.0);
   let g=vec3<f32>(cloudD(p+ex)-cloudD(p-ex),cloudD(p+ey)-cloudD(p-ey),cloudD(p+ez)-cloudD(p-ez));
   let m=length(g);if(m<0.001){return vec3<f32>(0.0,1.0,0.0);}return -g/m;
 }
@@ -149,6 +151,11 @@ async function initGPU(){
   uniformBuffer=device.createBuffer({size:32,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
   device.pushErrorScope('validation');
   const module=device.createShaderModule({code:WGSL});
+  if(typeof module.getCompilationInfo==='function'){
+    const info=await module.getCompilationInfo();
+    const errors=info.messages.filter(m=>m.type==='error');
+    if(errors.length)throw new Error('WGSL: '+errors.map(m=>`${m.lineNum}:${m.linePos} ${m.message}`).join(' | '));
+  }
   pipeline=device.createRenderPipeline({layout:'auto',vertex:{module,entryPoint:'vs'},fragment:{module,entryPoint:'fs',targets:[{format}]},primitive:{topology:'triangle-list'}});
   const validation=await device.popErrorScope();if(validation)throw new Error('WebGPU shader/pipeline: '+validation.message);
   bindGroup=device.createBindGroup({layout:pipeline.getBindGroupLayout(0),entries:[{binding:0,resource:{buffer:atmoBuffer}},{binding:1,resource:{buffer:surfaceBuffer}},{binding:2,resource:{buffer:uniformBuffer}}]});
