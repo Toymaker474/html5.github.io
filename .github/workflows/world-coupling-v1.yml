@@ -1,10 +1,10 @@
 name: GENESIS Weather3D Volume Coupling V1
 on:
   push:
-    paths: ['world-coupling/**','.github/workflows/world-coupling-v1.yml']
+    paths: ['world-coupling/**','genesis-codehood/native-main.js','.github/workflows/world-coupling-v1.yml']
   pull_request:
     branches: [main]
-    paths: ['world-coupling/**','.github/workflows/world-coupling-v1.yml']
+    paths: ['world-coupling/**','genesis-codehood/native-main.js','.github/workflows/world-coupling-v1.yml']
 permissions:
   contents: write
 jobs:
@@ -20,6 +20,8 @@ jobs:
           test -f world-coupling/weather_volume_bridge.cpp
           test -f world-coupling/weather_volume_bridge_test.cpp
           test -f world-coupling/weather_volume_bridge_wasm.test.mjs
+          test -f world-coupling/worker.js
+          test -f world-coupling/browser_runtime_contract.test.mjs
           grep -q '#include "../volume3d/solver.cpp"' world-coupling/weather_volume_bridge.cpp
           grep -q '#include "../world-weather/weather3d.cpp"' world-coupling/weather_volume_bridge.cpp
           grep -q 'MASS_UNITS_PER_WATER_VOXEL = 256u' world-coupling/weather_volume_bridge.cpp
@@ -27,6 +29,14 @@ jobs:
           ! grep -R -E '#include[[:space:]]*[<"](three|babylon|unity|unreal|bullet|box2d|jolt|physx|glm|eigen)' world-coupling
           ! grep -R -Ei '(three\.js|babylon|playcanvas|pixi|matter\.js|p5\.js)' world-coupling
           node --check world-coupling/weather_volume_bridge_wasm.test.mjs
+          node --check world-coupling/browser_runtime_contract.test.mjs
+          node --check world-coupling/worker.js
+          node --check genesis-codehood/native-main.js
+      - name: Verify fail-closed browser coupling contract
+        run: |
+          set -euo pipefail
+          node world-coupling/browser_runtime_contract.test.mjs | tee world-coupling-browser.txt
+          grep -q 'PASS GENESIS browser Weather3D-volume coupling contract' world-coupling-browser.txt
       - name: Compile native authoritative-kernel bridge
         run: |
           set -euo pipefail
@@ -91,6 +101,7 @@ jobs:
             world-coupling/weather_volume_bridge.manifest.json
             world-coupling-native.txt
             world-coupling-wasm.txt
+            world-coupling-browser.txt
             world-coupling-wasm.sha256
             world-coupling-wasm-architecture.txt
           if-no-files-found: ignore
