@@ -9,7 +9,7 @@
   "stable": {
     "label": "native-fluid-projection-v3-ci-pass",
     "verified": false,
-    "note": "The active 3D browser route remains the compiler-proven native material/fluid slice. Native body-to-material coupling V2 is promoted on main but isolated from the active browser route. Weather3D V2 is the authoritative promoted weather route. Runtime browser execution and iPhone device execution remain unverified."
+    "note": "The active 3D browser route remains the compiler-proven native material/fluid slice. Native body-to-material coupling V2 and Weather3D-V2-to-volume coupling V1 are promoted on main but isolated from the active browser route. Weather3D V2 remains the authoritative promoted weather route. Runtime browser execution and iPhone device execution remain unverified."
   },
   "active_experience": {
     "route": "/genesis-codehood/",
@@ -18,7 +18,7 @@
     "runtime": "from-scratch C++/WASM owns the active 3D material and fluid state; JavaScript only verifies/transfers native state and drives the from-scratch WebGPU volume renderer",
     "simulated_state": ["3D voxel material occupancy","sand gravity/collapse","signed per-water-cell vx/vy/vz","gravity and bounded velocity damping","measured discrete velocity divergence","iterative native pressure relaxation","pressure-gradient velocity projection","solid/boundary normal-velocity constraints","momentum-directed conservative water-voxel advection","native kinetic energy and signed XYZ momentum","sand moisture/cohesion and saturation weakening","suspended sediment","flow-speed-driven erosion/deposition","deterministic seeded state evolution including velocity/pressure"],
     "render_coupling": ["3D solid/water density derives from native occupancy","surface normals derive from native field gradients","sand wetness derives from native moisture","water turbidity derives from native suspended sediment","native pressure is dynamics/telemetry and never relabeled as sediment","water shape derives from simulated occupancy rather than animated geometry"],
-    "approximations": ["not validated Navier-Stokes CFD/SPH/MPM/FLIP/LBM","water is coarse binary voxel occupancy","pressure projection is a voxel-scale incompressibility constraint","advection moves water at most one neighboring voxel per substep","viscosity uses bounded damping","ray marching interpolates only for presentation","native body v1 is not loaded by the active browser route","world-weather is a separate promoted route","no active native learning/evolution yet"],
+    "approximations": ["not validated Navier-Stokes CFD/SPH/MPM/FLIP/LBM","water is coarse binary voxel occupancy","pressure projection is a voxel-scale incompressibility constraint","advection moves water at most one neighboring voxel per substep","viscosity uses bounded damping","ray marching interpolates only for presentation","native body v1 is not loaded by the active browser route","Weather3D V2 and the CI-proven world-coupling bridge are separate promoted native candidates not yet loaded by this route","no active native learning/evolution yet"],
     "browser_exercise": {"live_pages":"DEPLOYED_NOT_RUNTIME_EXECUTED","iphone_safari":"NOT_DEVICE_TESTED"}
   },
   "native_cpp_kernel": {
@@ -80,8 +80,26 @@
     "simulated_state": ["3D temperature","3D humidity","3D cloud condensate","3D pressure anomaly","XYZ wind","vertical buoyancy response","volumetric precipitation state","terrain elevation","surface runoff/hydrology","native vorticity/tornado diagnostics"],
     "causal_model": ["3D pressure gradients accelerate XYZ wind","buoyancy contributes vertical atmospheric motion","wind transports volumetric humidity/cloud state","temperature-dependent saturation condenses humidity into cloud","cloud condensate produces precipitation","terrain receives precipitation into surface hydrology/runoff","native resolved fields produce vorticity/tornado diagnostics rather than timer-spawned effects"],
     "browser_contract": ["browser consumes the exact compiler-proven zero-import WebAssembly payload","model version and 96x48x96 dimensions must match","renderer uses WebGPU and reads native atmosphere fields","Canvas2D simulation fallback is forbidden","Math.random is forbidden from generating simulation state","visual interpolation/ray marching is presentation-only"],
-    "truth": "This is a deterministic native 3D atmosphere/hydrology model and from-scratch WebGPU presentation, not validated DNS, LES, mesoscale NWP or tornado forecasting. It is not yet two-way coupled to the authoritative 3D material/fluid volume.",
+    "truth": "This is a deterministic native 3D atmosphere/hydrology model and from-scratch WebGPU presentation, not validated DNS, LES, mesoscale NWP or tornado forecasting. The promoted Weather3D browser route is not yet two-way coupled to the authoritative 3D material/fluid volume; that coupling currently exists only as the separate CI-proven native bridge candidate recorded below.",
     "browser_exercise": {"branch_ci":"PASS","post_merge_ci":"PASS","pages_deploy":"PASS","live_runtime":"NOT_TESTED","iphone_safari":"NOT_DEVICE_TESTED"}
+  },
+  "weather_volume_coupling_v1": {
+    "verification_level": "CI_PASS",
+    "status": "PROMOTED_ISOLATED_NATIVE_BRIDGE_NOT_ACTIVE_ROUTE",
+    "model": "genesis-weather3d-volume-coupling-v1",
+    "model_version": "0x00010001",
+    "merge_sha": "ff587d9d94e3df553bb04aea909d3cf04b30c3cd",
+    "source": "world-coupling/weather_volume_bridge.cpp",
+    "test": "world-coupling/weather_volume_bridge_test.cpp",
+    "wasm_test": "world-coupling/weather_volume_bridge_wasm.test.mjs",
+    "workflow": ".github/workflows/world-coupling-v1.yml",
+    "authoritative_sources": ["world-weather/weather3d.cpp","volume3d/solver.cpp"],
+    "loaded_by_active_route": false,
+    "exchange_unit": {"weather_units_per_native_water_voxel":256,"truth":"This is an explicit deterministic bridge exchange unit, not a claim that the two pre-existing solvers already share calibrated SI water-mass units."},
+    "wasm": {"imports":0,"bytes":38910,"sha256":"3fbec5c7f18a07e9c809a32f1b4444480d5dcfc28a7a9577a4d87e8404f437ae","exact_committed_payload_cmp":"PASS","semantic_parity":"PASS"},
+    "coupling": ["Weather3D accumulated surface runoff can remove 256 bridge units and create one real WATER voxel in the authoritative material volume","one bounded exposed native WATER voxel can be removed and add 256 units to near-surface Weather3D humidity","native ROCK/SAND solid-column height deterministically feeds Weather3D terrain elevation","directional transfer ledgers measure weather-removed/volume-added and volume-removed/weather-added units","bridge conservation error is zero for the deterministic causal fixtures","fixed native setup plus fixed exchange reproduces the same combined state hash"],
+    "ci": {"status":"PASS","branch_proof_run_id":31860785395,"exact_main_run_id":31860891240,"foundation_exact_main_run_id":31860891224,"stable_lab_isolation":"PASS","exact_wasm_rebuild":"PASS"},
+    "truth": "This is a standalone native coupling bridge over the two authoritative source kernels. It is not loaded by /genesis-codehood/ or /world-weather/ yet, is not LIVE_TESTED or DEVICE_TESTED, does not add hydrodynamic body forces, swimming, wakes or body-to-fluid reaction, and does not turn either underlying approximation into validated CFD or NWP."
   },
   "superseded_world_weather_v1": {
     "status": "SUPERSEDED_NOT_AUTHORITATIVE",
@@ -94,9 +112,9 @@
   "scratch_engine": {"status":"PRESERVED_NOT_LOADED_BY_ACTIVE_ROUTE","verification_level":"CI_PASS"},
   "legacy_ecosystem_stack": {"status":"ARCHIVED_NOT_LOADED_BY_ACTIVE_ROUTE"},
   "physical_creature_v1": {"status":"PRESERVED_PROOF_SLICE","verification_level":"CI_PASS","route":"/genesis-codehood/physical-creature-v1/"},
-  "active_objective": "Couple the promoted native 96x48x96 Weather3D V2 atmosphere/hydrology state to the authoritative native 3D material/fluid world so real simulated precipitation/runoff enters volumetric water state and volumetric evaporation/topography/state feeds back into the atmosphere.",
-  "next_gate": "Prove deterministic two-way Weather3D-V2-to-volume mass/state transfer with explicit conservation/error telemetry before resuming hydrodynamic body-force work.",
-  "next_scientific_blocker": "Two-way world coupling: Weather3D V2 and the native 3D material/fluid volume are independently causal systems, but precipitation/runoff has not yet been injected into volumetric water state and volumetric evaporation/topography/state feedback has not yet been returned to the atmosphere.",
-  "invariants": ["IMPLEMENTATION > NAME","one authoritative native body solver","one active scientific lane","C++/WASM owns simulation state","committed browser WASM must equal fresh compiler output","Weather3D V2 is the authoritative weather target","weather renderer must read native state rather than inventing simulation motion","tornado state cannot be directly timer-spawned","visual interpolation is not simulation resolution","pressure never masquerades as sediment/turbidity","do not call weather validated NWP/tornado forecasting","do not call fluid validated CFD","no external game/physics/render/simulation libraries","Stable-vs-Lab remains fail-closed","CI_PASS does not imply LIVE_TESTED or DEVICE_TESTED"],
+  "active_objective": "Promote the exact CI-proven Weather3D-V2-to-native-volume bridge into one authoritative browser runtime without duplicating either solver, then prove the browser contract reads and advances the same coupled native state.",
+  "next_gate": "Wire the exact 38,910-byte zero-import coupling WASM payload into a single authoritative runtime path, add fail-closed browser-contract tests for real runoff injection, evaporation feedback and topography feedback, and keep LIVE_TESTED/DEVICE_TESTED false until actual execution evidence exists.",
+  "next_scientific_blocker": "The native two-way transfer bridge is CI-proven on main, but it is still an isolated candidate. The deployed Weather3D and GENESIS browser routes do not yet execute that combined coupled state, so runtime integration—not another solver—is the next blocker. Deferred hydrodynamic body-force PR #124 must remain parked until this promotion gate is complete.",
+  "invariants": ["IMPLEMENTATION > NAME","one authoritative native body solver","one active scientific lane","C++/WASM owns simulation state","committed browser WASM must equal fresh compiler output","Weather3D V2 is the authoritative weather target","one isolated Weather3D-volume bridge candidate; do not create a competing coupling solver","weather renderer must read native state rather than inventing simulation motion","tornado state cannot be directly timer-spawned","visual interpolation is not simulation resolution","pressure never masquerades as sediment/turbidity","do not call weather validated NWP/tornado forecasting","do not call fluid validated CFD","no external game/physics/render/simulation libraries","Stable-vs-Lab remains fail-closed","CI_PASS does not imply LIVE_TESTED or DEVICE_TESTED"],
   "updated": "2026-08-15"
 }
