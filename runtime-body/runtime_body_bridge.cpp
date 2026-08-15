@@ -37,7 +37,10 @@ void sync_body_collision_cache(){
 
 void reset(uint32_t seed){
   genesis_world_coupling_reset(seed?seed:0x3d5a17u);
-  genesis_body_seed_organism(16*Q,6*Q,16*Q);
+  // Seed the articulated body in free volume above the generated terrain.
+  // The previous y=6 placement could begin embedded in authoritative solids,
+  // making the hydrodynamic fixture unable to establish real WATER occupancy.
+  genesis_body_seed_organism(16*Q,18*Q,16*Q);
   sync_body_collision_cache();
   genesis_hydro_apply();
 }
