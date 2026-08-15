@@ -21,15 +21,18 @@ int main(){
 
   // Exposed volume water -> atmospheric humidity, again conserving bridge units.
   genesis_init(24,20,24,222u,70); genesis_clear(); w3::reset(222u); clear_weather_surface();
-  x=8;z=8;wx=coupling::map_wx(x);wz=coupling::map_wz(z);
-  int floor=(int)w3::terrain[w3::sidx(wx,wz)],ay=w3::clampi(floor+1,0,w3::H-1),ai=w3::idx(wx,ay,wz);
-  w3::temperature[ai]=20*w3::Q; w3::humidity[ai]=1200;
+  x=8;z=8;wx=coupling::map_wx(x);wz=coupling::map_wz(z);wi=w3::sidx(wx,wz);
   for(int y=0;y<=2;y++){int vi=idx(x,y,z);mat(vi)=ROCK;clear_motion(vi);}
+  // Coupling will map solid top y=2 to this Weather3D terrain height before evaporation.
+  int coupledFloor=w3::clampi(2+(2*12)/(H-1),2,14);
+  int ay=w3::clampi(coupledFloor+1,0,w3::H-1),ai=w3::idx(wx,ay,wz);
+  w3::temperature[ai]=20*w3::Q; w3::humidity[ai]=1200;
   int waterY=3,vi=idx(x,waterY,z);mat(vi)=WATER;clear_motion(vi);movedWater[vi]=0;
   // Choose phase so this column is eligible for bounded evaporation.
   stepIndex=(uint32_t)((8-((x+3*z)&7))&7);
   uint16_t humidityBefore=w3::humidity[ai];
   coupling::exchange_only();
+  assert((int)w3::terrain[wi]==coupledFloor);
   assert(mat(vi)==EMPTY);
   assert(w3::humidity[ai]==humidityBefore+256);
   assert(coupling::evaporatedVoxels==1);
