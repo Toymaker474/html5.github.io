@@ -3,13 +3,13 @@
   "project": "GENESIS",
   "product": "GENESIS Ecosystem Sandbox",
   "engineering_system": "GENESIS FORGE",
-  "phase": "native-body-mechanics-v1",
+  "phase": "world-weather3d-v2",
   "status": "IN_PROGRESS",
   "verification_levels": ["NOT_BUILT","IMPLEMENTED","TESTED","CI_PASS","LIVE_TESTED","DEVICE_TESTED","VERIFIED"],
   "stable": {
     "label": "native-fluid-projection-v3-ci-pass",
     "verified": false,
-    "note": "The active 3D browser route remains the compiler-proven native material/fluid slice. Native body-to-material coupling V2 is promoted on main but isolated from the active browser route. World Weather V1 is promoted on main and both GitHub Pages deployment paths passed. Runtime browser execution and iPhone device execution remain unverified."
+    "note": "The active 3D browser route remains the compiler-proven native material/fluid slice. Native body-to-material coupling V2 is promoted on main but isolated from the active browser route. Weather3D V2 is the authoritative promoted weather route. Runtime browser execution and iPhone device execution remain unverified."
   },
   "active_experience": {
     "route": "/genesis-codehood/",
@@ -66,31 +66,37 @@
   "world_weather": {
     "verification_level": "CI_PASS",
     "status": "PROMOTED_ON_MAIN_DEPLOYED",
-    "engineering_subphase": "world-atmosphere-hydrology-v1",
+    "engineering_subphase": "true-3d-atmosphere-hydrology-v2",
     "route": "/world-weather/",
     "loaded_on_main": true,
-    "merge_sha": "2728d86d375c0746070c67294ec84be59030d54c",
+    "merge_sha": "c9b1768ad26bd45b8bbc29f4ebf882783cce0e56",
+    "model": "genesis-weather3d-v2",
+    "model_version": "0x00020001",
+    "source": "world-weather/weather3d.cpp",
+    "dimensions": [96,48,96],
+    "cells": 442368,
+    "surface_cells": 9216,
+    "compiled_wasm": {"bytes":13433,"sha256":"91491be5228fd3724ffb173b11e769d574eda164b98e21d08fbbb40bb2f21db8","imports":0,"compiler_proof_run_id":31854232057,"exact_committed_payload_cmp":"PASS"},
+    "simulated_state": ["3D temperature","3D humidity","3D cloud condensate","3D pressure anomaly","XYZ wind","vertical buoyancy response","volumetric precipitation state","terrain elevation","surface runoff/hydrology","native vorticity/tornado diagnostics"],
+    "causal_model": ["3D pressure gradients accelerate XYZ wind","buoyancy contributes vertical atmospheric motion","wind transports volumetric humidity/cloud state","temperature-dependent saturation condenses humidity into cloud","cloud condensate produces precipitation","terrain receives precipitation into surface hydrology/runoff","native resolved fields produce vorticity/tornado diagnostics rather than timer-spawned effects"],
+    "browser_contract": ["browser consumes the exact compiler-proven zero-import WebAssembly payload","model version and 96x48x96 dimensions must match","renderer uses WebGPU and reads native atmosphere fields","Canvas2D simulation fallback is forbidden","Math.random is forbidden from generating simulation state","visual interpolation/ray marching is presentation-only"],
+    "truth": "This is a deterministic native 3D atmosphere/hydrology model and from-scratch WebGPU presentation, not validated DNS, LES, mesoscale NWP or tornado forecasting. It is not yet two-way coupled to the authoritative 3D material/fluid volume.",
+    "browser_exercise": {"branch_ci":"PASS","post_merge_ci":"PASS","pages_deploy":"PASS","live_runtime":"NOT_TESTED","iphone_safari":"NOT_DEVICE_TESTED"}
+  },
+  "superseded_world_weather_v1": {
+    "status": "SUPERSEDED_NOT_AUTHORITATIVE",
     "model": "genesis-world-weather-v1",
     "model_version": "0x00010001",
     "source": "world-weather/weather.cpp",
-    "surface_resolution": [192,128],
-    "surface_cells": 24576,
-    "compiled_wasm": {"bytes":10669,"sha256":"d95d030df7ca6594d1d8641c483fec234d185d5ad7de6ef0ded56207b627929c","imports":0,"compiler_proof_run_id":31851046043,"artifact_id":9237516490,"exact_committed_payload_cmp":"PASS"},
-    "simulated_state": ["elevation","temperature","humidity","cloud condensate","pressure anomaly","horizontal wind","vertical vorticity diagnostic","rainfall","soil moisture","mobile surface water","discharge memory","river-channel diagnostic","tornado diagnostic strength"],
-    "causal_model": ["pressure gradients accelerate wind","wind transports humidity/cloud state","temperature-dependent saturation condenses humidity into cloud","cloud condensate above threshold precipitates rain","rain infiltrates soil or becomes mobile surface water","surface water follows local hydraulic head","persistent concentrated discharge diagnoses river cells","tornado cells require simultaneous resolved vorticity, pressure deficit, cloud, rain and wind"],
-    "reference_fixture": {"cloud_cells":2362,"rain_cells":860,"river_cells":987,"max_discharge":13229,"deterministic_hash":2320738123},
-    "browser_contract": ["browser reconstructs seven committed payload chunks","SHA-256 is verified before WebAssembly instantiation","unexpected imports fail boot","model version and 192x128 dimensions must match","renderer reads native elevation/cloud/rain/water/discharge/tornado exports","Math.random is forbidden from generating simulation state","visual smoothing is presentation-only"],
-    "post_merge_ci": {"weather_run_id":31851910240,"foundation_run_id":31851910193,"codehood_run_id":31851910228,"native_body_run_id":31851910227,"physical_creature_run_id":31851910187,"stable_lab_isolation":"PASS","pages_workflow_run_id":31851910206,"pages_native_run_id":31851909405,"pages_deploy":"PASS"},
-    "truth": "This is a deterministic 2D surface atmosphere/hydrology layer, not DNS, LES, mesoscale NWP or a validated tornado forecast model. It does not claim the full 3D material volume has been expanded to 192x128xdepth. Tornado output is a resolved-field diagnostic and is never directly written by a timer or spawn animation.",
-    "browser_exercise": {"branch_ci":"PASS","post_merge_ci":"PASS","pages_deploy":"PASS","live_runtime":"NOT_TESTED","iphone_safari":"NOT_DEVICE_TESTED"}
+    "truth": "Preserved historical proof only. It must not be used as the active weather target or as evidence for Weather3D V2 beyond independently shared gates."
   },
   "native_volume_renderer": {"verification_level":"CI_PASS","truth":"WebGPU ray marching is presentation over native 3D state; time-driven fake water-normal animation is forbidden; water normals derive from native water-density gradients and turbidity derives from native suspended sediment, never pressure."},
   "scratch_engine": {"status":"PRESERVED_NOT_LOADED_BY_ACTIVE_ROUTE","verification_level":"CI_PASS"},
   "legacy_ecosystem_stack": {"status":"ARCHIVED_NOT_LOADED_BY_ACTIVE_ROUTE"},
   "physical_creature_v1": {"status":"PRESERVED_PROOF_SLICE","verification_level":"CI_PASS","route":"/genesis-codehood/physical-creature-v1/"},
-  "active_objective": "Couple the promoted 192x128 atmosphere/hydrology layer to the native 3D material world so real simulated rainfall/runoff enters volumetric water state and volumetric evaporation/topography can feed back into weather.",
-  "next_gate": "Prove deterministic two-way weather-to-volume water transfer and conservation/error telemetry before resuming hydrodynamic body-force work.",
-  "next_scientific_blocker": "Two-way world coupling: the high-resolution surface weather layer and 3D material/fluid volume are both causal systems, but rainfall/runoff has not yet been injected into the volumetric material state and volumetric evaporation/topography feedback has not yet been returned to the weather layer.",
-  "invariants": ["IMPLEMENTATION > NAME","one authoritative native body solver","one active scientific lane","C++/WASM owns simulation state","committed browser WASM must equal fresh compiler output","weather renderer must read native state rather than inventing simulation motion","tornado state cannot be directly timer-spawned","visual interpolation is not simulation resolution","pressure never masquerades as sediment/turbidity","do not call weather validated NWP/tornado forecasting","do not call fluid validated CFD","no external game/physics/render/simulation libraries","Stable-vs-Lab remains fail-closed","CI_PASS does not imply LIVE_TESTED or DEVICE_TESTED"],
-  "updated": "2026-08-14"
+  "active_objective": "Couple the promoted native 96x48x96 Weather3D V2 atmosphere/hydrology state to the authoritative native 3D material/fluid world so real simulated precipitation/runoff enters volumetric water state and volumetric evaporation/topography/state feeds back into the atmosphere.",
+  "next_gate": "Prove deterministic two-way Weather3D-V2-to-volume mass/state transfer with explicit conservation/error telemetry before resuming hydrodynamic body-force work.",
+  "next_scientific_blocker": "Two-way world coupling: Weather3D V2 and the native 3D material/fluid volume are independently causal systems, but precipitation/runoff has not yet been injected into volumetric water state and volumetric evaporation/topography/state feedback has not yet been returned to the atmosphere.",
+  "invariants": ["IMPLEMENTATION > NAME","one authoritative native body solver","one active scientific lane","C++/WASM owns simulation state","committed browser WASM must equal fresh compiler output","Weather3D V2 is the authoritative weather target","weather renderer must read native state rather than inventing simulation motion","tornado state cannot be directly timer-spawned","visual interpolation is not simulation resolution","pressure never masquerades as sediment/turbidity","do not call weather validated NWP/tornado forecasting","do not call fluid validated CFD","no external game/physics/render/simulation libraries","Stable-vs-Lab remains fail-closed","CI_PASS does not imply LIVE_TESTED or DEVICE_TESTED"],
+  "updated": "2026-08-15"
 }
