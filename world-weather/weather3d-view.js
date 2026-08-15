@@ -111,10 +111,10 @@ fn cloudLight(p:vec3<f32>,n:vec3<f32>)->f32{
 }
 
 @fragment fn fs(i:VOut)->@location(0) vec4<f32>{
-  let target=vec3<f32>(48.0,13.0,48.0);
+  let focusPoint=vec3<f32>(48.0,13.0,48.0);
   let cp=cos(params.pitch);let sp=sin(params.pitch);let cy=cos(params.yaw);let sy=sin(params.yaw);
-  let ro=target+vec3<f32>(sy*cp,sp,cy*cp)*params.radius;
-  let f=normalize(target-ro);let r=normalize(cross(f,vec3<f32>(0.0,1.0,0.0)));let u=cross(r,f);
+  let ro=focusPoint+vec3<f32>(sy*cp,sp,cy*cp)*params.radius;
+  let f=normalize(focusPoint-ro);let r=normalize(cross(f,vec3<f32>(0.0,1.0,0.0)));let u=cross(r,f);
   let ndc=i.uv*2.0-1.0;let rd=normalize(f+r*ndc.x*params.aspect*0.72+u*ndc.y*0.72);
   let hit=boxHit(ro,rd);var col=sky(rd);if(hit.y<=max(hit.x,0.0)){return vec4<f32>(col,1.0);}
   var t=max(hit.x,0.0);let end=hit.y;let ds=max((end-t)/104.0,0.35);var trans=1.0;var accum=vec3<f32>(0.0);
