@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Fail-closed architecture gate
         run: |
           set -euo pipefail
@@ -20,7 +22,7 @@ jobs:
           test -f native-body/hydrodynamics_wasm.test.mjs
           grep -q '#include "../volume3d/solver.cpp"' native-body/hydro_fluid_adapter.cpp
           grep -q 'genesis_pressure_at' native-body/hydrodynamics.cpp
-          ! git diff --exit-code origin/main -- volume3d/solver.cpp
+          git diff --exit-code origin/main -- volume3d/solver.cpp
           ! grep -R -E '#include[[:space:]]*[<"](bullet|box2d|jolt|physx|ode|chipmunk|reactphysics3d|glm|eigen|three|babylon)' native-body
       - name: Compile and run native causal tests
         run: |
