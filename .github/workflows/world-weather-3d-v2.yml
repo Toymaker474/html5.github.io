@@ -1,0 +1,59 @@
+name: GENESIS True 3D Weather V2
+on:
+  push:
+    paths: ['world-weather/weather3d*','.github/workflows/world-weather-3d-v2.yml']
+  pull_request:
+    branches: [main]
+    paths: ['world-weather/weather3d*','.github/workflows/world-weather-3d-v2.yml']
+jobs:
+  verify-true-3d-weather:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail-closed architecture gate
+        run: |
+          set -euo pipefail
+          test -f world-weather/weather3d.cpp
+          test -f world-weather/weather3d_test.cpp
+          test -f world-weather/weather3d_wasm.test.mjs
+          test -f world-weather/wasm_runtime.cpp
+          grep -q 'W=96,H=48,D=96' world-weather/weather3d.cpp
+          grep -q 'genesis_weather3d_cloud_ptr' world-weather/weather3d.cpp
+          grep -q 'vortY' world-weather/weather3d.cpp
+          ! grep -R -E '#include[[:space:]]*[<"](three|babylon|unity|unreal|bullet|box2d|jolt|physx|glm|eigen)' world-weather/weather3d.cpp world-weather/weather3d_test.cpp
+      - name: Compile native 3D atmosphere hydrology
+        run: |
+          set -euo pipefail
+          clang++ -std=c++17 -O2 -Wall -Wextra -pedantic world-weather/weather3d.cpp world-weather/weather3d_test.cpp -o /tmp/genesis-weather3d
+      - name: Execute causal native 3D tests
+        run: |
+          set -euo pipefail
+          /tmp/genesis-weather3d | tee world-weather-3d-native.txt
+          grep -q 'PASS GENESIS true 3D atmosphere hydrology' world-weather-3d-native.txt
+      - name: Compile freestanding C++ to WebAssembly
+        run: |
+          set -euo pipefail
+          clang++ --target=wasm32 -std=c++17 -O3 -nostdlib -fno-exceptions -fno-rtti \
+            world-weather/weather3d.cpp world-weather/wasm_runtime.cpp \
+            -Wl,--no-entry -Wl,--export-all -Wl,--export-memory \
+            -Wl,--initial-memory=33554432 -Wl,--max-memory=33554432 \
+            -o /tmp/genesis-weather3d.wasm
+          test -s /tmp/genesis-weather3d.wasm
+          sha256sum /tmp/genesis-weather3d.wasm | tee world-weather-3d-wasm.sha256
+          wc -c /tmp/genesis-weather3d.wasm | tee world-weather-3d-wasm.bytes
+      - name: Verify native and WebAssembly semantics
+        run: |
+          set -euo pipefail
+          node world-weather/weather3d_wasm.test.mjs /tmp/genesis-weather3d.wasm | tee world-weather-3d-wasm.txt
+          grep -q 'PASS GENESIS true 3D weather C++ -> freestanding WASM semantic parity' world-weather-3d-wasm.txt
+      - name: Preserve exact compiler payload
+        uses: actions/upload-artifact@v4
+        with:
+          name: genesis-true-3d-weather-v2-${{ github.run_id }}
+          path: |
+            /tmp/genesis-weather3d.wasm
+            world-weather-3d-native.txt
+            world-weather-3d-wasm.txt
+            world-weather-3d-wasm.sha256
+            world-weather-3d-wasm.bytes
+          if-no-files-found: error
