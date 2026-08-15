@@ -1,0 +1,51 @@
+name: GENESIS Native Hydrodynamics V1
+on:
+  push:
+    branches: [native-hydrodynamic-forces-v1]
+    paths: ['native-body/**','volume3d/**','.github/workflows/native-hydrodynamics-v1.yml']
+  pull_request:
+    branches: [main]
+    paths: ['native-body/**','volume3d/**','.github/workflows/native-hydrodynamics-v1.yml']
+jobs:
+  verify-hydrodynamics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail-closed architecture gate
+        run: |
+          set -euo pipefail
+          test -f native-body/hydro_fluid_adapter.cpp
+          test -f native-body/hydrodynamics.cpp
+          test -f native-body/hydrodynamics_test.cpp
+          test -f native-body/hydrodynamics_wasm.test.mjs
+          grep -q '#include "../volume3d/solver.cpp"' native-body/hydro_fluid_adapter.cpp
+          grep -q 'genesis_pressure_at' native-body/hydrodynamics.cpp
+          ! git diff --exit-code origin/main -- volume3d/solver.cpp
+          ! grep -R -E '#include[[:space:]]*[<"](bullet|box2d|jolt|physx|ode|chipmunk|reactphysics3d|glm|eigen|three|babylon)' native-body
+      - name: Compile and run native causal tests
+        run: |
+          set -euo pipefail
+          clang++ -std=c++17 -O2 -Wall -Wextra -c native-body/hydro_fluid_adapter.cpp -o /tmp/fluid_adapter.o
+          clang++ -std=c++17 -O2 -Wall -Wextra -c native-body/body.cpp -o /tmp/body.o
+          clang++ -std=c++17 -O2 -Wall -Wextra -c native-body/hydrodynamics.cpp -o /tmp/hydro.o
+          clang++ -std=c++17 -O2 -Wall -Wextra -c native-body/hydrodynamics_test.cpp -o /tmp/test.o
+          clang++ /tmp/fluid_adapter.o /tmp/body.o /tmp/hydro.o /tmp/test.o -o /tmp/genesis-hydro
+          /tmp/genesis-hydro | tee native-hydrodynamics-test.txt
+          grep -q 'PASS GENESIS reconciled one-way native hydrodynamics' native-hydrodynamics-test.txt
+      - name: Compile exact freestanding C++ to WASM and exercise semantics
+        run: |
+          set -euo pipefail
+          clang++ --target=wasm32 -std=c++17 -O3 -nostdlib -fno-exceptions -fno-rtti native-body/hydro_fluid_adapter.cpp native-body/body.cpp native-body/hydrodynamics.cpp -Wl,--no-entry -Wl,--export-all -Wl,--export-memory -Wl,--initial-memory=8388608 -Wl,--max-memory=8388608 -o /tmp/genesis-hydro.wasm
+          node native-body/hydrodynamics_wasm.test.mjs /tmp/genesis-hydro.wasm | tee native-hydrodynamics-wasm-test.txt
+          grep -q 'PASS GENESIS reconciled hydrodynamics zero-import WASM causal gate' native-hydrodynamics-wasm-test.txt
+          sha256sum /tmp/genesis-hydro.wasm | tee native-hydrodynamics-wasm.sha256
+      - name: Preserve evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: genesis-native-hydrodynamics-v1-${{ github.run_id }}
+          path: |
+            native-hydrodynamics-test.txt
+            native-hydrodynamics-wasm-test.txt
+            native-hydrodynamics-wasm.sha256
+          if-no-files-found: ignore
