@@ -1,0 +1,65 @@
+name: GENESIS Runtime Body Promotion V1
+on:
+  push:
+    branches: [runtime-body-promotion-v1]
+    paths: ['runtime-body/**','.github/workflows/runtime-body-promotion-v1.yml','native-body/**','world-coupling/**','volume3d/**','world-weather/**']
+  pull_request:
+    branches: [main]
+    paths: ['runtime-body/**','.github/workflows/runtime-body-promotion-v1.yml','native-body/**','world-coupling/**','volume3d/**','world-weather/**']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Fail-closed single-authority architecture gate
+        run: |
+          set -euo pipefail
+          test -f runtime-body/runtime_body_bridge.cpp
+          test -f runtime-body/runtime_body_bridge_test.cpp
+          test -f runtime-body/runtime_body_bridge_wasm.test.mjs
+          grep -q '#include "../world-coupling/weather_volume_bridge.cpp"' runtime-body/runtime_body_bridge.cpp
+          grep -q '#include "../native-body/body.cpp"' runtime-body/runtime_body_bridge.cpp
+          grep -q '#include "../native-body/hydrodynamics.cpp"' runtime-body/runtime_body_bridge.cpp
+          ! grep -R -E '#include[[:space:]]*[<"](three|babylon|unity|unreal|bullet|box2d|jolt|physx|glm|eigen)' runtime-body
+          ! grep -R -Ei '(three\.js|babylon|playcanvas|pixi|matter\.js|p5\.js)' runtime-body
+          git diff --exit-code origin/main -- volume3d/solver.cpp world-weather/weather3d.cpp world-coupling/weather_volume_bridge.cpp native-body/body.cpp native-body/hydrodynamics.cpp
+      - name: Compile deterministic native integration fixture
+        run: clang++ -std=c++17 -O2 -Wall -Wextra -pedantic runtime-body/runtime_body_bridge_test.cpp -o /tmp/genesis-runtime-body
+      - name: Execute native causal integration fixture
+        run: |
+          set -euo pipefail
+          /tmp/genesis-runtime-body | tee runtime-body-native.txt
+          grep -q 'PASS GENESIS runtime body promotion V1' runtime-body-native.txt
+      - name: Compile exact zero-import C++ to WASM
+        run: |
+          set -euo pipefail
+          clang++ --target=wasm32 -std=c++17 -O3 -nostdlib -fno-exceptions -fno-rtti runtime-body/runtime_body_bridge.cpp \
+            -Wl,--no-entry -Wl,--export-all -Wl,--export-memory \
+            -Wl,--initial-memory=100663296 -Wl,--max-memory=100663296 \
+            -o /tmp/genesis-runtime-body.wasm
+          test -s /tmp/genesis-runtime-body.wasm
+          sha256sum /tmp/genesis-runtime-body.wasm | tee runtime-body-wasm.sha256
+          node -e "const fs=require('fs');const b=fs.readFileSync('/tmp/genesis-runtime-body.wasm');const m=new WebAssembly.Module(b);if(WebAssembly.Module.imports(m).length)process.exit(1);console.log('ZERO_IMPORT_WASM',b.length)" | tee runtime-body-wasm-architecture.txt
+      - name: Verify exact native/WASM semantics
+        run: |
+          set -euo pipefail
+          node runtime-body/runtime_body_bridge_wasm.test.mjs /tmp/genesis-runtime-body.wasm | tee runtime-body-wasm.txt
+          grep -q 'PASS GENESIS runtime body promotion V1 WASM parity' runtime-body-wasm.txt
+          NATIVE_HASH="$(awk '/REFERENCE_HASH/{print $2}' runtime-body-native.txt)"
+          WASM_HASH="$(awk '/REFERENCE_HASH/{print $2}' runtime-body-wasm.txt)"
+          test "$NATIVE_HASH" = "$WASM_HASH"
+      - name: Preserve exact proof artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: genesis-runtime-body-promotion-v1-${{ github.run_id }}
+          path: |
+            /tmp/genesis-runtime-body.wasm
+            runtime-body-native.txt
+            runtime-body-wasm.txt
+            runtime-body-wasm.sha256
+            runtime-body-wasm-architecture.txt
+          if-no-files-found: ignore
