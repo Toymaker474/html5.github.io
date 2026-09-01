@@ -1,0 +1,361 @@
+name: Validate NEXUS V7 Mobile Robot Garage
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/nexus-v7-science-core.yml'
+      - 'nexus-science-core-v7/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nexus-v7-mobile-robot-garage-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-mobile-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install and build exact mobile application
+        working-directory: nexus-science-core-v7
+        run: |
+          npm install --ignore-scripts=false
+          npm run build
+          test -f dist/index.html
+          test -f dist/cad/manifest.json
+
+      - name: Validate preset, physics, CAD and no-fake-motion contracts
+        working-directory: nexus-science-core-v7
+        run: |
+          node --check src/main.js
+          node --check src/mujocoRuntime.js
+          node --check src/robotPresets.js
+          node --check src/mobileCameraFraming.js
+          grep -q 'Robot Garage' index.html
+          grep -q 'Runs now on mobile' index.html
+          grep -q 'Future real topologies' index.html
+          grep -q 'MjModel.from_xml_string' src/mujocoRuntime.js
+          grep -q 'compileMorphologyToMjcf' src/mujocoRuntime.js
+          grep -q 'EXPECTED_ACTUATOR_COUNT' src/mujocoRuntime.js
+          grep -q 'nexus.robot-preset.v1' src/robotPresets.js
+          grep -q 'Rover Car' src/robotPresets.js
+          grep -q 'Sandcastle Maker' src/robotPresets.js
+          grep -q 'a floating mesh would be fake' src/robotPresets.js
+          grep -q 'nexus.mobile-camera-fit.v1' src/mobileCameraFraming.js
+          ! grep -R "position\.x +=\|rotation\.y +=\|Math\.sin.*mesh" src --include='*.js'
+          node --input-type=module <<'EOF'
+          import { readFile } from 'node:fs/promises';
+          import {
+            FUTURE_ROBOT_PRESETS,
+            READY_ROBOT_PRESETS,
+            validateRobotPresetCatalog,
+          } from './src/robotPresets.js';
+          import { compileMorphologyToMjcf, validateMorphology } from './src/research/morphologyGenome.js';
+
+          const catalog = validateRobotPresetCatalog();
+          if (!catalog.valid) throw new Error(catalog.errors.join('\n'));
+          if (READY_ROBOT_PRESETS.length !== 6) throw new Error('Expected exactly six runnable mobile presets.');
+          if (FUTURE_ROBOT_PRESETS.length < 6) throw new Error('Expected at least six honest blocked future topologies.');
+
+          const identities = new Set();
+          const signatures = new Set();
+          for (const preset of READY_ROBOT_PRESETS) {
+            if (preset.status !== 'ready' || preset.topology !== 'hexapod-2dof') {
+              throw new Error(`${preset.id} is not a runnable hexapod preset.`);
+            }
+            if (identities.has(preset.id)) throw new Error(`Duplicate preset ${preset.id}.`);
+            identities.add(preset.id);
+            const validation = validateMorphology(preset.morphology);
+            if (!validation.valid) throw new Error(`${preset.id}: ${validation.errors.join(' | ')}`);
+            const xml = compileMorphologyToMjcf(preset.morphology);
+            const actuators = [...xml.matchAll(/<position name=/g)].length;
+            const touchSensors = [...xml.matchAll(/<touch name=/g)].length;
+            if (actuators !== 12 || touchSensors !== 6) {
+              throw new Error(`${preset.id} compiled ${actuators} actuators and ${touchSensors} touch sensors.`);
+            }
+            signatures.add(JSON.stringify({
+              torso: preset.morphology.torso,
+              leg: preset.morphology.leg,
+              frequencyHz: preset.controllerGenome.frequencyHz,
+              batteryJoules: preset.batteryJoules,
+            }));
+          }
+          if (signatures.size !== READY_ROBOT_PRESETS.length) {
+            throw new Error('Runnable presets do not have distinct physical/controller signatures.');
+          }
+
+          for (const preset of FUTURE_ROBOT_PRESETS) {
+            if (preset.status !== 'blocked' || preset.topology !== 'not-implemented' || !preset.blocker) {
+              throw new Error(`${preset.id} is pretending to be implemented.`);
+            }
+          }
+
+          const manifest = JSON.parse(await readFile('public/cad/manifest.json', 'utf8'));
+          if (manifest.schema !== 'nexus.cad-asset-manifest.v1' ||
+              manifest.sourceCommit !== '7d8fc8034d715d1c9373f48281ecfa500c994d8b' ||
+              manifest.license !== 'MIT' || manifest.assets.length !== 10) {
+            throw new Error('Pinned CAD provenance failed.');
+          }
+          EOF
+
+      - name: Install mobile browser test runtime
+        run: |
+          mkdir -p nexus-v7-mobile-smoke artifacts
+          cd nexus-v7-mobile-smoke
+          npm init -y >/dev/null
+          npm install playwright@1.55.0 >/dev/null
+          npx playwright install --with-deps chromium
+
+      - name: Switch every real robot preset and run MuJoCo evolution
+        run: |
+          cd nexus-science-core-v7
+          npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/nexus-v7-mobile-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          cd ..
+          trap 'kill $PREVIEW_PID || true' EXIT
+          cat > nexus-v7-mobile-smoke/smoke.mjs <<'EOF'
+          import { writeFile } from 'node:fs/promises';
+          import { chromium } from 'playwright';
+
+          const browser = await chromium.launch({
+            headless: true,
+            args: [
+              '--use-gl=swiftshader',
+              '--enable-webgl',
+              '--enable-unsafe-swiftshader',
+              '--ignore-gpu-blocklist',
+            ],
+          });
+          const context = await browser.newContext({
+            viewport: { width: 430, height: 932 },
+            deviceScaleFactor: 1,
+            isMobile: true,
+            hasTouch: true,
+          });
+          const page = await context.newPage();
+          const diagnostics = [];
+          page.on('pageerror', error => diagnostics.push(`pageerror: ${error.message}`));
+          page.on('requestfailed', request => diagnostics.push(`requestfailed: ${request.url()} :: ${request.failure()?.errorText || 'unknown'}`));
+          page.on('console', message => {
+            if (message.type() === 'error') diagnostics.push(`console-error: ${message.text()}`);
+          });
+
+          await page.goto('http://127.0.0.1:4173/?robot=explorer', {
+            waitUntil: 'domcontentloaded',
+            timeout: 120000,
+          });
+          await page.waitForFunction(() => {
+            const nexus = window.__NEXUS_V7__;
+            const status = document.querySelector('#status')?.textContent || '';
+            return status.includes('FAIL-CLOSED') || (
+              nexus?.activePreset?.id === 'explorer' &&
+              Number(nexus?.runtime?.data?.time || 0) >= 0.6 &&
+              nexus?.renderer?.mobileCameraFit?.horizontallyContained === true
+            );
+          }, null, { timeout: 120000 });
+
+          await page.click('#preset-toggle');
+          await page.waitForFunction(() => {
+            const panel = document.querySelector('#preset-panel');
+            const backdrop = document.querySelector('#preset-backdrop');
+            const rect = panel?.getBoundingClientRect();
+            return panel?.dataset.open === 'true' &&
+              backdrop?.dataset.open === 'true' &&
+              rect && rect.top >= 0 && rect.top < window.innerHeight &&
+              rect.left >= 0 && rect.right <= window.innerWidth + 0.5 &&
+              rect.bottom <= window.innerHeight + 0.5;
+          }, null, { timeout: 5000 });
+
+          const garage = await page.evaluate(() => {
+            const panel = document.querySelector('#preset-panel').getBoundingClientRect();
+            const readyCards = [...document.querySelectorAll('#ready-presets button[data-preset-id]')];
+            const blockedCards = [...document.querySelectorAll('#future-presets [data-preset-id]')];
+            return {
+              panel: { left: panel.left, right: panel.right, top: panel.top, bottom: panel.bottom },
+              readyIds: readyCards.map(card => card.dataset.presetId),
+              blockedIds: blockedCards.map(card => card.dataset.presetId),
+              blockedAreDisabled: blockedCards.every(card => card.getAttribute('aria-disabled') === 'true'),
+              backdropOpen: document.querySelector('#preset-backdrop')?.dataset.open === 'true',
+            };
+          });
+          await page.click('#preset-close');
+          await page.waitForFunction(() =>
+            document.querySelector('#preset-panel')?.dataset.open === 'false' &&
+            document.querySelector('#preset-backdrop')?.dataset.open === 'false'
+          );
+
+          const expectedReady = ['explorer', 'sandwalker', 'builder', 'cargo', 'climber', 'rescue'];
+          if (JSON.stringify(garage.readyIds) !== JSON.stringify(expectedReady) ||
+              garage.blockedIds.length < 6 || !garage.blockedAreDisabled || !garage.backdropOpen ||
+              garage.panel.left < 0 || garage.panel.right > 430.5 ||
+              garage.panel.top < 0 || garage.panel.bottom > 932.5) {
+            throw new Error(`Robot Garage layout/catalog failed: ${JSON.stringify(garage)}`);
+          }
+
+          const presetEvidence = [];
+          for (const id of expectedReady) {
+            await page.evaluate(async (presetId) => {
+              await window.__NEXUS_V7__.activatePreset(presetId);
+            }, id);
+            await page.waitForFunction((presetId) => {
+              const nexus = window.__NEXUS_V7__;
+              const status = document.querySelector('#status')?.textContent || '';
+              return status.includes('FAIL-CLOSED') || (
+                nexus?.activePreset?.id === presetId &&
+                Number(nexus?.runtime?.data?.time || 0) >= 0.7 &&
+                nexus?.renderer?.mobileCameraFit?.presetId === presetId &&
+                nexus?.renderer?.mobileCameraFit?.horizontallyContained === true
+              );
+            }, id, { timeout: 120000 });
+
+            const evidence = await page.evaluate(() => {
+              const nexus = window.__NEXUS_V7__;
+              const connectivity = nexus.renderer.allLegConnectivity?.report;
+              return {
+                id: nexus.activePreset.id,
+                name: nexus.activePreset.name,
+                runtimePresetId: nexus.runtime.presetId,
+                time: Number(nexus.runtime.data.time || 0),
+                qposFinite: [...nexus.runtime.data.qpos].every(Number.isFinite),
+                ctrlCount: nexus.runtime.data.ctrl.length,
+                maximumContacts: nexus.runtime.maxFootContactsSeen,
+                peakPowerWatts: nexus.runtime.maxPowerWattsSeen,
+                torsoMassKg: nexus.runtime.morphology.torso.massKg,
+                footRadius: nexus.runtime.morphology.leg.footRadius,
+                gaitHz: nexus.runtime.controller.genome.frequencyHz,
+                batteryCapacityJoules: nexus.runtime.maxBatteryJoules,
+                connectedLegs: connectivity?.connectedLegs,
+                floatingParts: connectivity?.floatingParts,
+                maximumPivotGapMetres: connectivity?.maximumPivotGapMetres,
+                cameraFit: nexus.renderer.mobileCameraFit,
+                status: document.querySelector('#status')?.textContent || '',
+              };
+            });
+            presetEvidence.push(evidence);
+
+            const bounds = evidence.cameraFit?.viewportBounds;
+            if (evidence.runtimePresetId !== id || evidence.time < 0.7 || !evidence.qposFinite ||
+                evidence.ctrlCount !== 12 || evidence.maximumContacts < 1 || evidence.peakPowerWatts <= 0.1 ||
+                evidence.connectedLegs !== 6 || evidence.floatingParts !== 0 || evidence.maximumPivotGapMetres !== 0 ||
+                evidence.cameraFit?.horizontallyContained !== true || !bounds ||
+                bounds.left < 13.5 || bounds.right > 416.5 ||
+                evidence.status.includes('FAIL-CLOSED')) {
+              throw new Error(`Preset ${id} failed closed: ${JSON.stringify(evidence)}`);
+            }
+          }
+
+          const beforeBlocked = await page.evaluate(() => window.__NEXUS_V7__.activePreset.id);
+          await page.evaluate(async () => {
+            await window.__NEXUS_V7__.activatePreset('rover-car');
+          });
+          const afterBlocked = await page.evaluate(() => window.__NEXUS_V7__.activePreset.id);
+          if (beforeBlocked !== afterBlocked) throw new Error('Blocked rover preset changed the live physics model.');
+
+          await page.evaluate(async () => {
+            await window.__NEXUS_V7__.activatePreset('explorer');
+          });
+          await page.waitForFunction(() => {
+            const nexus = window.__NEXUS_V7__;
+            return nexus?.activePreset?.id === 'explorer' &&
+              nexus.runtime.data.time >= 0.7 &&
+              nexus.renderer.mobileCameraFit?.horizontallyContained === true;
+          }, null, { timeout: 120000 });
+
+          const backdropClosedBeforeEvolve = await page.evaluate(() =>
+            document.querySelector('#preset-backdrop')?.dataset.open === 'false'
+          );
+          if (!backdropClosedBeforeEvolve) throw new Error('Robot Garage backdrop remained active after closing.');
+
+          await page.click('#evolve');
+          await page.waitForFunction(() => {
+            const nexus = window.__NEXUS_V7__;
+            return nexus?.experiment?.generation >= 1 &&
+              nexus?.archive?.cells?.size >= 1 &&
+              nexus?.archive?.best?.fitness > 0;
+          }, null, { timeout: 90000 });
+          await page.waitForTimeout(700);
+
+          const finalEvidence = await page.evaluate(() => {
+            const nexus = window.__NEXUS_V7__;
+            const rect = selector => {
+              const value = document.querySelector(selector).getBoundingClientRect();
+              return { left: value.left, right: value.right, top: value.top, bottom: value.bottom, height: value.height };
+            };
+            const overlaps = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+            const identity = rect('#identity');
+            const actions = rect('#top-actions');
+            const controls = rect('#controls');
+            const visibleButtons = [...document.querySelectorAll('button')].filter(button => {
+              const style = getComputedStyle(button);
+              const bounds = button.getBoundingClientRect();
+              return style.visibility !== 'hidden' && style.display !== 'none' && bounds.width > 0 && bounds.height > 0;
+            }).map(button => ({ id: button.id, height: button.getBoundingClientRect().height }));
+            return {
+              runtimeSchema: nexus.schema,
+              productCycle: nexus.productCycle,
+              activePreset: nexus.activePreset.id,
+              generation: nexus.experiment.generation,
+              archiveCells: nexus.archive.cells.size,
+              bestFitness: nexus.archive.best?.fitness || 0,
+              cameraFit: nexus.renderer.mobileCameraFit,
+              backdropClosed: document.querySelector('#preset-backdrop')?.dataset.open === 'false',
+              layoutOverlap: overlaps(identity, actions) || overlaps(identity, controls) || overlaps(actions, controls),
+              buttonHeights: visibleButtons,
+              canvas: {
+                width: document.querySelector('#world')?.width || 0,
+                height: document.querySelector('#world')?.height || 0,
+              },
+            };
+          });
+
+          await page.screenshot({ path: 'artifacts/nexus-v7-mobile-robot-garage.png', fullPage: true });
+          await page.click('#preset-toggle');
+          await page.waitForFunction(() => {
+            const panel = document.querySelector('#preset-panel');
+            const rect = panel?.getBoundingClientRect();
+            return panel?.dataset.open === 'true' && rect &&
+              rect.top >= 0 && rect.bottom <= window.innerHeight + 0.5;
+          });
+          await page.screenshot({ path: 'artifacts/nexus-v7-mobile-robot-garage-open.png', fullPage: true });
+          await browser.close();
+
+          const report = { schema: 'nexus.mobile-robot-garage-evidence.v1', garage, presetEvidence, finalEvidence, diagnostics };
+          await writeFile('artifacts/nexus-v7-mobile-robot-garage-report.json', JSON.stringify(report, null, 2));
+          console.log(JSON.stringify(report, null, 2));
+
+          const bounds = finalEvidence.cameraFit?.viewportBounds;
+          const invalid =
+            finalEvidence.runtimeSchema !== 'nexus.science-runtime.v1' ||
+            finalEvidence.productCycle?.cycle !== 2 || finalEvidence.productCycle?.increment !== 1 ||
+            finalEvidence.productCycle?.readyPresetCount !== 6 || finalEvidence.activePreset !== 'explorer' ||
+            finalEvidence.generation < 1 || finalEvidence.archiveCells < 1 || finalEvidence.bestFitness <= 0 ||
+            finalEvidence.cameraFit?.horizontallyContained !== true || !bounds || bounds.left < 13.5 || bounds.right > 416.5 ||
+            !finalEvidence.backdropClosed || finalEvidence.layoutOverlap ||
+            finalEvidence.canvas.width <= 0 || finalEvidence.canvas.height <= 0 ||
+            finalEvidence.buttonHeights.some(button => button.height < 42) ||
+            diagnostics.some(entry => entry.startsWith('pageerror:') || entry.startsWith('requestfailed:') || entry.startsWith('console-error:'));
+          if (invalid) throw new Error(`Mobile Robot Garage failed closed: ${JSON.stringify(report)}`);
+          EOF
+          node nexus-v7-mobile-smoke/smoke.mjs
+
+      - name: Upload mobile Robot Garage evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-v7-mobile-robot-garage-evidence
+          path: |
+            artifacts/nexus-v7-mobile-robot-garage.png
+            artifacts/nexus-v7-mobile-robot-garage-open.png
+            artifacts/nexus-v7-mobile-robot-garage-report.json
+          if-no-files-found: warn
