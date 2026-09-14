@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;background:#050910;color:#eaf4ff;font-family:system-ui,-apple-system,sans-serif}
+#app{padding:8px;max-width:1100px;margin:auto}
+.top{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:7px}
+button,select{min-height:38px;border:1px solid #2d455d;background:#0d1a27;color:#edf7ff;border-radius:9px;padding:7px 10px;font:inherit}
+button:active{transform:translateY(1px)}
+#title{font-weight:700;margin-right:auto;min-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+canvas{display:block;width:100%;aspect-ratio:16/9;background:#02050a;border-radius:12px;touch-action:none}
+.stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin-top:6px}
+.stat{border:1px solid #203246;background:#09131e;border-radius:8px;padding:5px 6px;min-width:0}
+.k{font-size:9px;letter-spacing:.06em;color:#8ea8bd;text-transform:uppercase}
+.v{font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.note{font-size:10px;line-height:1.35;color:#8fa7ba;margin-top:6px}
+@media(max-width:700px){.stats{grid-template-columns:repeat(3,minmax(0,1fr))}.top{font-size:12px}button,select{min-height:36px;padding:6px 8px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top">
+    <div id="title">Fluid Lab</div>
+    <button id="pause">Pause</button>
+    <button id="reset">Reset</button>
+    <button id="burst">Vortex</button>
+    <select id="view" aria-label="Visualization">
+      <option value="dye">Dye</option>
+      <option value="speed">Speed</option>
+      <option value="pressure">Pressure</option>
+      <option value="divergence">Divergence</option>
+      <option value="vorticity">Vorticity</option>
+    </select>
+  </div>
+  <canvas id="sim" width="768" height="432"></canvas>
+  <div class="stats">
+    <div class="stat"><div class="k">FPS</div><div class="v" id="fps">0</div></div>
+    <div class="stat"><div class="k">Grid</div><div class="v" id="grid">0×0</div></div>
+    <div class="stat"><div class="k">Max speed</div><div class="v" id="speed">0</div></div>
+    <div class="stat"><div class="k">Max div</div><div class="v" id="div">0</div></div>
+    <div class="stat"><div class="k">Energy</div><div class="v" id="energy">0</div></div>
+    <div class="stat"><div class="k">NaN/Inf</div><div class="v" id="nan">0</div></div>
+  </div>
+  <div class="note">2D incompressible Stable-Fluids model: semi-Lagrangian advection + pressure projection + vorticity confinement. Drag to inject dye and momentum.</div>
+</div>
+<script>
+(()=>{
+"use strict";
+
+const P=new URLSearchParams(location.search);
+const preset=P.get("preset")||"water";
+const quality=P.get("quality")||"balanced";
+const pressureIterations=Math.max(8,Math.min(40,+(P.get("pressureIterations")||24)));
+const vortStrength=Math.max(0,Math.min(8,+(P.get("vorticity")||3)));
+const viscosity=Math.max(0,Math.min(.003,+(P.get("viscosity")||.00015)));
+const dissipation=Math.max(.97,Math.min(1,+(P.get("dissipation")||.995)));
+const gravityY=Math.max(-2,Math.min(2,+(P.get("gravityY")||0)));
+document.getElementById("title").textContent=P.get("title")||("Fluid Lab · "+preset);
+
+const dims=quality==="high"?[128,72]:quality==="fast"?[72,44]:[96,60];
+const W=dims[0],H=dims[1],N=W*H;
+document.getElementById("grid").textContent=W+"×"+H;
+
+const canvas=document.getElementById("sim"),ctx=canvas.getContext("2d",{alpha:false});
+const image=ctx.createImageData(W,H),pix=image.data;
+const off=document.createElement("canvas");off.width=W;off.height=H;
+const offctx=off.getContext("2d",{alpha:false});
+
+let u=new Float32Array(N),v=new Float32Array(N),u0=new Float32Array(N),v0=new Float32Array(N);
+let p=new Float32Array(N),p0=new Float32Array(N),div=new Float32Array(N);
+let dye=new Float32Array(N),dye0=new Float32Array(N),curl=new Float32Array(N);
+let running=true,nanCount=0,last=performance.now(),fpsFrames=0,fpsLast=last;
+const dt=quality==="high"?0.08:0.1;
+const idx=(x,y)=>x+y*W;
+const clamp=(x,a,b)=>x<a?a:x>b?b:x;
+
+function sample(a,x,y){
+  x=clamp(x,.5,W-1.5);y=clamp(y,.5,H-1.5);
+  const x0=Math.floor(x),y0=Math.floor(y),x1=x0+1,y1=y0+1;
+  const sx=x-x0,sy=y-y0;
+  const a00=a[idx(x0,y0)],a10=a[idx(x1,y0)],a01=a[idx(x0,y1)],a11=a[idx(x1,y1)];
+  return (a00*(1-sx)+a10*sx)*(1-sy)+(a01*(1-sx)+a11*sx)*sy;
+}
+function boundary(){
+  for(let x=0;x<W;x++){
+    let a=idx(x,0),b=idx(x,H-1);
+    u[a]=u[b]=0;v[a]=v[b]=0;dye[a]=dye[b]=0;
+  }
+  for(let y=0;y<H;y++){
+    let a=idx(0,y),b=idx(W-1,y);
+    u[a]=u[b]=0;v[a]=v[b]=0;dye[a]=dye[b]=0;
+  }
+}
+function advect(dst,src,velU,velV,decay){
+  for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){
+    const i=idx(x,y);
+    dst[i]=sample(src,x-dt*velU[i],y-dt*velV[i])*decay;
+  }
+}
+function diffuseVelocity(){
+  if(viscosity<=0)return;
+  const a=viscosity*dt*W*H*.5;
+  u0.set(u);v0.set(v);
+  for(let k=0;k<4;k++){
+    for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){
+      const i=idx(x,y);
+      u[i]=(u0[i]+a*(u[i-1]+u[i+1]+u[i-W]+u[i+W]))/(1+4*a);
+      v[i]=(v0[i]+a*(v[i-1]+v[i+1]+v[i-W]+v[i+W]))/(1+4*a);
+    }
+  }
+}
+function project(){
+  let maxD=0;
+  p.fill(0);
+  for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){
+    const i=idx(x,y);
+    const d=.5*((u[i+1]-u[i-1])+(v[i+W]-v[i-W]));
+    div[i]=d;maxD=Math.max(maxD,Math.abs(d));
+  }
+  for(let k=0;k<pressureIterations;k++){
+    for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){
+      const i=idx(x,y);
+      p0[i]=(p[i-1]+p[i+1]+p[i-W]+p[i+W]-div[i])*.25;
+    }
+    [p,p0]=[p0,p];
+  }
+  for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){
+    const i=idx(x,y);
+    u[i]-=.5*(p[i+1]-p[i-1]);
+    v[i]-=.5*(p[i+W]-p[i-W]);
+  }
+  boundary();
+  return maxD;
+}
+function vorticityConfinement(){
+  for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){
+    const i=idx(x,y);
+    curl[i]=.5*((v[i+1]-v[i-1])-(u[i+W]-u[i-W]));
+  }
+  for(let y=2;y<H-2;y++)for(let x=2;x<W-2;x++){
+    const i=idx(x,y);
+    let nx=Math.abs(curl[i+1])-Math.abs(curl[i-1]);
+    let ny=Math.abs(curl[i+W])-Math.abs(curl[i-W]);
+    const m=Math.hypot(nx,ny)+1e-6;nx/=m;ny/=m;
+    const c=curl[i]*vortStrength*.015;
+    u[i]+=ny*c;v[i]-=nx*c;
+  }
+}
+function presetForces(){
+  if(preset==="smoke"){
+    for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const i=idx(x,y);v[i]+=gravityY*dt*dye[i];}
+  }else if(gravityY!==0){
+    for(let i=0;i<N;i++)v[i]+=gravityY*dt;
+  }
+  if(preset==="jet"){
+    const cy=(H*.5)|0;
+    for(let y=cy-3;y<=cy+3;y++)for(let x=2;x<7;x++){const i=idx(x,y);u[i]+=1.4;dye[i]=1;}
+  }
+}
+function step(){
+  presetForces();
+  diffuseVelocity();
+  vorticityConfinement();
+  project();
+  u0.set(u);v0.set(v);
+  advect(u,u0,u0,v0,.999);
+  advect(v,v0,u0,v0,.999);
+  project();
+  dye0.set(dye);
+  advect(dye,dye0,u,v,dissipation);
+  boundary();
+}
+function inject(gx,gy,fx,fy,amount=1){
+  const r=4,r2=r*r;
+  for(let y=Math.max(1,gy-r);y<=Math.min(H-2,gy+r);y++)for(let x=Math.max(1,gx-r);x<=Math.min(W-2,gx+r);x++){
+    const d=(x-gx)*(x-gx)+(y-gy)*(y-gy);
+    if(d<=r2){
+      const w=Math.exp(-d/(r2*.4)),i=idx(x,y);
+      u[i]+=fx*w;v[i]+=fy*w;dye[i]=Math.min(1.5,dye[i]+amount*w);
+    }
+  }
+}
+function seed(){
+  u.fill(0);v.fill(0);p.fill(0);div.fill(0);dye.fill(0);curl.fill(0);nanCount=0;
+  if(preset==="vortex"){
+    const cx=W*.5,cy=H*.5;
+    for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){
+      const dx=x-cx,dy=y-cy,r=Math.hypot(dx,dy)+1;
+      const i=idx(x,y),s=Math.exp(-r*r/(W*.28*W*.28));
+      u[i]=-dy/r*s*1.6;v[i]=dx/r*s*1.6;dye[i]=s;
+    }
+  }else{
+    inject((W*.35)|0,(H*.52)|0,1.1,-.2,1);
+    inject((W*.65)|0,(H*.48)|0,-1.1,.2,1);
+  }
+}
+function diagnostics(){
+  let maxSpeed=0,maxDiv=0,energy=0;
+  for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){
+    const i=idx(x,y),s=Math.hypot(u[i],v[i]);
+    maxSpeed=Math.max(maxSpeed,s);energy+=.5*s*s;
+    const d=.5*((u[i+1]-u[i-1])+(v[i+W]-v[i-W]));
+    maxDiv=Math.max(maxDiv,Math.abs(d));
+    if(!Number.isFinite(u[i])||!Number.isFinite(v[i])||!Number.isFinite(dye[i])||!Number.isFinite(p[i]))nanCount++;
+  }
+  document.getElementById("speed").textContent=maxSpeed.toFixed(3);
+  document.getElementById("div").textContent=maxDiv.toFixed(4);
+  document.getElementById("energy").textContent=energy.toFixed(1);
+  document.getElementById("nan").textContent=nanCount;
+}
+function render(){
+  const mode=document.getElementById("view").value;
+  let k=0;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    const i=idx(x,y);let a=0,r=0,g=0,b=0;
+    if(mode==="dye"){
+      a=clamp(dye[i],0,1);
+      if(preset==="smoke"){r=40+150*a;g=55+160*a;b=70+170*a;}
+      else if(preset==="honey"){r=45+210*a;g=25+135*a;b=10+40*a;}
+      else{r=5+35*a;g=20+135*a;b=45+210*a;}
+    }else if(mode==="speed"){
+      a=clamp(Math.hypot(u[i],v[i])*.5,0,1);r=20+235*a;g=35+150*(1-a);b=80+175*(1-a);
+    }else if(mode==="pressure"){
+      a=clamp(.5+p[i]*.8,0,1);r=255*a;g=70+80*(1-Math.abs(a-.5)*2);b=255*(1-a);
+    }else if(mode==="divergence"){
+      const d=.5*((u[Math.min(N-1,i+1)]-u[Math.max(0,i-1)])+(v[Math.min(N-1,i+W)]-v[Math.max(0,i-W)]));
+      a=clamp(Math.abs(d)*4,0,1);r=230*a;g=30;b=255*(1-a);
+    }else{
+      a=clamp(.5+curl[i]*.8,0,1);r=255*a;g=60;b=255*(1-a);
+    }
+    pix[k++]=r|0;pix[k++]=g|0;pix[k++]=b|0;pix[k++]=255;
+  }
+  offctx.putImageData(image,0,0);
+  ctx.imageSmoothingEnabled=true;
+  ctx.drawImage(off,0,0,canvas.width,canvas.height);
+}
+let pointer=null;
+function pos(e){
+  const r=canvas.getBoundingClientRect();
+  return [clamp((e.clientX-r.left)/r.width*W,1,W-2),clamp((e.clientY-r.top)/r.height*H,1,H-2)];
+}
+canvas.addEventListener("pointerdown",e=>{
+  canvas.setPointerCapture(e.pointerId);
+  const p=pos(e);pointer=p;inject(p[0]|0,p[1]|0,0,0,1);
+});
+canvas.addEventListener("pointermove",e=>{
+  if(!pointer||!e.buttons)return;
+  const p=pos(e),dx=p[0]-pointer[0],dy=p[1]-pointer[1];
+  inject(p[0]|0,p[1]|0,dx*.35,dy*.35,1);
+  pointer=p;
+});
+canvas.addEventListener("pointerup",()=>pointer=null);
+canvas.addEventListener("pointercancel",()=>pointer=null);
+
+document.getElementById("pause").addEventListener("click",e=>{
+  running=!running;e.currentTarget.textContent=running?"Pause":"Run";
+});
+document.getElementById("reset").addEventListener("click",seed);
+document.getElementById("burst").addEventListener("click",()=>{
+  const cx=W*.5,cy=H*.5;
+  for(let a=0;a<Math.PI*2;a+=Math.PI/10)inject((cx+Math.cos(a)*6)|0,(cy+Math.sin(a)*6)|0,-Math.sin(a)*.7,Math.cos(a)*.7,.7);
+});
+
+function frame(now){
+  if(running){step();if(quality!=="high")step();}
+  render();diagnostics();
+  fpsFrames++;
+  if(now-fpsLast>600){
+    document.getElementById("fps").textContent=(fpsFrames*1000/(now-fpsLast)).toFixed(0);
+    fpsFrames=0;fpsLast=now;
+  }
+  last=now;requestAnimationFrame(frame);
+}
+seed();requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
