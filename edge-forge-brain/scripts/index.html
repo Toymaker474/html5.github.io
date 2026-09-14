@@ -1,0 +1,189 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Edge Forge Brain Runner</title>
+</head>
+<body>
+<script>
+(() => {
+  "use strict";
+
+  const K = {
+    memory: "efb.memory.v1",
+    programs: "efb.programs.v1",
+    latest: "efb.latest.v1",
+    brain: "efb.flybrain.v1"
+  };
+
+  const load = (k, fallback) => {
+    try {
+      const x = localStorage.getItem(k);
+      return x ? JSON.parse(x) : fallback;
+    } catch (_) { return fallback; }
+  };
+  const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+  const clean = s => String(s ?? "").trim();
+
+  function tokenize(s) {
+    return clean(s).toLowerCase().match(/[a-z0-9_+-]+/g) || [];
+  }
+
+  function help() {
+    return {
+      result:
+`Edge Forge Brain commands:
+/learn <fact>       persistent skill memory
+/memory <query>     search memory
+/make <request>     Gemma builds + saves a runnable HTML/JS program
+/run                open latest program
+/programs           list programs
+/fly                fly champion brain
+/train fast         quick evolution
+/train normal       balanced evolution
+/train deep         heavier evolution
+/brain              champion stats
+/resetbrain         clear champion
+/export             snapshot state`
+    };
+  }
+
+  function learn(d) {
+    const text = clean(d.text);
+    if (!text) return {error:"Nothing to learn."};
+    const mem = load(K.memory, []);
+    const item = {
+      id: (Date.now().toString(36) + Math.random().toString(36).slice(2,7)),
+      text,
+      tags: Array.isArray(d.tags) ? d.tags.map(clean).filter(Boolean).slice(0,12) : [],
+      t: Date.now()
+    };
+    mem.push(item);
+    if (mem.length > 250) mem.splice(0, mem.length - 250);
+    save(K.memory, mem);
+    return {result:`Learned. Memory now has ${mem.length} item(s).`, memory:item};
+  }
+
+  function recall(d) {
+    const q = tokenize(d.query);
+    const mem = load(K.memory, []);
+    const ranked = mem.map(m => {
+      const hay = (m.text + " " + (m.tags||[]).join(" ")).toLowerCase();
+      let score = 0;
+      for (const t of q) if (hay.includes(t)) score += 1;
+      if (!q.length) score = 1;
+      return {m, score};
+    }).filter(x => x.score > 0)
+      .sort((a,b)=> b.score-a.score || b.m.t-a.m.t)
+      .slice(0,12)
+      .map(x=>x.m);
+    return {result: ranked.length ? ranked.map((m,i)=>`${i+1}. ${m.text}`).join("\n") : "No matching memory.", items:ranked};
+  }
+
+  function makeProgram(d) {
+    const code = String(d.code || "");
+    if (!/^<!doctype html>|^<html[\s>]/i.test(code.trim())) {
+      return {error:"Program must be a complete HTML document."};
+    }
+    if (code.length > 350000) return {error:"Program is too large for the mobile runner."};
+    const programs = load(K.programs, {});
+    let name = clean(d.name || "program").toLowerCase().replace(/[^a-z0-9_-]+/g,"-").replace(/^-+|-+$/g,"").slice(0,48) || "program";
+    programs[name] = {
+      name,
+      request: clean(d.request).slice(0,1000),
+      code,
+      t: Date.now(),
+      bytes: code.length
+    };
+    const names = Object.keys(programs).sort((a,b)=>programs[b].t-programs[a].t);
+    while (names.length > 20) {
+      const old = names.pop();
+      delete programs[old];
+    }
+    save(K.programs, programs);
+    localStorage.setItem(K.latest, name);
+    return {
+      result:`Saved "${name}" (${code.length.toLocaleString()} chars). Opening sandbox.`,
+      webview:{url:`program.html?n=${encodeURIComponent(name)}`,aspectRatio:0.72}
+    };
+  }
+
+  function runProgram(d) {
+    const programs = load(K.programs, {});
+    const name = clean(d.name) || localStorage.getItem(K.latest) || "";
+    if (!name || !programs[name]) return {error:"No saved program found. Use /make first."};
+    localStorage.setItem(K.latest, name);
+    return {
+      result:`Running "${name}" in an isolated iframe.`,
+      webview:{url:`program.html?n=${encodeURIComponent(name)}`,aspectRatio:0.72}
+    };
+  }
+
+  function listPrograms() {
+    const programs = load(K.programs, {});
+    const p = Object.values(programs).sort((a,b)=>b.t-a.t);
+    return {result: p.length ? p.map((x,i)=>`${i+1}. ${x.name} — ${x.bytes} chars`).join("\n") : "No saved programs yet.", programs:p.map(x=>({name:x.name,request:x.request,t:x.t,bytes:x.bytes}))};
+  }
+
+  function fly(d) {
+    const mode = ["train","play"].includes(d.mode) ? d.mode : "train";
+    const preset = ["fast","normal","deep"].includes(d.preset) ? d.preset : "normal";
+    return {
+      result:`Opening flying-brain lab (${mode}, ${preset}). The controller is a real tiny neural network optimized by evolution; it is separate from Gemma.`,
+      webview:{url:`fly.html?mode=${encodeURIComponent(mode)}&preset=${encodeURIComponent(preset)}`,aspectRatio:0.66}
+    };
+  }
+
+  function brainStats() {
+    const b = load(K.brain, null);
+    if (!b) return {result:"No champion brain saved yet. Use /train."};
+    return {result:`Champion: fitness ${Number(b.fitness||0).toFixed(1)}, generation ${b.generation||0}, trained episodes ${b.episodes||0}, genome ${Array.isArray(b.genome)?b.genome.length:0} weights.`, brain:{fitness:b.fitness,generation:b.generation,episodes:b.episodes,weights:Array.isArray(b.genome)?b.genome.length:0}};
+  }
+
+  function resetBrain() {
+    localStorage.removeItem(K.brain);
+    return {result:"Flying-brain champion cleared. Skill memory and saved programs were kept."};
+  }
+
+  function exportState() {
+    const mem = load(K.memory, []);
+    const programs = load(K.programs, {});
+    const brain = load(K.brain, null);
+    const snapshot = {
+      version:1,
+      exportedAt:new Date().toISOString(),
+      memory:mem,
+      programs:Object.values(programs).map(p=>({name:p.name,request:p.request,t:p.t,bytes:p.bytes})),
+      brain:brain ? {fitness:brain.fitness,generation:brain.generation,episodes:brain.episodes,genome:brain.genome} : null
+    };
+    return {result:JSON.stringify(snapshot)};
+  }
+
+  window["ai_edge_gallery_get_result"] = async (data) => {
+    try {
+      const d = typeof data === "string" ? JSON.parse(data) : data;
+      if (!d || typeof d !== "object") throw new Error("Expected one JSON object.");
+      let out;
+      switch (d.action) {
+        case "help": out = help(); break;
+        case "learn": out = learn(d); break;
+        case "recall": out = recall(d); break;
+        case "make_program": out = makeProgram(d); break;
+        case "run_program": out = runProgram(d); break;
+        case "list_programs": out = listPrograms(); break;
+        case "fly": out = fly(d); break;
+        case "brain_stats": out = brainStats(); break;
+        case "reset_brain": out = resetBrain(); break;
+        case "export": out = exportState(); break;
+        default: out = {error:`Unknown action "${clean(d.action)}". Use help.`};
+      }
+      return JSON.stringify(out);
+    } catch (e) {
+      return JSON.stringify({error:`Edge Forge Brain: ${e && e.message ? e.message : String(e)}`});
+    }
+  };
+})();
+</script>
+</body>
+</html>
