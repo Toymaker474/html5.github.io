@@ -16,6 +16,7 @@ targets:
     dependencies:
       - package: LiteRTLM
         product: LiteRTLM
+      - framework: NativeRustCore/SuperAgentRust.xcframework
       - sdk: libsqlite3.tbd
       - sdk: Accelerate.framework
       - sdk: NaturalLanguage.framework
