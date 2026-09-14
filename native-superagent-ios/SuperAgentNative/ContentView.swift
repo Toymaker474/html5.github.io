@@ -5,6 +5,7 @@ struct ContentView: View {
   @EnvironmentObject private var runtime: AgentRuntime
   @State private var prompt = ""
   @State private var importingModel = false
+  @State private var importingWorkspaceFile = false
 
   private var liteRTType: UTType {
     UTType(filenameExtension: "litertlm") ?? .data
@@ -19,8 +20,7 @@ struct ContentView: View {
           ScrollView {
             LazyVStack(alignment: .leading, spacing: 12) {
               ForEach(runtime.lines) { line in
-                bubble(line)
-                  .id(line.id)
+                bubble(line).id(line.id)
               }
             }
             .padding()
@@ -38,7 +38,12 @@ struct ContentView: View {
       .navigationTitle("SuperAgent Native")
       .toolbar {
         ToolbarItem(placement: .topBarLeading) {
-          Button("Model") { importingModel = true }
+          Menu {
+            Button("Import LiteRT-LM Model") { importingModel = true }
+            Button("Import Workspace File") { importingWorkspaceFile = true }
+          } label: {
+            Label("Import", systemImage: "square.and.arrow.down")
+          }
         }
         ToolbarItem(placement: .topBarTrailing) {
           Button {
@@ -56,11 +61,21 @@ struct ContentView: View {
       ) { result in
         switch result {
         case .success(let urls):
-          if let url = urls.first {
-            Task { await runtime.installModel(from: url) }
-          }
+          if let url = urls.first { Task { await runtime.installModel(from: url) } }
         case .failure(let error):
           runtime.lines.append(.init(kind: .error, text: "Model picker: \(error)"))
+        }
+      }
+      .fileImporter(
+        isPresented: $importingWorkspaceFile,
+        allowedContentTypes: [.item],
+        allowsMultipleSelection: false
+      ) { result in
+        switch result {
+        case .success(let urls):
+          if let url = urls.first { Task { await runtime.importWorkspaceFile(from: url) } }
+        case .failure(let error):
+          runtime.lines.append(.init(kind: .error, text: "File picker: \(error)"))
         }
       }
     }
@@ -93,9 +108,10 @@ struct ContentView: View {
       HStack(spacing: 8) {
         quick("Device", "Use device_info and tell me exactly what this iPhone exposes.")
         quick("GPU", "Run the native Metal vector benchmark and explain the measured result.")
-        quick("Files", "List the safe workspace files.")
+        quick("Files", "List the safe workspace files and tell me what you can inspect.")
+        quick("OCR", "List workspace files. If there is an image, use ocr_image on it.")
         quick("Memory", "Recall everything useful you have stored locally.")
-        quick("Tools", "List your native tools and give me 3 useful things to try.")
+        quick("Tools", "List your native tools and give me 5 useful things to try.")
       }
       .padding(.horizontal)
       .padding(.vertical, 8)
@@ -103,11 +119,9 @@ struct ContentView: View {
   }
 
   private func quick(_ title: String, _ command: String) -> some View {
-    Button(title) {
-      Task { await runtime.send(command) }
-    }
-    .buttonStyle(.bordered)
-    .disabled(runtime.isBusy || runtime.modelName == nil)
+    Button(title) { Task { await runtime.send(command) } }
+      .buttonStyle(.bordered)
+      .disabled(runtime.isBusy || runtime.modelName == nil)
   }
 
   private var composer: some View {
@@ -117,9 +131,7 @@ struct ContentView: View {
         .lineLimit(1...5)
         .submitLabel(.send)
         .onSubmit { send() }
-      Button {
-        send()
-      } label: {
+      Button { send() } label: {
         Image(systemName: "arrow.up.circle.fill")
           .font(.system(size: 32))
       }
