@@ -59,6 +59,19 @@ final class AgentRuntime: ObservableObject {
     }
   }
 
+  func importWorkspaceFile(from externalURL: URL) async {
+    let scoped = externalURL.startAccessingSecurityScopedResource()
+    defer { if scoped { externalURL.stopAccessingSecurityScopedResource() } }
+    do {
+      let result = try await NativeHub.shared.importFile(from: externalURL)
+      let name = result["name"] as? String ?? externalURL.lastPathComponent
+      let bytes = result["bytes"] as? Int ?? 0
+      lines.append(.init(kind: .system, text: "Imported workspace file: \(name) (\(bytes) bytes)."))
+    } catch {
+      lines.append(.init(kind: .error, text: "Workspace import failed: \(error)"))
+    }
+  }
+
   private func loadModel(at url: URL) async throws {
     status = "Starting LiteRT-LM on GPU…"
 
