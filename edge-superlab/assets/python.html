@@ -1,0 +1,31 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Python/WASM Probe</title><style>:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#050914;color:#eef6ff;font:13px system-ui,-apple-system,sans-serif;padding:max(12px,env(safe-area-inset-top)) 12px calc(18px + env(safe-area-inset-bottom));max-width:900px;margin:auto}h1{font-size:21px;margin:4px 0}.note{padding:10px;border:1px solid #38506b;background:#0c1625;border-radius:12px;color:#b9cee3}.warn{color:#ffd88a}textarea{width:100%;height:300px;margin-top:10px;border:1px solid #2c4661;border-radius:12px;background:#02060d;color:#d8f1ff;padding:11px;font:12px ui-monospace,SFMono-Regular,Menlo,monospace;resize:vertical}button{border:1px solid #3d6385;background:#112640;color:#fff;border-radius:12px;padding:11px 13px;font-weight:760;margin:8px 5px 0 0}pre{white-space:pre-wrap;word-break:break-word;min-height:100px;max-height:320px;overflow:auto;background:#02060d;border:1px solid #1c3147;border-radius:12px;padding:11px;color:#bde8ff}#status{font-weight:750;color:#8ddcff}</style></head><body><h1>🐍 Python through WebAssembly</h1><div class="note"><b>This is real CPython, but not a native Python process.</b><br>It loads Pyodide 314.0.6 (Python 3.14.x compiled for WebAssembly) from jsDelivr. First load can be large and needs internet. It stays inside the WebView sandbox; it cannot spawn arbitrary iOS processes or become a shell.</div><p id="status">Not loaded.</p><button id="load">LOAD PYTHON</button><button id="run" disabled>RUN CODE</button><button id="example">RESET EXAMPLE</button><textarea id="code"></textarea><h3>Output</h3><pre id="out">Load Python first.</pre><script type="module">
+const code=document.getElementById('code'),out=document.getElementById('out'),status=document.getElementById('status'),loadBtn=document.getElementById('load'),runBtn=document.getElementById('run');let py=null;const example=`import sys, math, statistics
+print(sys.version)
+print("runtime: CPython compiled to WebAssembly")
+
+# Lorenz system: deterministic numerical integration
+x, y, z = 0.1, 0.0, 0.0
+sigma, rho, beta = 10.0, 28.0, 8.0/3.0
+dt = 0.005
+zs = []
+for step in range(12000):
+    dx = sigma * (y - x)
+    dy = x * (rho - z) - y
+    dz = x * y - beta * z
+    x += dx * dt
+    y += dy * dt
+    z += dz * dt
+    if step > 2000:
+        zs.append(z)
+print("Lorenz final:", round(x,4), round(y,4), round(z,4))
+print("z mean/std:", round(statistics.mean(zs),4), round(statistics.pstdev(zs),4))
+print("steps:", 12000)
+`;code.value=example;document.getElementById('example').onclick=()=>code.value=example;loadBtn.onclick=async()=>{if(py)return;loadBtn.disabled=true;status.textContent='Downloading Pyodide runtime…';out.textContent='This may take a while on first load.';try{const mod=await import('https://cdn.jsdelivr.net/pyodide/v314.0.6/full/pyodide.mjs');py=await mod.loadPyodide({indexURL:'https://cdn.jsdelivr.net/pyodide/v314.0.6/full/'});status.textContent='Loaded ✓ '+py.runPython('import sys; sys.version.split()[0]');runBtn.disabled=false;out.textContent='Python ready.'}catch(e){status.textContent='Load failed';out.textContent=e.stack||e.message;loadBtn.disabled=false}};runBtn.onclick=async()=>{if(!py)return;runBtn.disabled=true;out.textContent='Running…';const src=code.value;try{status.textContent='Resolving imports…';await py.loadPackagesFromImports(src);py.globals.set('EDGE_USER_CODE',src);status.textContent='Executing inside WASM sandbox…';const result=await py.runPythonAsync(`import io, contextlib, traceback
+_buf = io.StringIO()
+with contextlib.redirect_stdout(_buf), contextlib.redirect_stderr(_buf):
+    try:
+        exec(EDGE_USER_CODE, globals())
+    except Exception:
+        traceback.print_exc()
+_buf.getvalue()`);out.textContent=String(result)||'(no output)';result?.destroy?.();status.textContent='Execution finished ✓'}catch(e){out.textContent=e.stack||e.message;status.textContent='Execution failed'}finally{runBtn.disabled=false}};
+</script></body></html>
