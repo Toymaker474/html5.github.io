@@ -10,9 +10,13 @@ metadata:
 
 Use this only to test the `require-secret` mechanism.
 
-You MUST call `run_js` with:
-- script name: `index.html`
-- data: `{"action":"probe"}`
+## CRITICAL run_js schema
+You MUST call `run_js` with all three exact top-level parameters:
+- `skillName`: `edge-secret-probe`
+- `scriptName`: `index.html`
+- `data`: `{"action":"probe"}`
+
+The `data` value must be a JSON string. Never omit `skillName` or `scriptName`.
 
 The script receives the secret through Edge Gallery's separate secret parameter. It must never print, return, persist, transmit, or log the secret value. It returns only whether a secret was received, its character count, and the first 12 hex characters of its SHA-256 digest.
 
