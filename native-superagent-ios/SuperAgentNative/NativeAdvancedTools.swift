@@ -8,6 +8,13 @@ struct NativeStackManifestTool: Tool {
   func run() async throws -> Any { await NativeAdvancedHub.shared.stackManifest() }
 }
 
+struct NativeSelfTestTool: Tool {
+  static let name = "native_self_test"
+  static let description = "Run a real local smoke test across C++, C, Rust, Accelerate and SQLite and return the measured results."
+  init() {}
+  func run() async throws -> Any { try await NativeAdvancedHub.shared.selfTest() }
+}
+
 struct CppNBodyTool: Tool {
   static let name = "cpp_nbody"
   static let description = "Run a deterministic C++20 gravitational N-body simulation with velocity-Verlet integration and energy-drift verification."
@@ -46,6 +53,16 @@ struct CByteAnalysisTool: Tool {
   @ToolParam(description: "Text whose UTF-8 bytes should be analyzed") var text: String
   init() {}
   func run() async throws -> Any { await NativeAdvancedHub.shared.analyzeBytes(text: text) }
+}
+
+struct RustAnalyzeTool: Tool {
+  static let name = "rust_analyze"
+  static let description = "Run the compiled Rust static library through its C ABI: FNV-1a hash, compensated mean, and deterministic xorshift values."
+  @ToolParam(description: "Text to hash") var text: String
+  @ToolParam(description: "Numbers for compensated mean") var values: [Double]
+  @ToolParam(description: "Seed for Rust PRNG") var seed: Int = 1
+  init() {}
+  func run() async throws -> Any { await NativeAdvancedHub.shared.rustAnalyze(text: text, values: values, seed: seed) }
 }
 
 struct AccelerateStatsTool: Tool {
@@ -102,10 +119,12 @@ enum NativeAdvancedTools {
   static var all: [Tool] {
     [
       NativeStackManifestTool(),
+      NativeSelfTestTool(),
       CppNBodyTool(),
       CppPathfindingTool(),
       NativeVMTool(),
       CByteAnalysisTool(),
+      RustAnalyzeTool(),
       AccelerateStatsTool(),
       LanguageAnalyzeTool(),
       PDFExtractTool(),
