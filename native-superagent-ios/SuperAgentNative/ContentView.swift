@@ -93,7 +93,7 @@ struct ContentView: View {
         }
       }
       Spacer()
-      Text("SWIFT · NATIVE")
+      Text("NATIVE · C++ · RUST · METAL")
         .font(.caption2.monospaced().bold())
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
@@ -106,12 +106,16 @@ struct ContentView: View {
   private var quickTools: some View {
     ScrollView(.horizontal, showsIndicators: false) {
       HStack(spacing: 8) {
-        quick("Device", "Use device_info and tell me exactly what this iPhone exposes.")
+        quick("Self Test", "Run native_self_test and report each native engine that passed or failed.")
+        quick("Stack", "Use native_stack_manifest and tell me exactly what is compiled into this app.")
+        quick("C++", "Run cpp_nbody with 48 bodies, 800 steps, seed 7 and analyze energy drift.")
+        quick("Rust", "Use rust_analyze on text 'SuperAgent' with values 1,2,3,4,5 and seed 7.")
         quick("GPU", "Run the native Metal vector benchmark and explain the measured result.")
+        quick("DB", "Use sqlite_execute to create a demo table if needed, insert a row, then sqlite_query it.")
+        quick("Device", "Use device_info and tell me exactly what this iPhone exposes.")
         quick("Files", "List the safe workspace files and tell me what you can inspect.")
         quick("OCR", "List workspace files. If there is an image, use ocr_image on it.")
         quick("Memory", "Recall everything useful you have stored locally.")
-        quick("Tools", "List your native tools and give me 5 useful things to try.")
       }
       .padding(.horizontal)
       .padding(.vertical, 8)
@@ -126,7 +130,7 @@ struct ContentView: View {
 
   private var composer: some View {
     HStack(alignment: .bottom, spacing: 10) {
-      TextField("Ask the local agent…", text: $prompt, axis: .vertical)
+      TextField("Ask the local native agent…", text: $prompt, axis: .vertical)
         .textFieldStyle(.roundedBorder)
         .lineLimit(1...5)
         .submitLabel(.send)
