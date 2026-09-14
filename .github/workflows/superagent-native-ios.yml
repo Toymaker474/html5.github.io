@@ -1,0 +1,54 @@
+name: SuperAgent Native iOS
+
+on:
+  push:
+    paths:
+      - 'native-superagent-ios/**'
+      - '.github/workflows/superagent-native-ios.yml'
+  workflow_dispatch:
+
+jobs:
+  native-smoke-build:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Install Rust iOS targets
+        run: |
+          rustup target add aarch64-apple-ios aarch64-apple-ios-sim
+
+      - name: Build Rust XCFramework
+        working-directory: native-superagent-ios
+        run: sh NativeRustCore/build-ios.sh
+
+      - name: Generate Xcode project
+        working-directory: native-superagent-ios
+        run: xcodegen generate
+
+      - name: Resolve Swift packages
+        working-directory: native-superagent-ios
+        run: xcodebuild -resolvePackageDependencies -project SuperAgentNative.xcodeproj -scheme SuperAgentNative
+
+      - name: Build unsigned simulator app
+        working-directory: native-superagent-ios
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project SuperAgentNative.xcodeproj \
+            -scheme SuperAgentNative \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build | tee xcodebuild.log
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: superagent-native-xcodebuild-log
+          path: native-superagent-ios/xcodebuild.log
