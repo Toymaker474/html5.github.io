@@ -16,12 +16,24 @@ targets:
     dependencies:
       - package: LiteRTLM
         product: LiteRTLM
+      - sdk: libsqlite3.tbd
+      - sdk: Accelerate.framework
+      - sdk: NaturalLanguage.framework
+      - sdk: PDFKit.framework
+      - sdk: AVFoundation.framework
+      - sdk: Metal.framework
+      - sdk: Vision.framework
+      - sdk: CoreMotion.framework
+      - sdk: CoreImage.framework
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.toymaker474.superagentnative
         PRODUCT_NAME: SuperAgentNative
         SWIFT_VERSION: 5.9
         INFOPLIST_FILE: SuperAgentNative/Info.plist
+        SWIFT_OBJC_BRIDGING_HEADER: SuperAgentNative/SuperAgentNative-Bridging-Header.h
+        CLANG_CXX_LANGUAGE_STANDARD: c++20
+        GCC_C_LANGUAGE_STANDARD: c11
         CODE_SIGN_STYLE: Automatic
         TARGETED_DEVICE_FAMILY: "1,2"
         ENABLE_USER_SCRIPT_SANDBOXING: YES
