@@ -4,7 +4,7 @@ set -eu
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 cd "$ROOT"
 
-./NativeRustCore/build-ios.sh
+sh NativeRustCore/build-ios.sh
 xcodegen generate
 
 echo "Generated: $ROOT/SuperAgentNative.xcodeproj"
