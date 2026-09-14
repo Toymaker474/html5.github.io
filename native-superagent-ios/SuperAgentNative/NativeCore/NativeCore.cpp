@@ -1,6 +1,7 @@
 #include "NativeCore.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstddef>
 #include <limits>
@@ -12,6 +13,8 @@
 
 namespace superagent {
 namespace {
+
+constexpr double kSoftening2 = 0.0025;
 
 struct RNG {
   std::uint64_t state;
@@ -32,14 +35,13 @@ struct Body {
 
 double energy(const std::vector<Body>& b) {
   constexpr double G = 1.0;
-  constexpr double soft = 1e-3;
   double e = 0.0;
   for (const auto& p : b) e += 0.5 * p.m * (p.vx * p.vx + p.vy * p.vy);
   for (std::size_t i = 0; i < b.size(); ++i) {
     for (std::size_t j = i + 1; j < b.size(); ++j) {
       const double dx = b[j].x - b[i].x;
       const double dy = b[j].y - b[i].y;
-      e -= G * b[i].m * b[j].m / std::sqrt(dx * dx + dy * dy + soft * soft);
+      e -= G * b[i].m * b[j].m / std::sqrt(dx * dx + dy * dy + kSoftening2);
     }
   }
   return e;
@@ -94,7 +96,6 @@ NBodyResult runNBody(int bodies, int steps, std::uint64_t seed) {
 
   const double initial = energy(b);
   constexpr double G = 1.0;
-  constexpr double soft2 = 0.0025;
   constexpr double dt = 0.0015;
   std::vector<double> ax(b.size()), ay(b.size());
 
@@ -105,7 +106,7 @@ NBodyResult runNBody(int bodies, int steps, std::uint64_t seed) {
       for (std::size_t j = i + 1; j < b.size(); ++j) {
         const double dx = b[j].x - b[i].x;
         const double dy = b[j].y - b[i].y;
-        const double r2 = dx * dx + dy * dy + soft2;
+        const double r2 = dx * dx + dy * dy + kSoftening2;
         const double invR3 = 1.0 / (r2 * std::sqrt(r2));
         const double fx = G * dx * invR3;
         const double fy = G * dy * invR3;
