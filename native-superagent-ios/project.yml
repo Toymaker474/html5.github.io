@@ -24,8 +24,10 @@ targets:
       - sdk: AVFoundation.framework
       - sdk: Metal.framework
       - sdk: Vision.framework
+      - sdk: CoreML.framework
       - sdk: CoreMotion.framework
       - sdk: CoreImage.framework
+      - sdk: AppIntents.framework
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.toymaker474.superagentnative
