@@ -27,7 +27,7 @@ actor NativeAdvancedHub {
   func stackManifest() -> [String: Any] {
     [
       "webCode": false,
-      "languages": ["Swift", "Objective-C++", "C++20", "C11", "Metal Shading Language", "Rust source module"],
+      "languages": ["Swift", "Objective-C++", "C++20", "C11", "Rust", "Metal Shading Language"],
       "nativeFrameworks": ["LiteRT-LM", "Metal", "Accelerate/vDSP", "Vision", "Core Motion", "Core Image", "CryptoKit", "NaturalLanguage", "PDFKit", "AVFoundation", "SQLite3"],
       "execution": "compiled native iOS code only; no HTML, JavaScript, WebView, or run_js",
       "toolCount": NativeTools.all.count
@@ -55,6 +55,27 @@ actor NativeAdvancedHub {
     NativeCoreBridge.analyze(bytes: Data(text.utf8))
   }
 
+  func rustAnalyze(text: String, values: [Double], seed: Int) -> [String: Any] {
+    let data = Data(text.utf8)
+    let hash: UInt64 = data.withUnsafeBytes { raw in
+      let ptr = raw.bindMemory(to: UInt8.self).baseAddress
+      return sa_rust_hash64(ptr, data.count)
+    }
+    let mean: Double = values.withUnsafeBufferPointer { p in
+      sa_rust_mean(p.baseAddress, p.count)
+    }
+    var random = [UInt64](repeating: 0, count: 8)
+    random.withUnsafeMutableBufferPointer { p in
+      sa_rust_xorshift_fill(UInt64(bitPattern: Int64(seed)), p.baseAddress, p.count)
+    }
+    return [
+      "engine": "Rust staticlib via C ABI",
+      "fnv1a64": String(format: "%016llx", hash),
+      "compensatedMean": mean,
+      "randomPreview": random.map { String(format: "%016llx", $0) }
+    ]
+  }
+
   func accelerateStats(_ values: [Double]) throws -> [String: Any] {
     guard !values.isEmpty else { throw NativeError("No samples supplied") }
     var mean = 0.0
@@ -66,9 +87,15 @@ actor NativeAdvancedHub {
       vDSP_rmsqvD(base, 1, &rms, vDSP_Length(values.count))
       vDSP_maxmgvD(base, 1, &peak, vDSP_Length(values.count))
     }
-    var centered = values
+
+    var centered = [Double](repeating: 0, count: values.count)
     var negativeMean = -mean
-    vDSP_vsaddD(centered, 1, &negativeMean, &centered, 1, vDSP_Length(centered.count))
+    values.withUnsafeBufferPointer { src in
+      centered.withUnsafeMutableBufferPointer { dst in
+        guard let s = src.baseAddress, let d = dst.baseAddress else { return }
+        vDSP_vsaddD(s, 1, &negativeMean, d, 1, vDSP_Length(values.count))
+      }
+    }
     var energy = 0.0
     centered.withUnsafeBufferPointer { p in
       guard let base = p.baseAddress else { return }
@@ -182,8 +209,9 @@ actor NativeAdvancedHub {
 
     let limit = max(1, min(requested, 500))
     let columnCount = Int(sqlite3_column_count(stmt))
-    let columns = (0..<columnCount).map { i in
-      sqlite3_column_name(stmt, Int32(i)).map(String.init(cString:)) ?? "column\(i)"
+    let columns = (0..<columnCount).map { i -> String in
+      guard let p = sqlite3_column_name(stmt, Int32(i)) else { return "column\(i)" }
+      return String(cString: p)
     }
     var rows: [[String: Any]] = []
 
@@ -218,6 +246,23 @@ actor NativeAdvancedHub {
       "rowCount": rows.count,
       "truncated": rows.count == limit,
       "rows": rows
+    ]
+  }
+
+  func selfTest() throws -> [String: Any] {
+    let cpp = pathfind(width: 24, height: 24, obstacleRate: 0.1, seed: 7)
+    let c = analyzeBytes(text: "SuperAgent Native")
+    let rust = rustAnalyze(text: "SuperAgent Native", values: [1, 2, 3, 4, 5], seed: 7)
+    let accel = try accelerateStats([1, 2, 3, 4, 5])
+    let sqlite = try sqliteQuery("SELECT 42 AS answer, 'native' AS mode", limit: 5)
+    return [
+      "ok": true,
+      "stack": stackManifest(),
+      "cpp": cpp,
+      "c": c,
+      "rust": rust,
+      "accelerate": accel,
+      "sqlite": sqlite
     ]
   }
 
