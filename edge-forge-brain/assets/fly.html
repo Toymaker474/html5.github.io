@@ -1,0 +1,214 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Fly Brain Lab</title>
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07111b;color:#eaf7ff;font:13px system-ui,-apple-system,sans-serif}
+#hud{position:fixed;z-index:3;left:8px;right:8px;top:max(8px,env(safe-area-inset-top));display:flex;gap:6px;flex-wrap:wrap;pointer-events:none}
+.pill{background:#0c1827d9;border:1px solid #294057;border-radius:12px;padding:6px 8px;backdrop-filter:blur(8px)}
+#controls{position:fixed;z-index:4;left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+button{border:1px solid #38516b;border-radius:12px;background:#112136dd;color:#f2fbff;padding:10px 6px;font-weight:750}
+canvas{width:100%;height:100%;display:block;touch-action:none}
+#msg{position:fixed;z-index:5;left:10px;right:10px;top:76px;text-align:center;pointer-events:none;font-weight:700;text-shadow:0 1px 2px #000}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud">
+  <div class="pill" id="gen">gen 0</div>
+  <div class="pill" id="fit">fitness 0</div>
+  <div class="pill" id="pop">pop 0</div>
+  <div class="pill" id="wind">wind 0</div>
+</div>
+<div id="msg"></div>
+<div id="controls">
+  <button id="train">TRAIN</button>
+  <button id="turbo">TURBO</button>
+  <button id="play">PLAY</button>
+  <button id="reset">RESET</button>
+</div>
+<script>
+(() => {
+"use strict";
+const canvas=document.getElementById("c"), ctx=canvas.getContext("2d",{alpha:false});
+const $=id=>document.getElementById(id);
+let W=0,H=0,DPR=1;
+function resize(){DPR=Math.min(2,devicePixelRatio||1);W=innerWidth;H=innerHeight;canvas.width=W*DPR;canvas.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0)}
+addEventListener("resize",resize); resize();
+
+const params=new URLSearchParams(location.search);
+let mode=params.get("mode")==="play"?"play":"train";
+const preset=params.get("preset")||"normal";
+const CFG = preset==="fast" ? {pop:24,steps:900,batch:5} : preset==="deep" ? {pop:96,steps:1800,batch:18} : {pop:48,steps:1200,batch:9};
+const K="efb.flybrain.v1";
+let generation=0, episodes=0, champion=null, turbo=false, training=mode==="train";
+let worldTime=0, last=performance.now(), playAgent=null;
+
+const NI=7,NH=10,NO=2, GL=NI*NH+NH+NH*NO+NO;
+const rand=()=>Math.random()*2-1;
+const clamp=(x,a,b)=>x<a?a:x>b?b:x;
+function genome(){return Array.from({length:GL},()=>rand()*0.7)}
+function brain(g,inp){
+  let k=0, h=new Float32Array(NH);
+  for(let j=0;j<NH;j++){let s=0;for(let i=0;i<NI;i++)s+=inp[i]*g[k++];s+=g[k++];h[j]=Math.tanh(s)}
+  const o=new Float32Array(NO);
+  for(let j=0;j<NO;j++){let s=0;for(let i=0;i<NH;i++)s+=h[i]*g[k++];s+=g[k++];o[j]=Math.tanh(s)}
+  return o;
+}
+function mutate(g,rate=.16,scale=.24){
+  const n=g.slice();
+  for(let i=0;i<n.length;i++)if(Math.random()<rate)n[i]+=rand()*scale;
+  return n;
+}
+function crossover(a,b){const n=new Array(GL);for(let i=0;i<GL;i++)n[i]=Math.random()<.5?a[i]:b[i];return n}
+
+function windAt(x,t){
+  return 0.55*Math.sin(x*.007+t*.8)+0.28*Math.sin(x*.019-t*1.37)+0.12*Math.sin(x*.051+t*2.1);
+}
+function newAgent(g){
+  return {g,x:0,y:0.56,vy:0,vx:0.85,angle:0,omega:0,energy:1,alive:true,fitness:0,t:0};
+}
+function step(a,dt){
+  if(!a.alive)return;
+  const wx=windAt(a.x*500,a.t), ground=0.93+0.02*Math.sin(a.x*3.2);
+  const target=0.42+0.16*Math.sin(a.x*1.8)+0.08*Math.sin(a.x*5.1);
+  const inp=[
+    (a.y-.5)*2,
+    clamp(a.vy/2,-1,1),
+    Math.sin(a.angle), Math.cos(a.angle),
+    wx,
+    clamp((target-a.y)*3,-1,1),
+    a.energy*2-1
+  ];
+  const o=brain(a.g,inp);
+  const flap=clamp((o[0]+1)*.5,0,1);
+  const pitch=o[1];
+  a.omega += (pitch*5.2 - a.omega*2.4)*dt;
+  a.angle += a.omega*dt;
+  a.angle=clamp(a.angle,-1.15,1.15);
+  const airV=Math.max(.15,a.vx + wx*.18);
+  const lift=(0.34 + flap*.92)*airV*airV*(0.75+0.25*Math.cos(a.angle));
+  const drag=.09*airV*airV + flap*.045;
+  a.vx += (0.18-drag + wx*.08)*dt;
+  a.vx=clamp(a.vx,.28,1.6);
+  a.vy += (0.78 - lift + Math.sin(a.angle)*.14)*dt;
+  a.vy *= Math.exp(-.35*dt);
+  a.y += a.vy*dt;
+  a.x += a.vx*dt;
+  a.energy=clamp(a.energy - flap*.035*dt + .007*dt,0,1);
+  a.t+=dt;
+  const error=Math.abs(a.y-target);
+  a.fitness += (1.1 + a.vx*.25 - error*.55 - flap*.018)*dt;
+  if(a.y<.03 || a.y>ground || a.energy<=0){a.alive=false;a.fitness-=2}
+}
+function evalGenome(g,seedShift=0){
+  const a=newAgent(g);
+  a.x=seedShift*.001;
+  const dt=1/60;
+  for(let s=0;s<CFG.steps && a.alive;s++) step(a,dt);
+  return a.fitness + a.x*0.12;
+}
+function loadChampion(){
+  try{
+    const b=JSON.parse(localStorage.getItem(K)||"null");
+    if(b&&Array.isArray(b.genome)&&b.genome.length===GL){champion=b;generation=b.generation||0;episodes=b.episodes||0}
+  }catch(e){}
+}
+function saveChampion(){
+  if(champion)localStorage.setItem(K,JSON.stringify(champion));
+}
+loadChampion();
+
+let population=[];
+function initPopulation(){
+  population=[];
+  if(champion){
+    population.push(champion.genome.slice());
+    while(population.length<CFG.pop)population.push(mutate(champion.genome,.28,.34));
+  }else{
+    while(population.length<CFG.pop)population.push(genome());
+  }
+}
+initPopulation();
+
+function evolveOne(){
+  const scored=population.map((g,i)=>({g,fit:evalGenome(g,i+generation*17)})).sort((a,b)=>b.fit-a.fit);
+  episodes+=population.length;
+  const best=scored[0];
+  if(!champion || best.fit>champion.fitness){
+    champion={fitness:best.fit,generation:generation,episodes,genome:best.g.slice()};
+    saveChampion();
+  } else {
+    champion.episodes=episodes;
+    champion.generation=generation;
+    saveChampion();
+  }
+  const elite=Math.max(4,Math.floor(CFG.pop*.18)), next=[scored[0].g.slice(), champion.genome.slice()];
+  while(next.length<CFG.pop){
+    const a=scored[(Math.random()*elite)|0].g,b=scored[(Math.random()*elite)|0].g;
+    next.push(mutate(crossover(a,b),.13+Math.random()*.13,.12+Math.random()*.28));
+  }
+  population=next; generation++;
+  return best.fit;
+}
+function newPlay(){playAgent=newAgent(champion?champion.genome:population[0]);playAgent.x=0;worldTime=0}
+newPlay();
+
+function draw(a){
+  const sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,"#06131f");sky.addColorStop(1,"#143b4e");ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+  const groundY=H*.93;
+  ctx.globalAlpha=.22;ctx.strokeStyle="#d4f3ff";ctx.lineWidth=1;
+  for(let i=0;i<18;i++){
+    const yy=(i+1)*H/20, off=((worldTime*45+i*31)%90);
+    ctx.beginPath();
+    for(let x=-100;x<W+100;x+=18){const y=yy+Math.sin(x*.025+i+worldTime*1.2)*5;if(x===-100)ctx.moveTo(x+off,y);else ctx.lineTo(x+off,y)}
+    ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+  ctx.fillStyle="#0b1714";ctx.beginPath();ctx.moveTo(0,H);
+  for(let x=0;x<=W;x+=14){const wy=(a?a.x:0)*220+x;const y=groundY+Math.sin(wy*.012)*7+Math.sin(wy*.031)*3;ctx.lineTo(x,y)}
+  ctx.lineTo(W,H);ctx.fill();
+  if(!a)return;
+  const target=.42+.16*Math.sin(a.x*1.8)+.08*Math.sin(a.x*5.1);
+  ctx.setLineDash([5,8]);ctx.strokeStyle="#8fffc2aa";ctx.beginPath();ctx.moveTo(0,target*H);ctx.lineTo(W,target*H);ctx.stroke();ctx.setLineDash([]);
+  const sx=W*.32, sy=a.y*H;
+  ctx.save();ctx.translate(sx,sy);ctx.rotate(a.angle);
+  ctx.fillStyle="#f5fbff";ctx.beginPath();ctx.moveTo(18,0);ctx.lineTo(-9,-7);ctx.lineTo(-4,0);ctx.lineTo(-9,7);ctx.closePath();ctx.fill();
+  ctx.strokeStyle="#75c9ff";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-3,0);ctx.lineTo(-20,-13);ctx.moveTo(-3,0);ctx.lineTo(-20,13);ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle="#ffffff";ctx.font="12px system-ui";ctx.fillText(`x ${a.x.toFixed(1)}  energy ${(a.energy*100)|0}%`,8,H-18);
+}
+let lastFit=champion?champion.fitness:0;
+function ui(){
+  $("gen").textContent=`gen ${generation}`;
+  $("fit").textContent=`fitness ${Number(champion?champion.fitness:lastFit).toFixed(1)}`;
+  $("pop").textContent=`pop ${CFG.pop} · episodes ${episodes}`;
+  $("wind").textContent=`wind ${windAt((playAgent?playAgent.x:0)*500,worldTime).toFixed(2)}`;
+  $("train").textContent=training?"PAUSE":"TRAIN";
+  $("turbo").textContent=turbo?"TURBO ×":"TURBO";
+}
+
+function frame(now){
+  const dt=Math.min(.033,(now-last)/1000||.016);last=now;
+  if(training){
+    const loops=turbo?CFG.batch:1;
+    for(let i=0;i<loops;i++)lastFit=evolveOne();
+    if(!playAgent || !playAgent.alive || generation%3===0)newPlay();
+  }
+  if(!playAgent||!playAgent.alive)newPlay();
+  if(playAgent){for(let i=0;i<2;i++)step(playAgent,dt*.5);worldTime+=dt}
+  draw(playAgent);ui();requestAnimationFrame(frame);
+}
+$("train").onclick=()=>{training=!training};
+$("turbo").onclick=()=>{turbo=!turbo;training=true};
+$("play").onclick=()=>{training=false;newPlay()};
+$("reset").onclick=()=>{localStorage.removeItem(K);champion=null;generation=0;episodes=0;initPopulation();newPlay();$("msg").textContent="Brain reset";setTimeout(()=>$("msg").textContent="",1200)};
+canvas.addEventListener("pointerdown",()=>{ if(playAgent){playAgent.vy-=.22;playAgent.energy=Math.max(0,playAgent.energy-.02)} });
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
