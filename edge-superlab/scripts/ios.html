@@ -1,55 +1,41 @@
-<!doctype html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Edge SuperLab iOS Runner</title></head>
-<body><div id="qr" style="display:none"></div><canvas id="canvas" width="512" height="512" style="display:none"></canvas>
-<script>
-(()=>{
-'use strict';
-const PY='edge-superlab.python.v2', LATEST='edge-superlab.python.latest.v2', MEM='edge-superlab.memory.v1';
-const enc=new TextEncoder(), dec=new TextDecoder();
-const clean=v=>String(v??'').trim();
-const out=v=>JSON.stringify(v);
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Edge SuperLab iOS Runner</title></head><body><div id="qr" hidden></div><canvas id="canvas" width="256" height="256" hidden></canvas><script>
+(()=>{'use strict';
+const PY='edge-superlab.python.v2',LATEST='edge-superlab.python.latest.v2',MEM='edge-superlab.memory.v1',PERF='edge-superlab.perf.v1';
+const enc=new TextEncoder(),clean=v=>String(v??'').trim(),out=v=>JSON.stringify(v);
+const modes=new Set(['eco','balanced','turbo']);
+function mode(){const m=localStorage.getItem(PERF)||'eco';return modes.has(m)?m:'eco'}
+function setMode(m){m=clean(m).toLowerCase();if(!modes.has(m))m='eco';localStorage.setItem(PERF,m);return m}
 function load(k,d=[]){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch{return d}}
-function save(k,v){localStorage.setItem(k,JSON.stringify(v))}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch{return false}}
 async function sha256(text){const b=await crypto.subtle.digest('SHA-256',enc.encode(text));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
-async function wasm(){const bytes=new Uint8Array([0,97,115,109,1,0,0,0,1,7,1,96,2,127,127,1,127,3,2,1,0,7,7,1,3,97,100,100,0,0,10,9,1,7,0,32,0,32,1,106,11]);const {instance}=await WebAssembly.instantiate(bytes);return instance.exports.add(20,22)}
-function savePython(d){const name=(clean(d.name)||`program-${Date.now()}`).slice(0,80),code=String(d.code??'');if(!code.trim())return{error:'Python code is empty.'};if(code.length>250000)return{error:'Python program is too large.'};let p=load(PY);p=p.filter(x=>x.name!==name);p.unshift({name,request:clean(d.request),code,t:Date.now()});p=p.slice(0,40);save(PY,p);localStorage.setItem(LATEST,name);return{result:`Saved Python program '${name}'. Opening Python Studio.`,webview:{url:`python.html?name=${encodeURIComponent(name)}${d.autorun?'&autorun=1':''}`,aspectRatio:.7}}}
-function listPython(){const p=load(PY);return{result:p.length?p.map((x,i)=>`${i+1}. ${x.name} — ${x.request||'Python program'}`).join('\n'):'No saved Python programs yet.'}}
-function putMemory(d){const text=clean(d.text);if(!text)return{error:'Nothing to remember.'};const m=load(MEM);m.push({text,t:Date.now()});if(m.length>300)m.splice(0,m.length-300);save(MEM,m);return{result:`Remembered. ${m.length} item(s) stored.`}}
-function getMemory(d){const q=clean(d.query).toLowerCase(),m=load(MEM),r=m.filter(x=>!q||x.text.toLowerCase().includes(q)).slice(-25).reverse();return{result:r.length?r.map((x,i)=>`${i+1}. ${x.text}`).join('\n'):'No matching memory.'}}
-function caps(){let gl2=false;try{gl2=!!document.createElement('canvas').getContext('webgl2')}catch{}return{javascript:true,webAssembly:typeof WebAssembly!=='undefined',webCrypto:!!crypto?.subtle,localStorage:true,indexedDB:!!window.indexedDB,worker:typeof Worker!=='undefined',webgpu:!!navigator.gpu,webgl2:gl2,audio:!!(window.AudioContext||window.webkitAudioContext),camera:!!navigator.mediaDevices?.getUserMedia,motion:'DeviceMotionEvent'in window||'DeviceOrientationEvent'in window,share:!!navigator.share,clipboard:!!navigator.clipboard}}
-async function selftest(){const c=caps();let storage=false,hash=false,w=false;try{localStorage.setItem('edge-superlab.ios.probe','ok');storage=localStorage.getItem('edge-superlab.ios.probe')==='ok';localStorage.removeItem('edge-superlab.ios.probe')}catch{}try{hash=(await sha256('superlab')).length===64}catch{}try{w=(await wasm())===42}catch{}return{runner:'ios-compat-v1',entrypoints:['ai_edge_gallery_get_result','ai_gallery_get_result'],storage,sha256:hash,wasm:w,capabilities:c,userAgent:navigator.userAgent}}
-function image(){const c=document.getElementById('canvas'),x=c.getContext('2d'),im=x.createImageData(c.width,c.height),a=im.data;for(let y=0;y<c.height;y++)for(let xx=0;xx<c.width;xx++){const i=(y*c.width+xx)*4,dx=(xx-256)/256,dy=(y-256)/256,r=Math.hypot(dx,dy),v=Math.max(0,1-r)*180+30*Math.sin(xx*.05+y*.02);a[i]=Math.max(0,30+v*.35);a[i+1]=Math.max(0,20+v*.5);a[i+2]=Math.max(0,70+v);a[i+3]=255}x.putImageData(im,0,0);return c.toDataURL('image/png')}
-function loadQR(){return new Promise((res,rej)=>{if(window.QRCode)return res();const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';s.onload=res;s.onerror=()=>rej(new Error('QR library could not load'));document.head.appendChild(s)})}
-async function qr(text){await loadQR();const h=document.getElementById('qr');h.innerHTML='';new QRCode(h,{text,width:512,height:512,correctLevel:QRCode.CorrectLevel.M});for(let i=0;i<50;i++){const c=h.querySelector('canvas'),im=h.querySelector('img');if(c)return c.toDataURL('image/png');if(im?.src)return im.src;await new Promise(r=>setTimeout(r,40))}throw new Error('QR generation timed out')}
-function numbers(text){const a=(String(text).match(/[-+]?(?:\d*\.)?\d+(?:[eE][-+]?\d+)?/g)||[]).map(Number).filter(Number.isFinite).sort((a,b)=>a-b);if(!a.length)throw new Error('No numbers found');const n=a.length,sum=a.reduce((s,x)=>s+x,0),mean=sum/n,median=n%2?a[n>>1]:(a[n/2-1]+a[n/2])/2;return{count:n,min:a[0],max:a[n-1],sum,mean,median}}
-function view(url,msg,ratio=.7){return out({result:msg,webview:{url,aspectRatio:ratio}})}
+async function wasm(){const b=new Uint8Array([0,97,115,109,1,0,0,0,1,7,1,96,2,127,127,1,127,3,2,1,0,7,7,1,3,97,100,100,0,0,10,9,1,7,0,32,0,32,1,106,11]);const {instance}=await WebAssembly.instantiate(b);return instance.exports.add(20,22)}
+function savePython(d){const name=(clean(d.name)||`program-${Date.now()}`).slice(0,64),code=String(d.code??'');if(!code.trim())return{error:'Python code is empty.'};if(code.length>100000)return{error:'Program exceeds the iPhone-safe 100 KB limit.'};let p=load(PY);p=p.filter(x=>x.name!==name);p.unshift({name,request:clean(d.request),code,t:Date.now()});p=p.slice(0,20);save(PY,p);localStorage.setItem(LATEST,name);const autorun=!!d.autorun&&mode()!=='eco';return{result:`Saved '${name}'. ${autorun?'Opening and running':'Opening Python Studio; ECO mode leaves Run manual to avoid a lag spike.'}`,webview:{url:`python.html?name=${encodeURIComponent(name)}&mode=${mode()}${autorun?'&autorun=1':''}`,aspectRatio:.72}}}
+function listPython(){const p=load(PY);return{result:p.length?p.map((x,i)=>`${i+1}. ${x.name} — ${x.request||'Python program'}`).join('\n'):'No saved Python programs.'}}
+function putMemory(d){const text=clean(d.text);if(!text)return{error:'Nothing to remember.'};const m=load(MEM);m.push({text,t:Date.now()});if(m.length>200)m.splice(0,m.length-200);save(MEM,m);return{result:`Remembered. ${m.length} item(s) stored.`}}
+function getMemory(d){const q=clean(d.query).toLowerCase(),m=load(MEM),r=m.filter(x=>!q||x.text.toLowerCase().includes(q)).slice(-20).reverse();return{result:r.length?r.map((x,i)=>`${i+1}. ${x.text}`).join('\n'):'No matching memory.'}}
+function caps(){let gl2=false;try{gl2=!!document.createElement('canvas').getContext('webgl2')}catch{}return{webAssembly:typeof WebAssembly!=='undefined',webCrypto:!!crypto?.subtle,indexedDB:!!window.indexedDB,worker:typeof Worker!=='undefined',webgpu:!!navigator.gpu,webgl2:gl2,audio:!!(window.AudioContext||window.webkitAudioContext),camera:!!navigator.mediaDevices?.getUserMedia,motion:'DeviceMotionEvent'in window||'DeviceOrientationEvent'in window,share:!!navigator.share,clipboard:!!navigator.clipboard}}
+async function selftest(){let storage=false,hash=false,w=false;try{localStorage.setItem('edge-superlab.probe','1');storage=localStorage.getItem('edge-superlab.probe')==='1';localStorage.removeItem('edge-superlab.probe')}catch{}try{hash=(await sha256('superlab')).length===64}catch{}try{w=(await wasm())===42}catch{}return{runner:'ios-perf-v4',performanceMode:mode(),storage,sha256:hash,wasm:w,capabilities:caps()}}
+function image(){const c=document.getElementById('canvas'),x=c.getContext('2d'),im=x.createImageData(256,256),a=im.data;for(let y=0;y<256;y++)for(let xx=0;xx<256;xx++){const i=(y*256+xx)*4,dx=(xx-128)/128,dy=(y-128)/128,r=Math.hypot(dx,dy),v=Math.max(0,1-r)*180+25*Math.sin(xx*.08+y*.03);a[i]=25+v*.3;a[i+1]=18+v*.45;a[i+2]=65+v;a[i+3]=255}x.putImageData(im,0,0);return c.toDataURL('image/png')}
+function loadQR(){return new Promise((res,rej)=>{if(window.QRCode)return res();const s=document.createElement('script');s.src='../vendor/qrcode.min.js';s.onload=res;s.onerror=()=>rej(new Error('QR library unavailable'));document.head.appendChild(s)})}
+async function qr(text){await loadQR();const h=document.getElementById('qr');h.innerHTML='';new QRCode(h,{text,width:256,height:256,correctLevel:QRCode.CorrectLevel.M});for(let i=0;i<20;i++){const c=h.querySelector('canvas'),im=h.querySelector('img');if(c)return c.toDataURL('image/png');if(im?.src)return im.src;await new Promise(r=>setTimeout(r,25))}throw new Error('QR generation timed out')}
+function numbers(text){const a=(String(text).match(/[-+]?(?:\d*\.)?\d+(?:[eE][-+]?\d+)?/g)||[]).map(Number).filter(Number.isFinite).sort((a,b)=>a-b);if(!a.length)throw Error('No numbers found');const n=a.length,sum=a.reduce((s,x)=>s+x,0);return{count:n,min:a[0],max:a[n-1],sum,mean:sum/n,median:n%2?a[n>>1]:(a[n/2-1]+a[n/2])/2}}
+function view(url,msg,ratio=.7){const sep=url.includes('?')?'&':'?';return out({result:msg,webview:{url:`${url}${sep}mode=${mode()}`,aspectRatio:ratio}})}
 async function handler(data){try{const d=typeof data==='string'?JSON.parse(data||'{}'):(data||{});switch(d.action){
-case 'hub':case 'open_hub':return view('hub.html','Opening SuperLab Mission Control.',.66);
-case 'open_lab':return view('lab.html','Opening capability lab.',.66);
-case 'open_tools':return view('toolbox.html','Opening local tool library.',.69);
-case 'open_python':{const n=clean(d.name)||localStorage.getItem(LATEST)||'';return view(`python.html${n?`?name=${encodeURIComponent(n)}`:''}`,'Opening Python Studio — CPython through WebAssembly.',.7)}
-case 'save_python':return out(savePython(d));
-case 'list_python':return out(listPython());
-case 'open_notebook':return view('notebook.html','Opening persistent Python notebook.',.68);
-case 'open_workspace':return view('workspace.html','Opening project workspace.',.68);
-case 'open_vision':return view('vision-lab.html','Opening Vision Lab.',.68);
-case 'open_audio':return view('audio-lab.html','Opening Audio/DSP Lab.',.68);
-case 'open_sql':return view('sql-lab.html','Opening SQLite Data Lab.',.68);
-case 'open_gpu':case 'open_compute':return view('gpu-sim.html','Opening GPU/CPU compute lab.',.62);
-case 'selftest':{const r=await selftest();return out({result:JSON.stringify(r,null,2),report:r})}
-case 'capabilities':{const r=caps();return out({result:JSON.stringify(r,null,2),capabilities:r})}
-case 'hash':return out({result:await sha256(clean(d.text))});
-case 'wasm':return out({result:`WebAssembly executed: add(20,22) = ${await wasm()}`});
-case 'memory_put':return out(putMemory(d));
-case 'memory_get':return out(getMemory(d));
-case 'image':return out({result:'Generated locally with Canvas.',image:{base64:image()}});
-case 'qr':{const t=clean(d.text);if(!t)return out({error:'Give text or a URL for the QR code.'});return out({result:'QR generated.',image:{base64:await qr(t)}})}
-case 'packages':return out({result:'Core: numpy, scipy, pandas, matplotlib\nSymbolic: sympy\nML: scikit-learn\nVision: Pillow, opencv-python, scikit-image\nGraphs: networkx\nScience: astropy, statsmodels\nData: polars, pyarrow\nCompatible pure-Python wheels may install through micropip.'});
-case 'tool':{if(d.op==='numbers'){const r=numbers(d.text);return out({result:JSON.stringify(r,null,2),tool:r})}if(d.op==='json_pretty')return out({result:JSON.stringify(JSON.parse(String(d.text??'')),null,2)});if(d.op==='json_minify')return out({result:JSON.stringify(JSON.parse(String(d.text??'')))});if(d.op==='base64_encode')return out({result:btoa(unescape(encodeURIComponent(String(d.text??''))))});if(d.op==='base64_decode')return out({result:decodeURIComponent(escape(atob(String(d.text??''))))});if(d.op==='sha256')return out({result:await sha256(String(d.text??''))});return out({error:`Unsupported compact tool op: ${d.op}`})}
-case 'limits':return out({result:'Downloaded Edge Gallery skills can run WebView JavaScript, WebAssembly and exposed Web APIs. Python works through CPython/Pyodide WASM. Arbitrary native shell/Swift/C++/Metal execution is not granted to downloaded skills.'});
-default:return out({result:'Edge SuperLab iOS runner ready. Try /hub, /python, /notebook, /workspace, /vision, /audio, /sql, /gpu, /selftest, /packages, /wasm, /qr.'});
-}}catch(e){return out({error:`Edge SuperLab iOS runner: ${e?.message||e}`})}}
-window['ai_edge_gallery_get_result']=handler;
-window['ai_gallery_get_result']=handler;
+case 'perf_set':{const m=setMode(d.mode);return out({result:`Performance mode: ${m.toUpperCase()}. ${m==='eco'?'Lowest heat/memory; heavy Python autorun disabled.':m==='balanced'?'Moderate workloads and smoother demos.':'Maximum demo load; use temporarily if the phone stays cool.'}`,mode:m})}
+case 'perf_get':return out({result:`Performance mode: ${mode().toUpperCase()}`,mode:mode()});
+case 'hub':case 'open_hub':return view('hub.html','Opening Mission Control.');
+case 'open_lab':return view('lab.html','Opening lightweight capability lab.');
+case 'open_tools':return view('toolbox.html','Opening local tools.');
+case 'open_python':{const n=clean(d.name)||localStorage.getItem(LATEST)||'';return view(`python.html${n?`?name=${encodeURIComponent(n)}`:''}`,'Opening performance-tuned Python Studio.',.72)}
+case 'save_python':return out(savePython(d));case 'list_python':return out(listPython());
+case 'open_notebook':return view('notebook.html','Opening notebook.');case 'open_workspace':return view('workspace.html','Opening workspace.');case 'open_vision':return view('vision-lab.html','Opening Vision Lab.');case 'open_audio':return view('audio-lab.html','Opening Audio Lab.');case 'open_sql':return view('sql-lab.html','Opening SQLite Lab.');case 'open_gpu':case 'open_compute':return view('gpu-sim.html','Opening adaptive compute field.',.64);
+case 'selftest':{const r=await selftest();return out({result:JSON.stringify(r,null,2),report:r})}case 'capabilities':{const r=caps();return out({result:JSON.stringify({mode:mode(),...r},null,2),capabilities:r})}
+case 'hash':return out({result:await sha256(clean(d.text))});case 'wasm':return out({result:`WASM add(20,22) = ${await wasm()}`});case 'memory_put':return out(putMemory(d));case 'memory_get':return out(getMemory(d));case 'image':return out({result:'Generated a compact 256×256 image locally.',image:{base64:image()}});case 'qr':{const t=clean(d.text);if(!t)return out({error:'Give text or URL.'});return out({result:'QR generated locally.',image:{base64:await qr(t)}})}
+case 'packages':return out({result:'Load packages only when needed. Light: standard library, NumPy, SymPy, NetworkX. Heavy: SciPy, pandas, Matplotlib, scikit-learn, OpenCV/scikit-image, PyArrow/Polars. ECO asks before heavy imports.'});
+case 'tool':{if(d.op==='numbers')return out({result:JSON.stringify(numbers(d.text),null,2)});if(d.op==='json_pretty')return out({result:JSON.stringify(JSON.parse(String(d.text??'')),null,2)});if(d.op==='json_minify')return out({result:JSON.stringify(JSON.parse(String(d.text??'')))});if(d.op==='base64_encode')return out({result:btoa(unescape(encodeURIComponent(String(d.text??''))))});if(d.op==='base64_decode')return out({result:decodeURIComponent(escape(atob(String(d.text??''))))});if(d.op==='sha256')return out({result:await sha256(String(d.text??''))});return out({error:`Unsupported tool: ${d.op}`})}
+case 'limits':return out({result:'ECO is default. Python is CPython/Pyodide WebAssembly and mostly CPU-bound. The adaptive /gpu lab uses WebGPU only if the host exposes it and falls back to a small CPU simulation.'});
+default:return out({result:`Edge SuperLab 4 ready in ${mode().toUpperCase()} mode. Try /selftest, /perf, /python, /gpu, /tools, /wasm.`});}}
+catch(e){return out({error:`Edge SuperLab: ${e?.message||e}`})}}
+window.ai_edge_gallery_get_result=handler;window.ai_gallery_get_result=handler;
 })();
 </script></body></html>
