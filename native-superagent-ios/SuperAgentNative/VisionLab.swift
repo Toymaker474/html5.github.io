@@ -55,6 +55,10 @@ actor VisionLab {
     configuration.computeUnits = .all
     let model = try MLModel(contentsOf: url, configuration: configuration)
     let desc = model.modelDescription
+    var metadata: [String: String] = [:]
+    for (key, value) in desc.metadata {
+      metadata[key.rawValue] = String(describing: value)
+    }
     return [
       "engine": "Core ML",
       "file": url.lastPathComponent,
@@ -62,7 +66,7 @@ actor VisionLab {
       "predictedProbabilitiesName": desc.predictedProbabilitiesName ?? "",
       "inputs": desc.inputDescriptionsByName.mapValues { $0.type.rawValue },
       "outputs": desc.outputDescriptionsByName.mapValues { $0.type.rawValue },
-      "metadata": desc.metadata.mapValues { String(describing: $0) }
+      "metadata": metadata
     ]
   }
 
