@@ -1,0 +1,86 @@
+{
+  "schema": "nexus.open-source-capabilities.v1",
+  "policy": {
+    "paidApisAllowed": false,
+    "subscriptionsAllowed": false,
+    "trialsAllowed": false,
+    "automaticProductionWritesAllowed": false,
+    "aiReviewIsAdvisory": true
+  },
+  "capabilities": [
+    {
+      "id": "production-build",
+      "purpose": "Build the real GitHub.io simulation",
+      "preferredTool": "Vite",
+      "license": "MIT",
+      "evidenceTokens": ["vite build"],
+      "required": true
+    },
+    {
+      "id": "mobile-browser-test",
+      "purpose": "Open the simulation in a phone-sized touch browser",
+      "preferredTool": "Playwright",
+      "license": "Apache-2.0",
+      "evidenceTokens": ["playwright", "430, height: 932"],
+      "required": true
+    },
+    {
+      "id": "web-quality-audit",
+      "purpose": "Measure web performance and quality without a paid upload service",
+      "preferredTool": "Lighthouse CI",
+      "license": "Apache-2.0",
+      "evidenceTokens": ["@lhci/cli", "lhci collect"],
+      "required": true
+    },
+    {
+      "id": "secret-scan",
+      "purpose": "Find accidentally committed passwords or API keys",
+      "preferredTool": "Gitleaks",
+      "license": "MIT",
+      "evidenceTokens": ["gitleaks git"],
+      "required": true
+    },
+    {
+      "id": "dependency-security",
+      "purpose": "Find known high-severity package problems",
+      "preferredTool": "npm audit",
+      "license": "Artistic-2.0",
+      "evidenceTokens": ["npm audit"],
+      "required": true
+    },
+    {
+      "id": "open-source-ai-review",
+      "purpose": "Give a cautious second opinion using a real free model in the GitHub runner",
+      "preferredTool": "Ollama plus Qwen2.5-Coder",
+      "license": "Open-source runtime and model-specific open license",
+      "evidenceTokens": ["ollama serve", "qwen2.5-coder"],
+      "required": false
+    },
+    {
+      "id": "mobile-bundle-budget",
+      "purpose": "Stop the phone build from silently growing too large",
+      "preferredTool": null,
+      "license": "MIT",
+      "evidenceTokens": ["bundle-budget.mjs"],
+      "required": true,
+      "generate": "bundle-budget"
+    },
+    {
+      "id": "evidence-integrity",
+      "purpose": "Hash every important report and screenshot so evidence cannot be mixed up",
+      "preferredTool": null,
+      "license": "MIT",
+      "evidenceTokens": ["evidence-manifest.mjs"],
+      "required": true,
+      "generate": "evidence-manifest"
+    },
+    {
+      "id": "fail-closed-final-gate",
+      "purpose": "Make the workflow fail after collecting evidence when a required gate is red",
+      "preferredTool": "NEXUS final gate",
+      "license": "MIT",
+      "evidenceTokens": ["final-gate.mjs"],
+      "required": true
+    }
+  ]
+}

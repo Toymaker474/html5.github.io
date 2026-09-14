@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema": "nexus.project-contract.v1",
+  "project": {
+    "name": "NEXUS Science Core V7",
+    "purpose": "Research-grade browser robotics and artificial-life laboratory",
+    "authoritative_state": "Google DeepMind MuJoCo",
+    "presentation": "Babylon.js",
+    "target_devices": ["iPhone 16 Pro Max", "ASUS ROG Ally X"],
+    "status": "draft-research-vertical-slice"
+  },
+  "modules": {
+    "physics": {
+      "owner": "src/mujocoRuntime.js",
+      "model_source": "src/research/morphologyGenome.js",
+      "rules": [
+        "All body motion must originate from MuJoCo state.",
+        "No renderer transform may feed back into physics authority.",
+        "Invalid MJCF or non-finite state fails closed."
+      ]
+    },
+    "control": {
+      "owner": "src/controller.js",
+      "algorithm": "Hybrid Kuramoto neural central-pattern generator",
+      "inputs": ["foot contacts", "body roll", "body pitch", "battery ratio"],
+      "outputs": ["12 MuJoCo actuator targets"]
+    },
+    "evolution": {
+      "owners": [
+        "src/research/qualityDiversity.js",
+        "src/research/experimentProtocol.js"
+      ],
+      "algorithm": "Deterministic MAP-Elites",
+      "descriptors": ["contact duty factor", "stability"],
+      "fitness_inputs": [
+        "speed",
+        "energy efficiency",
+        "stability",
+        "body height",
+        "fall state"
+      ]
+    },
+    "morphology": {
+      "owner": "src/research/morphologyGenome.js",
+      "schema": "nexus.morphology.hexapod.v1",
+      "compiler_output": "MJCF",
+      "rule": "Every mutation must validate before model construction."
+    },
+    "rendering": {
+      "owner": "src/babylonRenderer.js",
+      "role": "Presentation only",
+      "visual_language": "Machined scientific instrument",
+      "prohibited": [
+        "random neon gradients",
+        "decorative neural activity",
+        "unlabeled particles",
+        "fake graphs",
+        "direct mesh locomotion",
+        "generic glass-card dashboard styling"
+      ]
+    },
+    "interface": {
+      "owners": ["index.html", "src/ui/scienceDashboard.js"],
+      "rule": "Every metric must be authoritative or explicitly derived from authoritative state."
+    }
+  },
+  "extension_points": {
+    "new_sensor": [
+      "Add sensor to compiled MJCF.",
+      "Cache its address in MujocoScienceRuntime.",
+      "Expose it in buildObservation().",
+      "Add a deterministic controller input.",
+      "Add a browser test proving non-zero or expected data."
+    ],
+    "new_morphology_parameter": [
+      "Add bounded value to DEFAULT_MORPHOLOGY.",
+      "Add bounds to LIMITS.",
+      "Validate coupled physical constraints.",
+      "Compile to MJCF.",
+      "Add mutation and regression coverage."
+    ],
+    "new_visual_effect": [
+      "State the scientific meaning.",
+      "Bind it to measured state.",
+      "Provide a quality-tier cost.",
+      "Disable it when unsupported.",
+      "Never use it as evidence that a simulation feature exists."
+    ]
+  },
+  "acceptance_gates": {
+    "build": ["npm install", "npm run build"],
+    "runtime": [
+      "MuJoCo WASM loads.",
+      "MJCF compiles.",
+      "Simulation time advances.",
+      "Foot contacts are measured.",
+      "Actuator power is non-zero.",
+      "Planar displacement is measured.",
+      "No boot failure or fail-closed event occurs."
+    ],
+    "evolution": [
+      "EVOLVE starts an 8-second measured episode.",
+      "Generation increments after episode completion.",
+      "MAP-Elites archive receives a valid candidate.",
+      "A child genome differs from its selected parent.",
+      "Reset preserves MuJoCo authority."
+    ],
+    "visual": [
+      "Robot remains in frame.",
+      "Mobile controls remain reachable within safe areas.",
+      "No overlapping panels at 430x932.",
+      "No unlabeled synthetic telemetry."
+    ]
+  },
+  "agent_policy": {
+    "read_before_edit": [
+      "nexus.project.json",
+      "README.md",
+      "docs/AI_EXTENSION_PROTOCOL.md"
+    ],
+    "must_not_claim": [
+      "native iPhone performance without device evidence",
+      "scientific validity without measured protocol",
+      "working morphology evolution before model rebuild and validation exist",
+      "WebGPU support when the verified backend is WebGL2"
+    ],
+    "fail_closed_on": [
+      "unknown API behavior",
+      "missing sensor addresses",
+      "invalid morphology",
+      "non-finite physics",
+      "stale evidence",
+      "unverified visual fallback"
+    ]
+  }
+}

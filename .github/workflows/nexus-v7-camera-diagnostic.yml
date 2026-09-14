@@ -1,0 +1,157 @@
+name: Diagnose NEXUS V7 Mobile Camera
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/nexus-v7-camera-diagnostic.yml'
+      - 'nexus-science-core-v7/index.html'
+      - 'nexus-science-core-v7/src/mobileCameraFraming.js'
+      - 'nexus-science-core-v7/src/main.js'
+      - 'nexus-science-core-v7/src/babylonRenderer.js'
+      - 'nexus-science-core-v7/src/productionArtDirection.js'
+      - 'nexus-science-core-v7/src/referenceLegConnectivity.js'
+      - 'nexus-science-core-v7/src/robotPresets.js'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-camera-radius:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Build exact simulator
+        working-directory: nexus-science-core-v7
+        run: |
+          npm install --ignore-scripts=false
+          node --check src/babylonRenderer.js
+          node --check src/mobileCameraFraming.js
+          grep -q 'this.camera.target.copyFrom(this.followTarget)' src/babylonRenderer.js
+          ! grep -q 'this.camera.setTarget(this.followTarget)' src/babylonRenderer.js
+          npm run build
+
+      - name: Install browser
+        run: |
+          mkdir -p camera-proof artifacts/camera
+          cd camera-proof
+          npm init -y >/dev/null
+          npm install playwright@1.55.0 >/dev/null
+          npx playwright install --with-deps chromium
+
+      - name: Prove full robot framing at iPhone size
+        run: |
+          cd nexus-science-core-v7
+          npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/nexus-camera-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          cd ..
+          trap 'kill $PREVIEW_PID || true' EXIT
+          cat > camera-proof/prove.mjs <<'EOF'
+          import { writeFile } from 'node:fs/promises';
+          import { chromium } from 'playwright';
+
+          const browser = await chromium.launch({
+            headless: true,
+            args: [
+              '--use-gl=swiftshader',
+              '--enable-webgl',
+              '--enable-unsafe-swiftshader',
+              '--ignore-gpu-blocklist',
+            ],
+          });
+          const context = await browser.newContext({
+            viewport: { width: 430, height: 932 },
+            deviceScaleFactor: 1,
+            isMobile: true,
+            hasTouch: true,
+          });
+          const page = await context.newPage();
+          const diagnostics = [];
+          page.on('pageerror', error => diagnostics.push(`pageerror: ${error.message}`));
+          page.on('requestfailed', request => diagnostics.push(`requestfailed: ${request.url()} :: ${request.failure()?.errorText || 'unknown'}`));
+          page.on('console', message => {
+            if (message.type() === 'error') diagnostics.push(`console-error: ${message.text()}`);
+          });
+
+          await page.goto('http://127.0.0.1:4173/?robot=explorer&proof=camera-radius', {
+            waitUntil: 'domcontentloaded',
+            timeout: 120000,
+          });
+          await page.waitForFunction(() => {
+            const nexus = window.__NEXUS_V7__;
+            const status = document.querySelector('#status')?.textContent || '';
+            return status.includes('FAIL-CLOSED') ||
+              (nexus?.activePreset?.id === 'explorer' && Number(nexus?.runtime?.data?.time || 0) >= 0.35);
+          }, null, { timeout: 120000 });
+          await page.waitForTimeout(6500);
+
+          const report = await page.evaluate(() => {
+            const nexus = window.__NEXUS_V7__;
+            const camera = nexus?.renderer?.camera;
+            const fit = nexus?.renderer?.mobileCameraFit;
+            return {
+              schema: 'nexus.mobile-camera-proof.v1',
+              activePreset: nexus?.activePreset?.id || null,
+              runtimeTime: Number(nexus?.runtime?.data?.time || 0),
+              rootPosition: nexus?.runtime?.rootPosition || null,
+              status: document.querySelector('#status')?.textContent || '',
+              camera: camera ? {
+                radius: Number(camera.radius),
+                lowerRadiusLimit: Number(camera.lowerRadiusLimit),
+                upperRadiusLimit: Number(camera.upperRadiusLimit),
+                alpha: Number(camera.alpha),
+                beta: Number(camera.beta),
+                target: {
+                  x: Number(camera.target.x),
+                  y: Number(camera.target.y),
+                  z: Number(camera.target.z),
+                },
+              } : null,
+              fit,
+              canvas: {
+                width: document.querySelector('#world')?.width || 0,
+                height: document.querySelector('#world')?.height || 0,
+              },
+            };
+          });
+          report.diagnostics = diagnostics;
+          await page.screenshot({ path: 'artifacts/camera/nexus-v7-camera-proof.png', fullPage: true });
+          await writeFile('artifacts/camera/nexus-v7-camera-proof.json', JSON.stringify(report, null, 2));
+          console.log(JSON.stringify(report, null, 2));
+          await browser.close();
+
+          const bounds = report.fit?.viewportBounds;
+          const invalid =
+            report.activePreset !== 'explorer' || report.runtimeTime < 0.35 ||
+            report.fit?.horizontallyContained !== true || !bounds ||
+            bounds.left < 13.5 || bounds.right > 416.5 ||
+            report.camera?.radius < report.fit?.targetRadius * 0.95 ||
+            report.canvas.width !== 430 || report.canvas.height !== 932 ||
+            diagnostics.length > 0 || report.status.includes('FAIL-CLOSED');
+          if (invalid) throw new Error(`Mobile camera proof failed closed: ${JSON.stringify(report)}`);
+          EOF
+          node camera-proof/prove.mjs
+
+      - name: Upload camera proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-v7-camera-proof-${{ github.run_id }}
+          path: |
+            artifacts/camera/nexus-v7-camera-proof.png
+            artifacts/camera/nexus-v7-camera-proof.json
+            /tmp/nexus-camera-preview.log
+          if-no-files-found: warn
+          retention-days: 7

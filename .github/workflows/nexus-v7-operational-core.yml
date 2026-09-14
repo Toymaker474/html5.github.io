@@ -1,0 +1,245 @@
+name: Validate NEXUS V7 Operational Core
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/nexus-v7-operational-core.yml'
+      - 'nexus-science-core-v7/index.html'
+      - 'nexus-science-core-v7/src/main.js'
+      - 'nexus-science-core-v7/src/operationalCore.js'
+      - 'nexus-science-core-v7/src/mobileCameraFraming.js'
+      - 'nexus-science-core-v7/src/mobileRendererOverhaul.js'
+      - 'nexus-science-core-v7/src/productionArtDirection.js'
+      - 'nexus-science-core-v7/src/mujocoRuntime.js'
+      - 'nexus-science-core-v7/src/controller.js'
+      - 'nexus-science-core-v7/src/robotPresets.js'
+      - 'nexus-science-core-v7/src/research/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nexus-v7-operational-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify-real-tools:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout exact pull-request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Build operational simulator
+        working-directory: nexus-science-core-v7
+        run: |
+          npm install --ignore-scripts=false
+          node --check src/operationalCore.js
+          node --check src/mobileCameraFraming.js
+          node --check src/mobileRendererOverhaul.js
+          grep -q "nexus.operational-core.v1" src/operationalCore.js
+          grep -q "applyMobileRendererOverhaul" src/mobileCameraFraming.js
+          grep -q "standard-lit-cad" src/mobileRendererOverhaul.js
+          npm run build
+          test -f dist/index.html
+
+      - name: Install iPhone browser harness
+        run: |
+          mkdir -p operational-test artifacts/operational
+          cd operational-test
+          npm init -y >/dev/null
+          npm install playwright@1.55.0 >/dev/null
+          npx playwright install --with-deps chromium
+
+      - name: Tap and verify every real tool
+        run: |
+          cd nexus-science-core-v7
+          npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/nexus-operational-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          cd ..
+          trap 'kill $PREVIEW_PID || true' EXIT
+          cat > operational-test/verify.mjs <<'EOF'
+          import { writeFile } from 'node:fs/promises';
+          import { chromium } from 'playwright';
+
+          const browser = await chromium.launch({
+            headless: true,
+            args: [
+              '--use-gl=swiftshader',
+              '--enable-webgl',
+              '--enable-unsafe-swiftshader',
+              '--ignore-gpu-blocklist',
+            ],
+          });
+          const context = await browser.newContext({
+            viewport: { width: 430, height: 932 },
+            deviceScaleFactor: 3,
+            isMobile: true,
+            hasTouch: true,
+          });
+          const page = await context.newPage();
+          const diagnostics = [];
+          page.on('pageerror', error => diagnostics.push(`pageerror: ${error.message}`));
+          page.on('requestfailed', request => diagnostics.push(`requestfailed: ${request.url()} :: ${request.failure()?.errorText || 'unknown'}`));
+          page.on('console', message => {
+            if (message.type() === 'error') diagnostics.push(`console-error: ${message.text()}`);
+          });
+
+          await page.goto('http://127.0.0.1:4173/?robot=explorer&test=operational-core', {
+            waitUntil: 'domcontentloaded',
+            timeout: 120000,
+          });
+          await page.waitForFunction(() => {
+            const nexus = window.__NEXUS_V7__;
+            const tools = window.__NEXUS_OPERATIONAL__;
+            return nexus?.runtime && nexus?.renderer && tools?.schema === 'nexus.operational-core.v1' &&
+              document.querySelector('#tool-receipt')?.textContent?.includes('TOOLS READY');
+          }, null, { timeout: 120000 });
+
+          async function clickTool(id, sequence, timeout = 30000) {
+            await page.locator(`#${id}`).click({ timeout: 15000 });
+            await page.waitForFunction((expected) => {
+              const rows = window.__NEXUS_OPERATIONAL__?.ledger || [];
+              return rows.some(row => row.sequence === expected && (row.status === 'pass' || row.status === 'fail'));
+            }, sequence, { timeout });
+            const row = await page.evaluate((expected) =>
+              window.__NEXUS_OPERATIONAL__.ledger.find(item => item.sequence === expected), sequence);
+            if (!row || row.status !== 'pass') throw new Error(`${id} failed: ${JSON.stringify(row)}`);
+            if (row.inputLatencyMs > 250) throw new Error(`${id} input latency was ${row.inputLatencyMs.toFixed(1)} ms.`);
+            return row;
+          }
+
+          await page.waitForTimeout(1000);
+          const beforePauseTime = await page.evaluate(() => window.__NEXUS_V7__.runtime.data.time);
+          const pauseReceipt = await clickTool('pause', 1);
+          if (!pauseReceipt.after.paused) throw new Error('Pause receipt did not record a paused runtime.');
+          const pausedAt = await page.evaluate(() => window.__NEXUS_V7__.runtime.data.time);
+          await page.waitForTimeout(900);
+          const pausedAfter = await page.evaluate(() => window.__NEXUS_V7__.runtime.data.time);
+          if (Math.abs(pausedAfter - pausedAt) > 0.012) {
+            throw new Error(`Simulation advanced while paused: ${pausedAt} → ${pausedAfter}.`);
+          }
+
+          const resumeReceipt = await clickTool('pause', 2);
+          if (resumeReceipt.after.paused) throw new Error('Resume receipt still reported paused state.');
+          await page.waitForTimeout(1200);
+          const resumedAt = await page.evaluate(() => window.__NEXUS_V7__.runtime.data.time);
+          if (resumedAt <= pausedAfter + 0.02 || resumedAt <= beforePauseTime) {
+            throw new Error('MuJoCo clock did not advance after Resume.');
+          }
+
+          const resetReceipt = await clickTool('reset', 3);
+          if (resetReceipt.after.simulationTime > 0.005) {
+            throw new Error(`Reset receipt was not captured at t=0: ${resetReceipt.after.simulationTime}.`);
+          }
+          const maxBatteryJoules = await page.evaluate(() => window.__NEXUS_V7__.runtime.maxBatteryJoules);
+          if (Math.abs(resetReceipt.after.batteryJoules - maxBatteryJoules) > 0.01) {
+            throw new Error('Reset did not restore the battery state.');
+          }
+
+          const seedBefore = await page.evaluate(() => window.__NEXUS_V7__.runtime.controller.genome.seed);
+          const mutationReceipt = await clickTool('mutate', 4);
+          if (mutationReceipt.after.controllerSeed === seedBefore) {
+            throw new Error('Mutate gait did not change the controller seed.');
+          }
+
+          const evolutionReceipt = await clickTool('evolve', 5, 70000);
+          const evolutionState = await page.evaluate(() => ({
+            generation: window.__NEXUS_V7__.experiment.generation,
+            result: window.__NEXUS_V7__.coordinator.lastResult,
+            enabled: window.__NEXUS_V7__.coordinator.enabled,
+          }));
+          if (evolutionState.generation < 1 || !evolutionState.result || evolutionState.enabled) {
+            throw new Error(`Single-generation evolution verification failed: ${JSON.stringify(evolutionState)}`);
+          }
+          if (!evolutionReceipt.detail.includes('fitness')) throw new Error('Evolution receipt omitted fitness evidence.');
+
+          await page.locator('#preset-toggle').click();
+          await page.waitForFunction(() => document.querySelector('#preset-panel')?.dataset.open === 'true');
+          await page.locator('button[data-preset-id="sandwalker"]').click();
+          await page.waitForFunction(() => window.__NEXUS_V7__?.activePreset?.id === 'sandwalker', null, { timeout: 120000 });
+          await page.waitForTimeout(600);
+          const switchedReset = await clickTool('reset', 6);
+          if (switchedReset.after.presetId !== 'sandwalker') {
+            throw new Error('Operational controls remained bound to the old preset runtime.');
+          }
+
+          await page.waitForFunction(() => {
+            const fit = window.__NEXUS_V7__?.renderer?.mobileCameraFit;
+            return fit?.horizontallyContained === true && fit?.readableFill === true;
+          }, null, { timeout: 30000 });
+          await page.waitForTimeout(900);
+
+          const report = await page.evaluate(() => ({
+            schema: 'nexus.operational-browser-proof.v2',
+            activePreset: window.__NEXUS_V7__.activePreset.id,
+            runtimeTime: window.__NEXUS_V7__.runtime.data.time,
+            generation: window.__NEXUS_V7__.experiment.generation,
+            frameRate: window.__NEXUS_OPERATIONAL__.latestFrameRate,
+            performanceProfile: window.__NEXUS_V7__.renderer.performanceProfile,
+            cameraFit: window.__NEXUS_V7__.renderer.mobileCameraFit,
+            ledger: window.__NEXUS_OPERATIONAL__.ledger,
+            receiptText: document.querySelector('#tool-receipt')?.textContent || '',
+            controlLabels: [...document.querySelectorAll('#controls button')].map(button => ({
+              id: button.id,
+              text: button.textContent,
+              disabled: button.disabled,
+            })),
+          }));
+          report.diagnostics = diagnostics;
+
+          if (report.ledger.length !== 6 || report.ledger.some(row => row.status !== 'pass')) {
+            throw new Error(`Incomplete command ledger: ${JSON.stringify(report.ledger)}`);
+          }
+          const profile = report.performanceProfile;
+          if (
+            profile?.schema !== 'nexus.mobile-renderer-overhaul.v2' ||
+            profile?.materialMode !== 'standard-lit-cad' ||
+            profile?.authoredCadPreserved !== true ||
+            profile?.shadowsEnabled !== false ||
+            profile?.radiusSafeFollow !== true ||
+            profile?.disabledDecorationCount < 18 ||
+            profile?.renderWidth < 180 ||
+            profile?.renderHeight < 400
+          ) {
+            throw new Error(`Mobile renderer overhaul missing: ${JSON.stringify(profile)}`);
+          }
+          const bounds = report.cameraFit?.viewportBounds;
+          if (
+            report.cameraFit?.readableFill !== true ||
+            !bounds || bounds.widthRatio < 0.62 || bounds.widthRatio > 0.84
+          ) {
+            throw new Error(`Robot is still too small or cropped: ${JSON.stringify(report.cameraFit)}`);
+          }
+          if (!(report.frameRate > 4)) throw new Error(`Render loop remained unusable at ${report.frameRate} FPS.`);
+          if (diagnostics.length) throw new Error(`Browser diagnostics failed: ${diagnostics.join(' | ')}`);
+          if (report.controlLabels.some(button => button.disabled)) throw new Error('A tool remained disabled after the verified command sequence.');
+
+          await page.screenshot({ path: 'artifacts/operational/nexus-v7-operational-core.png', fullPage: true });
+          await writeFile('artifacts/operational/nexus-v7-operational-core.json', JSON.stringify(report, null, 2));
+          console.log(JSON.stringify(report, null, 2));
+          await browser.close();
+          EOF
+          node operational-test/verify.mjs
+
+      - name: Upload operational evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-v7-operational-core-${{ github.run_id }}
+          path: |
+            artifacts/operational/nexus-v7-operational-core.png
+            artifacts/operational/nexus-v7-operational-core.json
+            /tmp/nexus-operational-preview.log
+          if-no-files-found: warn
+          retention-days: 14

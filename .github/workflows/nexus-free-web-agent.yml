@@ -1,0 +1,249 @@
+name: NEXUS Free Web Agent
+
+on:
+  push:
+    branches:
+      - nexus-mujoco-science-core-v7
+    paths:
+      - 'nexus-science-core-v7/**'
+      - 'tools/free-web-agent/**'
+      - '.gitleaks.toml'
+      - '.github/workflows/nexus-free-web-agent.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'nexus-science-core-v7/**'
+      - 'tools/free-web-agent/**'
+      - '.gitleaks.toml'
+      - '.github/workflows/nexus-free-web-agent.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '17 8 * * *'
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: nexus-free-web-agent-${{ github.event_name }}
+  cancel-in-progress: true
+
+env:
+  PROJECT_DIR: nexus-science-core-v7
+  NODE_VERSION: '24'
+  PLAYWRIGHT_VERSION: '1.62.0'
+  LIGHTHOUSE_VERSION: '0.15.1'
+  GITLEAKS_VERSION: '8.30.1'
+  GITLEAKS_SHA256: '551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb'
+  OLLAMA_VERSION: '0.32.6'
+  OLLAMA_SHA256: 'dec2fa50d24e6868ca3c4c977d69d059399372105f951a9acc320a5a79aadcfc'
+  QWEN_MODEL: 'qwen2.5-coder:0.5b-instruct-q4_K_M'
+
+jobs:
+  verify-mobile-web-simulation:
+    name: Build, mobile test, Tool Foundry, security, and Qwen review
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out exact V7 source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'nexus-mujoco-science-core-v7' || github.event.pull_request.head.sha || github.sha }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Prepare evidence folders
+        run: mkdir -p artifacts artifacts/mobile artifacts/lighthouse
+
+      - name: Install project
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: npm install --ignore-scripts=false
+
+      - name: Build exact simulation
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: npm run build
+
+      - name: Check source and agent syntax
+        run: |
+          find "$PROJECT_DIR/src" -type f -name '*.js' -print0 | xargs -0 -r -n1 node --check
+          find "$PROJECT_DIR/tools" -type f -name '*.mjs' -print0 | xargs -0 -r -n1 node --check
+          find tools/free-web-agent -type f -name '*.mjs' -print0 | xargs -0 -r -n1 node --check
+
+      - name: Run open-source Tool Foundry
+        id: foundry
+        continue-on-error: true
+        run: node tools/free-web-agent/tool-foundry-v2.mjs
+
+      - name: Validate tools built by the Foundry
+        if: always()
+        run: |
+          find artifacts/generated-tools -type f -name '*.mjs' -print0 | xargs -0 -r -n1 node --check
+
+      - name: Check mobile download budget
+        id: bundle
+        if: always()
+        continue-on-error: true
+        run: node artifacts/generated-tools/bundle-budget.mjs
+
+      - name: Audit npm dependencies
+        if: always()
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: npm audit --json > ../artifacts/npm-audit.json || true
+
+      - name: Install verified Gitleaks binary
+        if: always()
+        run: |
+          curl --fail --location --retry 4 \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            --output /tmp/gitleaks.tar.gz
+          echo "${GITLEAKS_SHA256}  /tmp/gitleaks.tar.gz" | sha256sum --check --strict
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          sudo install -m 0755 /tmp/gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+
+      - name: Scan Git history for real secrets
+        if: always()
+        run: |
+          gitleaks git . \
+            --config .gitleaks.toml \
+            --redact \
+            --no-banner \
+            --report-format json \
+            --report-path gitleaks-report.json || true
+          test -f gitleaks-report.json || printf '[]\n' > gitleaks-report.json
+
+      - name: Install browser tools
+        if: always()
+        run: |
+          mkdir -p /tmp/nexus-browser-agent
+          cd /tmp/nexus-browser-agent
+          npm init -y >/dev/null
+          npm install --no-save "playwright@${PLAYWRIGHT_VERSION}" "@lhci/cli@${LIGHTHOUSE_VERSION}"
+          npx playwright install --with-deps chromium
+
+      - name: Start built simulation
+        if: always()
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/nexus-preview.log 2>&1 &
+          echo $! > /tmp/nexus-preview.pid
+          for attempt in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/nexus-preview.log
+          exit 1
+
+      - name: Test as an iPhone-sized touch device
+        id: mobile
+        if: always()
+        continue-on-error: true
+        run: node tools/free-web-agent/mobile-audit.mjs
+
+      - name: Run Lighthouse locally without paid upload
+        if: always()
+        continue-on-error: true
+        run: |
+          cd /tmp/nexus-browser-agent
+          npx lhci collect \
+            --url=http://127.0.0.1:4173/ \
+            --numberOfRuns=1 \
+            --settings.chromeFlags='--headless --no-sandbox --disable-gpu'
+          cp -R .lighthouseci/. "$GITHUB_WORKSPACE/artifacts/lighthouse/"
+
+      - name: Install verified Ollama for a real open-source AI review
+        if: ${{ always() && github.event_name != 'pull_request' }}
+        continue-on-error: true
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq zstd
+          curl --fail --location --retry 4 \
+            "https://github.com/ollama/ollama/releases/download/v${OLLAMA_VERSION}/ollama-linux-amd64.tar.zst" \
+            --output /tmp/ollama.tar.zst
+          echo "${OLLAMA_SHA256}  /tmp/ollama.tar.zst" | sha256sum --check --strict
+          sudo tar --zstd -xf /tmp/ollama.tar.zst -C /usr
+          ollama --version
+
+      - name: Run Qwen inside the GitHub cloud computer
+        if: ${{ always() && github.event_name != 'pull_request' }}
+        continue-on-error: true
+        run: |
+          OLLAMA_HOST=127.0.0.1:11434 OLLAMA_CONTEXT_LENGTH=16384 ollama serve > /tmp/ollama.log 2>&1 &
+          echo $! > /tmp/ollama.pid
+          for attempt in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          ollama pull "$QWEN_MODEL"
+          node tools/free-web-agent/qwen-review.mjs
+
+      - name: Build plain-language report
+        if: always()
+        run: node tools/free-web-agent/make-report.mjs
+
+      - name: Stop temporary cloud services
+        if: always()
+        run: |
+          if [ -f /tmp/nexus-preview.pid ]; then kill "$(cat /tmp/nexus-preview.pid)" || true; fi
+          if [ -f /tmp/ollama.pid ]; then kill "$(cat /tmp/ollama.pid)" || true; fi
+
+      - name: Make fail-closed final decision
+        id: final
+        if: always()
+        continue-on-error: true
+        run: node tools/free-web-agent/final-gate.mjs
+
+      - name: Hash all evidence
+        if: always()
+        run: |
+          if [ -f artifacts/generated-tools/evidence-manifest.mjs ]; then
+            node artifacts/generated-tools/evidence-manifest.mjs
+          else
+            echo 'Evidence-manifest tool was not generated.'
+          fi
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-free-web-agent-${{ github.run_id }}
+          path: |
+            artifacts/**
+            gitleaks-report.json
+            /tmp/nexus-preview.log
+            /tmp/ollama.log
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Publish or update one GitHub status issue
+        if: always() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TITLE='NEXUS free web-agent status'
+          BODY_FILE='artifacts/web-agent-report.md'
+          NUMBER="$(gh issue list --state open --search \"$TITLE in:title\" --json number --jq '.[0].number // empty')"
+          if [ -n "$NUMBER" ]; then
+            gh issue edit "$NUMBER" --body-file "$BODY_FILE"
+          else
+            gh issue create --title "$TITLE" --body-file "$BODY_FILE" --label automation || \
+              gh issue create --title "$TITLE" --body-file "$BODY_FILE"
+          fi
+
+      - name: Enforce final decision
+        if: always()
+        run: |
+          if [ "${{ steps.final.outcome }}" != "success" ]; then
+            echo 'NEXUS final gate blocked this build. Evidence was still preserved.'
+            exit 1
+          fi
