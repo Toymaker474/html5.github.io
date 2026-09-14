@@ -1,46 +1,60 @@
-# Edge SuperLab
+# Edge SuperLab 2
 
-A capability-test skill for Google AI Edge Gallery on iPhone/iPad/Android.
+A local AI workstation/capability-lab skill for Google AI Edge Gallery on iPhone/iPad/Android.
 
 ## Install
 
-In AI Edge Gallery → Agent Skills → Skills → + → Load skill from URL, use:
+AI Edge Gallery → Agent Skills → Skills → + → Load skill from URL:
 
 `https://toymaker474.github.io/html5.github.io/edge-superlab/`
 
-The folder is hosted by GitHub Pages and the repository root already includes `.nojekyll`.
+## Main commands
 
-## Best tests
+- `/selftest` — actual runtime probes for JS, WASM, storage, workers, WebCrypto and more.
+- `/lab` — interactive iPhone/WebView capability lab.
+- `/tools` — large local utility library: text/JSON/CSV, encoders, regex, number stats, SHA-256, file hashes, compression, QR and image processing.
+- `/python` or `/studio` — full CPython/Pyodide workbench.
+- `/packages` — library packs available to Python Studio.
+- `/py <request>` — asks the AI to create a runnable Python program, store it in the local program library, open Python Studio and run it.
+- `/programs` — list saved Python programs.
+- `/gpu` — WebGPU/WGSL particle demo where available, typed-array CPU fallback otherwise.
+- `/wasm` — execute a real WebAssembly module.
+- `/bench` — JS/WASM benchmark.
+- `/qr <text>` — generate a QR image.
+- `/hash <text>` — SHA-256.
+- `/remember ...` / `/recall ...` — skill-local persistent memory.
+- `/limits` — explain the execution boundary.
 
-- `/selftest` — runs headless execution probes and reports observed YES/NO results.
-- `/lab` — opens a touch UI to test browser APIs, storage, audio, motion, sharing and more.
-- `/gpu` — 50,000-particle WebGPU/WGSL compute demo when WebGPU is available, with an 8,500-particle typed-array Canvas fallback.
-- `/python` — real CPython through Pyodide/WebAssembly. It is not native Python and downloads the runtime on first use.
-- `/wasm` — executes a tiny WebAssembly module and verifies the result.
-- `/qr https://example.com` — generates a QR image using the same general JS-skill image-return mechanism used by Edge Gallery's built-in QR skill.
-- `/image` — returns a locally generated procedural PNG.
-- `/bench` — quick JS/WASM call benchmark.
-- `/remember ...` and `/recall ...` — tests origin-local persistent storage.
-- `/limits` — explains the sandbox boundary.
+## Python Studio
 
-## What this demonstrates
+Python Studio loads Pyodide 314.0.6: real CPython compiled to WebAssembly. It is not a native iOS Python process. The studio now includes:
 
-### Directly testable inside a downloadable skill
+- Saved-program library and auto-run support for AI-created scripts.
+- Import/export `.py` files.
+- Mount local user files into `/home/pyodide/` for a session.
+- Automatic `loadPackagesFromImports` dependency loading.
+- `micropip` install field for compatible Python wheels.
+- Automatic display of `/tmp/edge_plot.png` produced by Matplotlib/Pillow/etc.
+- Built-in examples for numerical chaos, NumPy Monte Carlo, pandas, SymPy, NetworkX, scikit-learn, SciPy optimization and Matplotlib fractals.
 
-JavaScript/WebView execution, structured tool results, Canvas image generation, returned images, returned interactive webviews, WebAssembly, WebCrypto, localStorage, IndexedDB, Workers, same-origin fetch, WebGL2 and (when WebKit exposes it) WebGPU.
+### Library packs
 
-### Permission/gesture dependent
+- Core: NumPy, SciPy, pandas, Matplotlib
+- Symbolic: SymPy
+- ML: scikit-learn
+- Vision: Pillow, OpenCV, scikit-image, imageio
+- Graphs: NetworkX
+- Science: Astropy, statsmodels
+- Data: Polars, PyArrow, pandas
+- Optimization: NLopt, HiGHS, SciPy
+- NLP: NLTK, regex
 
-Audio, motion/orientation, camera/microphone, clipboard, sharing, notifications and file pickers. The interactive lab tests several of these because iOS often requires a user gesture.
+Many other packages built for Pyodide are possible, and pure-Python wheels can often be installed using micropip.
 
-### Not native execution
+## Tool Library
 
-A normal downloaded skill does not get an arbitrary shell, native Python process, arbitrary Swift/C++ dynamic-code loader, unrestricted filesystem/process control, or the ability to invent new Edge Gallery native intents. C/C++/Rust can still be compiled to WebAssembly, and Python can run through CPython/Pyodide WebAssembly.
+The interactive toolbox is intentionally broader than simulation. It includes local text statistics, JSON pretty/minify, Base64, URL encoding, UTF-8/hex conversion, CSV inspection, number statistics, regex matches, SHA-256, UUIDs, local-file SHA-256, gzip/compression probes, QR generation, and local image grayscale/invert/threshold processing.
 
-### For full native power
+## Execution boundary
 
-A custom iOS app built around LiteRT-LM can expose your own Swift/C++/Metal/Python functions to the model because you control the host application.
-
-## Extra skill
-
-`edge-secret-probe/` is a separate minimal skill that tests Edge Gallery's secure `require-secret` path. It never echoes the secret; it returns only its length and a SHA-256 fingerprint prefix.
+A downloaded Edge Gallery skill can run JavaScript/Web APIs exposed by its WebView and WebAssembly. Python works because CPython is compiled to WASM. A normal downloaded skill does **not** get an arbitrary native shell, unrestricted filesystem/process control, or arbitrary Swift/C++/Metal execution. Native intents must already be implemented by the Edge Gallery host app. A custom LiteRT-LM iOS app can expose much more native functionality because you control the host.
