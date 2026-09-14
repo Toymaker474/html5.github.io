@@ -1,61 +1,99 @@
 # SuperAgent Native — iOS
 
-A native iPhone agent workstation. **No HTML, no JavaScript, no WebView runtime.**
+A native iPhone agent workstation with **zero HTML, zero JavaScript, zero WebView, and zero `run_js`**.
 
-This project pivots away from downloadable Edge Gallery web skills and uses:
+The app is built as a real iOS executable and combines several native languages/runtimes instead of forcing everything through Swift or web code.
 
-- Swift + SwiftUI for the app and tool layer
-- Google LiteRT-LM for local Gemma inference and automatic native tool calling
-- Metal for native GPU compute
-- Vision for local OCR
-- Core Motion for sensors
-- Core Image for QR generation
-- CryptoKit for hashing
-- a sandboxed native workspace + persistent agent memory
+## Native stack
 
-## Why this exists
+- **Swift + SwiftUI** — iOS UI, agent orchestration, Files integration and Apple frameworks
+- **LiteRT-LM** — local Gemma inference with automatic native tool calling
+- **Objective-C++** — bridge between Swift and compiled C/C++ engines
+- **C++20** — deterministic simulation, A* pathfinding and bounded numeric VM
+- **C11** — CRC-32, byte histograms and Shannon entropy
+- **Rust** — compiled static library/XCFramework with FFI math/hash/PRNG kernels
+- **Metal Shading Language** — native GPU compute
+- **Accelerate/vDSP** — Apple vector/signal math
+- **SQLite3 C API** — persistent local database
+- **Vision** — OCR
+- **Core Motion** — sensors
+- **Core Image** — QR generation
+- **CryptoKit** — hashing
+- **NaturalLanguage** — language recognition/tokenization
+- **PDFKit** — PDF text extraction
+- **AVFoundation** — native audio-file inspection
 
-A stock downloadable AI Edge Gallery skill is intentionally sandboxed around `run_js`/WebView code and host-provided native intents. If the goal is **zero web code and real native execution**, the correct architecture is a standalone iOS app that owns the host process and exposes Swift tools directly to LiteRT-LM.
+There is no browser runtime in this project.
 
-Google's current LiteRT-LM Swift package supports iOS and ships a native `CLiteRTLM.xcframework`. The Swift API supports GPU/CPU backends and native `Tool` objects that can be executed automatically during a conversation.
+## Agent tools
 
-## Native tools included
+Gemma gets real function tools through LiteRT-LM `automaticToolCalling`.
 
-The first native tool set gives Gemma real actions instead of fake/prompt-only tools:
+Core tools include:
 
-- `device_info` — device/model/OS/storage/runtime facts
-- `statistics` — deterministic native statistics
-- `sha256` — CryptoKit hashing
-- `remember` / `recall` — persistent local memory
-- `list_files` — inspect the app's safe workspace
-- `read_text_file` / `write_text_file` — create and edit sandboxed files
-- `ocr_image` — Vision text recognition on an imported image
-- `create_qr` — native Core Image QR PNG generation
-- `motion_sample` — accelerometer/orientation sample through Core Motion
-- `metal_vector_benchmark` — actual Metal compute kernel benchmark
+- `device_info`
+- `statistics`
+- `sha256`
+- `remember` / `recall`
+- `list_files`
+- `read_text_file` / `write_text_file`
+- `ocr_image`
+- `create_qr`
+- `motion_sample`
+- `metal_vector_benchmark`
+- `native_stack_manifest`
+- `native_self_test`
+- `cpp_nbody`
+- `cpp_pathfind`
+- `native_numeric_vm`
+- `c_byte_analysis`
+- `rust_analyze`
+- `accelerate_signal_stats`
+- `natural_language_analyze`
+- `pdf_extract`
+- `audio_info`
+- `sqlite_execute`
+- `sqlite_query`
 
-The model gets these as LiteRT-LM native function tools with `automaticToolCalling: true`.
+The bounded C++ VM gives the model a programmable execution surface without downloading arbitrary native executable code. Its instruction set is intentionally small and deterministic.
 
 ## Model
 
-Import a `.litertlm` model from Files inside the app. The UI copies it into the app's Application Support directory and initializes LiteRT-LM on the GPU.
+Use a `.litertlm` model in the iOS Files app. Inside SuperAgent Native choose **Import → Import LiteRT-LM Model**. The app copies the model into Application Support and initializes LiteRT-LM using the GPU backend.
 
-The intended model is the LiteRT-LM Gemma 4 E2B bundle, but the app is not hard-coded to one filename.
+The intended model is Gemma 4 E2B LiteRT-LM, but the app is not hard-coded to one model filename.
 
 ## Build
 
-This is a native iOS project, so iOS will not run the Swift source directly from a URL. Build/signing requires Xcode and then installation through Xcode or TestFlight/App Store signing.
+A native iOS app must be compiled and signed. It cannot be installed from a GitHub Pages URL like an Edge Gallery skill.
 
-### XcodeGen route
+Requirements:
 
-1. Install Xcode + XcodeGen on a Mac.
-2. From this folder run `xcodegen generate`.
-3. Open `SuperAgentNative.xcodeproj`.
-4. Select your Apple development team.
-5. Build to the iPhone or archive for TestFlight.
+- macOS + Xcode
+- XcodeGen
+- Rust toolchain (`rustup` + `cargo`)
 
-`project.yml` adds the official LiteRT-LM Swift package.
+From this folder:
 
-## Next native modules
+```sh
+sh build-native.sh
+```
 
-The architecture is deliberately ready for more real native tools: AVFoundation audio analysis, Photos/camera input, PDFKit, NaturalLanguage embeddings, Core ML specialist models, Metal particle/physics kernels, App Intents/Shortcuts, local SQLite, ZIP/archive tools, native networking with explicit permissions, and agent self-test/evaluation loops.
+That command:
+
+1. builds the Rust device + simulator static libraries,
+2. packages them as `NativeRustCore/SuperAgentRust.xcframework`,
+3. runs XcodeGen,
+4. creates `SuperAgentNative.xcodeproj`.
+
+Then open the project in Xcode, choose your Apple Development Team, and build to the iPhone or archive for TestFlight.
+
+## CI verification
+
+`.github/workflows/superagent-native-ios.yml` performs an unsigned iOS Simulator smoke build on macOS whenever this native project changes. It also uploads the Xcode build log for debugging.
+
+## Safety boundary
+
+This project deliberately does **not** expose arbitrary shell access, unrestricted filesystem access, credential extraction, or downloaded native-code execution. Tool access stays inside the app sandbox. The agent can create files, query its SQLite database, execute the bounded numeric VM, and invoke compiled tools shipped with the app.
+
+That gives it real execution without turning the iPhone into an unrestricted process launcher.
