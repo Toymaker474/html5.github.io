@@ -1,35 +1,37 @@
 ---
 name: edge-superlab
-description: Local AI workstation for Google AI Edge Gallery on iPhone. Runs CPython/Pyodide WebAssembly, saves and executes Python programs, opens notebook/workspace/vision/audio/SQLite/GPU labs, probes device capabilities, generates QR/images, and provides deterministic utilities.
+description: Performance-tuned local AI workstation for Google AI Edge Gallery on iPhone. Uses lightweight utilities first, optional CPython/Pyodide, adaptive GPU/CPU demos, persistent memory, and iPhone-safe performance profiles.
 metadata:
   homepage: https://toymaker474.github.io/html5.github.io/edge-superlab/
 ---
 
-# Edge SuperLab 3.1 — iOS compatibility build
+# Edge SuperLab 4 — iPhone performance build
 
-Use real tool execution instead of pretending a task ran.
+Use real tool execution instead of pretending a task ran. Keep the phone responsive: use the smallest tool that can solve the request and do not start heavy labs or package downloads unless needed.
 
-## CRITICAL: use one runner for EVERYTHING
+## CRITICAL runner contract
 
-Every `run_js` call for this skill MUST use exactly these top-level parameters:
-
+Every `run_js` call MUST use:
 - `skillName`: `edge-superlab`
 - `scriptName`: `ios.html`
 - `data`: a STRING containing JSON
 
-Never call `index.html` or `super.html` for this version. Never omit `skillName`. Never pass `data` as a raw object.
+Never call `index.html` or `super.html`. Never omit `skillName`.
 
-Example:
+## Performance profiles
 
-- `skillName`: `edge-superlab`
-- `scriptName`: `ios.html`
-- `data`: `{"action":"selftest"}`
+Default to **ECO** on iPhone.
 
-The iOS compatibility runner exposes both supported/observed callback names so different Gallery builds can find the skill entry point.
+- `/eco` -> `{"action":"perf_set","mode":"eco"}`
+- `/balanced` -> `{"action":"perf_set","mode":"balanced"}`
+- `/turbo` -> `{"action":"perf_set","mode":"turbo"}`
+- `/perf` -> `{"action":"perf_get"}`
+
+ECO favors responsiveness, lower memory, lower heat and 30 FPS labs. BALANCED allows moderate workloads. TURBO is explicit and temporary for demanding demos. Never switch to TURBO automatically. Never run a stress test automatically.
 
 ## Commands
 
-- `/hub`, `/mission`, or `Superlab` -> `{"action":"hub"}`
+- `/hub`, `/mission`, `Superlab` -> `{"action":"hub"}`
 - `/selftest` -> `{"action":"selftest"}`
 - `/capabilities` -> `{"action":"capabilities"}`
 - `/python` or `/studio` -> `{"action":"open_python"}`
@@ -41,8 +43,8 @@ The iOS compatibility runner exposes both supported/observed callback names so d
 - `/audio` -> `{"action":"open_audio"}`
 - `/sql` or `/database` -> `{"action":"open_sql"}`
 - `/tools` -> `{"action":"open_tools"}`
-- `/gpu`, `/sim`, or `/compute` -> `{"action":"open_gpu"}`
-- `/lab` or `/device` -> `{"action":"open_lab"}`
+- `/gpu`, `/sim`, `/compute` -> `{"action":"open_gpu"}`
+- `/lab`, `/device` -> `{"action":"open_lab"}`
 - `/qr <text>` -> `{"action":"qr","text":"..."}`
 - `/image` -> `{"action":"image"}`
 - `/hash <text>` -> `{"action":"hash","text":"..."}`
@@ -56,30 +58,18 @@ The iOS compatibility runner exposes both supported/observed callback names so d
 For `/py <request>` or a natural request to build/run Python:
 
 1. Generate one complete runnable Python script.
-2. Prefer useful libraries available through Pyodide, including NumPy, SciPy, pandas, Matplotlib, SymPy, NetworkX, scikit-learn, Pillow, OpenCV/scikit-image when available, Astropy, statsmodels, Polars and PyArrow.
-3. Print meaningful results. For a plot/image, save `/tmp/edge_plot.png` when practical.
-4. Call `run_js` with:
-   - `skillName`: `edge-superlab`
-   - `scriptName`: `ios.html`
-   - `data`: `{"action":"save_python","name":"short-name","request":"what the user asked","code":"COMPLETE PYTHON SOURCE","autorun":true}`
-5. Wait for the tool result before saying it worked.
+2. Prefer the Python standard library or NumPy. Load SciPy, pandas, Matplotlib, scikit-learn, OpenCV, scikit-image, PyArrow or Polars only when the task actually needs them.
+3. Keep iPhone workloads bounded: moderate arrays, moderate image sizes, moderate iteration counts, and concise output.
+4. For plots/images, save `/tmp/edge_plot.png` when useful.
+5. Call `run_js` using `ios.html` with `{"action":"save_python","name":"short-name","request":"what the user asked","code":"COMPLETE PYTHON SOURCE","autorun":true}`.
+6. The runner may suppress autorun in ECO mode. Do not claim execution succeeded until a tool result proves it.
 
-Example for an OpenCV request:
-
-- `skillName`: `edge-superlab`
-- `scriptName`: `ios.html`
-- `data`: `{"action":"save_python","name":"opencv-image-lab","request":"make an image-processing program with opencv","code":"COMPLETE PYTHON SOURCE","autorun":true}`
+Avoid loading several large Python packages together just to answer a simple question. Do not combine a heavy Python job and the GPU particle lab unless the user explicitly asks.
 
 ## Natural routing
 
-- image/photo/filter/computer vision -> Vision Lab or generate Python using Pillow/OpenCV/scikit-image.
-- CSV/table/database/query -> SQLite Data Lab or pandas/Polars Python.
-- multi-step experiment -> Notebook.
-- files/project/scratchpad -> Workspace.
-- sound/frequency/waveform/DSP -> Audio Lab.
-- runtime/GPU/device support -> selftest/capabilities/device lab.
-- science/math/ML/coding where execution helps -> generate and run Python.
+Use deterministic compact tools first. Image/photo work can use Vision Lab or one requested Python image library. CSV/table work can use SQLite before pandas. Multi-step experiments can use Notebook. Runtime/GPU support uses selftest/capabilities. Science/math/ML uses Python only when execution materially helps.
 
 ## Accuracy boundary
 
-Python in this skill is CPython compiled to WebAssembly through Pyodide, not a native iOS Python process. Downloaded Edge Gallery skills can use the WebView, WebAssembly and Web APIs exposed by the host. Do not claim arbitrary shell, unrestricted filesystem, arbitrary native Swift/C++/Metal execution, or native intents that Edge Gallery has not exposed.
+Python here is CPython compiled to WebAssembly through Pyodide, not native iOS Python. Downloaded Edge Gallery skills can use the WebView, WebAssembly and exposed Web APIs, but they do not receive arbitrary shell, unrestricted filesystem, or arbitrary native Swift/C++/Metal execution.
