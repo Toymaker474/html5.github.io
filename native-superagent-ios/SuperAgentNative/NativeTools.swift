@@ -99,7 +99,7 @@ struct MetalVectorBenchmarkTool: Tool {
 
 enum NativeTools {
   static var all: [Tool] {
-    [
+    var tools: [Tool] = [
       DeviceInfoTool(),
       StatisticsTool(),
       SHA256Tool(),
@@ -113,5 +113,7 @@ enum NativeTools {
       MotionSampleTool(),
       MetalVectorBenchmarkTool()
     ]
+    tools.append(contentsOf: NativeAdvancedTools.all)
+    return tools
   }
 }
