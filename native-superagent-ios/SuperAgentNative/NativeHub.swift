@@ -31,6 +31,14 @@ actor NativeHub {
     try? FileManager.default.createDirectory(at: workspace, withIntermediateDirectories: true)
   }
 
+  func importFile(from source: URL) throws -> [String: Any] {
+    let destination = try safeFile(source.lastPathComponent)
+    if fm.fileExists(atPath: destination.path) { try fm.removeItem(at: destination) }
+    try fm.copyItem(at: source, to: destination)
+    let size = (try? destination.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+    return ["imported": true, "name": destination.lastPathComponent, "bytes": size]
+  }
+
   func deviceInfo() -> [String: Any] {
     var system = utsname()
     uname(&system)
@@ -111,11 +119,12 @@ actor NativeHub {
       .sorted { $0.lastPathComponent < $1.lastPathComponent }
       .map { url in
         let r = try? url.resourceValues(forKeys: keys)
+        let modified = r?.contentModificationDate.map { ISO8601DateFormatter().string(from: $0) } ?? ""
         return [
           "name": url.lastPathComponent,
           "bytes": r?.fileSize ?? 0,
           "directory": r?.isDirectory ?? false,
-          "modified": r?.contentModificationDate.map { ISO8601DateFormatter().string(from: $0) } ?? ""
+          "modified": modified
         ]
       }
   }
@@ -174,8 +183,8 @@ actor NativeHub {
   }
 
   func sampleMotion() async throws -> [String: Any] {
-    guard CMMotionManager().isDeviceMotionAvailable else { throw NativeError("Device motion unavailable") }
     let manager = CMMotionManager()
+    guard manager.isDeviceMotionAvailable else { throw NativeError("Device motion unavailable") }
     manager.deviceMotionUpdateInterval = 1.0 / 30.0
     let queue = OperationQueue()
     queue.qualityOfService = .userInitiated
@@ -215,25 +224,37 @@ actor NativeHub {
     var b = [Float](repeating: 0, count: n)
     for i in 0..<n { a[i] = Float(i) * 0.25; b[i] = Float(i) * 0.75 }
     let bytes = n * MemoryLayout<Float>.stride
+
+    let ba = a.withUnsafeBytes { raw in
+      device.makeBuffer(bytes: raw.baseAddress!, length: bytes)
+    }
+    let bb = b.withUnsafeBytes { raw in
+      device.makeBuffer(bytes: raw.baseAddress!, length: bytes)
+    }
+
     guard
-      let ba = device.makeBuffer(bytes: &a, length: bytes),
-      let bb = device.makeBuffer(bytes: &b, length: bytes),
+      let ba,
+      let bb,
       let out = device.makeBuffer(length: bytes),
       let command = queue.makeCommandBuffer(),
       let encoder = command.makeComputeCommandEncoder()
     else { throw NativeError("Metal buffer allocation failed") }
 
     var count = UInt32(n)
-    let countBuffer = device.makeBuffer(bytes: &count, length: MemoryLayout<UInt32>.stride)!
+    guard let countBuffer = device.makeBuffer(bytes: &count, length: MemoryLayout<UInt32>.stride) else {
+      throw NativeError("Metal count buffer allocation failed")
+    }
+
     encoder.setComputePipelineState(pipeline)
     encoder.setBuffer(ba, offset: 0, index: 0)
     encoder.setBuffer(bb, offset: 0, index: 1)
     encoder.setBuffer(out, offset: 0, index: 2)
     encoder.setBuffer(countBuffer, offset: 0, index: 3)
     let width = pipeline.threadExecutionWidth
-    let group = MTLSize(width: width, height: 1, depth: 1)
-    let grid = MTLSize(width: n, height: 1, depth: 1)
-    encoder.dispatchThreads(grid, threadsPerThreadgroup: group)
+    encoder.dispatchThreads(
+      MTLSize(width: n, height: 1, depth: 1),
+      threadsPerThreadgroup: MTLSize(width: width, height: 1, depth: 1)
+    )
     encoder.endEncoding()
 
     let start = CFAbsoluteTimeGetCurrent()
