@@ -1,0 +1,43 @@
+<!doctype html>
+<meta charset="utf-8">
+<script>
+(function(){
+  "use strict";
+  function clamp(x,a,b){ return Math.max(a,Math.min(b,x)); }
+  function safeString(x, fallback, maxLen){
+    if(typeof x!=="string") return fallback;
+    return x.slice(0,maxLen);
+  }
+  window["ai_edge_gallery_get_result"] = async (data) => {
+    try {
+      const d = JSON.parse(data || "{}");
+      const presets = new Set(["water","smoke","honey","vortex","jet"]);
+      const qualities = new Set(["fast","balanced","high"]);
+      const cfg = {
+        preset: presets.has(d.preset) ? d.preset : "water",
+        quality: qualities.has(d.quality) ? d.quality : "balanced",
+        pressureIterations: Math.round(clamp(Number(d.pressureIterations)||24,8,40)),
+        vorticity: clamp(Number(d.vorticity)||3,0,8),
+        viscosity: clamp(Number(d.viscosity)||0.00015,0,0.003),
+        dissipation: clamp(Number(d.dissipation)||0.995,0.97,1),
+        gravityY: clamp(Number(d.gravityY)||0,-2,2),
+        title: safeString(d.title,"Fluid Lab",80)
+      };
+      const q = new URLSearchParams();
+      Object.entries(cfg).forEach(([k,v]) => q.set(k,String(v)));
+      return JSON.stringify({
+        result:
+          "Fluid Lab launched locally. Drag across the field to inject momentum and dye. " +
+          "Use the visualization selector to inspect speed, pressure, divergence, and vorticity.",
+        webview: {
+          url: "webview.html?" + q.toString(),
+          aspectRatio: 1.45
+        }
+      });
+    } catch (e) {
+      console.error(e);
+      return JSON.stringify({error:"Fluid Lab failed to start: "+e.message});
+    }
+  };
+})();
+</script>
